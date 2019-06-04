@@ -1,2 +1,1 @@
-google_id = ""
-token_secret = "YOUR_TOKEN_SECRET"
+# config file to keep your super secret variables

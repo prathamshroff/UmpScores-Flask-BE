@@ -16,15 +16,13 @@ from db import *
 app = flask.Flask(__name__)
 CORS(app)
 app.config["DEBUG"] = True
+# JWT stuff is not relevant for this build
 app.config['JWT_SECRET_KEY'] = 'super-secret-12'
 app.config['CORS_ORIGINS'] = 'https://evening-badlands-39009.herokuapp.com, http://localhost:3000'
 app.config['CORS_HEADERS'] = 'X-Requested-With, Content-Type, Authorization, Origin, Accept'
 
-
-
 bcrypt = flask_bcrypt.Bcrypt(app)
 jwt = JWTManager(app)
-
 
 def crossdomain(origin=None, methods=None, headers=None,
                 max_age=21600, attach_to_all=True,
