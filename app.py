@@ -188,6 +188,21 @@ def data():
 		return jsonify({"responseStatus":"error"})
 
 
+@app.route('/testing-action', methods=['GET'])
+@jwt_required
+def testingAction():
+	user = get_jwt_identity()
+	dataset = request.args["dataset"];
+	response = getLineGraphData(user, dataset)
+	response = json.loads(response.get_data().decode("utf-8"))
+	print(response["responseStatus"])
+	if (response["responseStatus"] == "success"):
+		# good data load,
+		return jsonify({"responseStatus":"success", "data":response["data"]})
+	else:
+		return jsonify({"responseStatus":"error"})
+
+
 
 
 
