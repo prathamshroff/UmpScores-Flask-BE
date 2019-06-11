@@ -1,5 +1,5 @@
 import flask
-from flask import make_response, request, current_app, jsonify
+from flask_api import FlaskAPI, status
 import json
 import sys, os
 
@@ -12,7 +12,7 @@ with open('.config.json') as f:
 	configs = json.load(f)
 
 # Backend Init Stuff
-app = flask.Flask(__name__)
+app = FlaskAPI(__name__)
 app.config["DEBUG"] = True
 datasets = Dataset(configs['iam-user'])
 
@@ -22,7 +22,7 @@ def home():
 		'umpires':'Mason'
 	})
 	item.pop('aws:rep:updatetime') # Remove decimal object which cannot be jsonify'd
-	return jsonify(item)
+	return item, status.HTTP_200_OK
 
 if __name__ == '__main__':
 	# getUmpires()
