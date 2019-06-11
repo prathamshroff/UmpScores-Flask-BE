@@ -8,7 +8,7 @@ from Umpires import getUmpires
 from Datasets import Dataset
 
 # Get creds
-with open('config.json') as f:
+with open('.config.json') as f:
 	configs = json.load(f)
 
 # Backend Init Stuff
@@ -19,8 +19,8 @@ datasets = Dataset(configs['iam-user'])
 @app.route('/', methods=['GET'])
 def home():
 	item = datasets.get({
-			'umpires':'Mason'
-		})
+		'umpires':'Mason'
+	})
 	item.pop('aws:rep:updatetime') # Remove decimal object which cannot be jsonify'd
 	return jsonify(item)
 
