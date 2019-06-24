@@ -1,32 +1,35 @@
 import boto3
-class Dataset:
+class Search:
 	class __impl:
 		"""Singleton Instance"""
-		def __init__(self, iam_role, table):
+		def __init__(self, iam_role, search_url):
 			self.iam_role = iam_role
-			self.dynamodb = boto3.resource('dynamodb',
+			self.cloudsearch = boto3.client('cloudsearchdomain', 
+				endpoint_url=search_url,
 				aws_access_key_id = self.iam_role['key'], 
 				aws_secret_access_key = self.iam_role['secret'],
 				region_name='us-east-1'
-			).Table(table)
+			)
 
-		def get(self, key):
-			"""Execute query given some dictionary
+		def get(self, query):
+			"""Index query
 
-			:param key: DICT of key value pairs to query based on
+			:param query: string to index on
 			:returns: dict of document results
 			"""
-			return self.dynamodb.get_item(Key=key)['Item']
+			return self.cloudsearch.search(query=query,
+				queryParser='simple',
+				size=10)
 
 	__instance = None
 
-	def __init__(self, iam_role, table):
+	def __init__(self, iam_role, search_url):
 		""" Create singleton instance """
-		if Dataset.__instance is None:
-			Dataset.__instance = Dataset.__impl(iam_role, table)
+		if Search.__instance is None:
+			Search.__instance = Search.__impl(iam_role, search_url)
 
 		# Store instance reference as the only member in the handle
-		self.__dict__['_Singleton__instance'] = Dataset.__instance
+		self.__dict__['_Singleton__instance'] = Search.__instance
 
 	def __getattr__(self, attr):
 		return getattr(self.__instance, attr)
