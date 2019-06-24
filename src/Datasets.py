@@ -18,6 +18,9 @@ class Dataset:
 			"""
 			return self.dynamodb.get_item(Key=key)['Item']
 
+		def all(self):
+			return self.dynamodb.scan()
+
 	__instance = None
 
 	def __init__(self, iam_role, table):
