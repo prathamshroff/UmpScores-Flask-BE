@@ -8,8 +8,8 @@ import time
 from boto3.dynamodb.conditions import Key, Attr
 sys.path.append('./src')
 from Umpires import getUmpires
-from umpires_dataset import Dataset
-from umpiresearch import Search
+from Datasets import Dataset
+from CloudSearch import Search
 with open('.config.json') as f:
 	configs = json.load(f)
 
@@ -34,7 +34,10 @@ games_text_search = Search(configs['iam-user'], configs['cloud-search']['games-u
 def search():
 	if request.method == 'GET':
 		query = request.args.get('search')
-		data = umpire_text_search.get(query) + games_text_search.get(query)
+		data = {
+			'umpires': umpires_text_search.get(query), 
+			'games': games_text_search.get(query)
+		}
 		return jsonify(data), 200
 
 @app.route('/get-all-umps', methods=['GET'])
