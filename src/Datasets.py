@@ -1,6 +1,6 @@
 import boto3
 class Dataset:
-	'''
+	"""
 	The Dataset class is our wrapper around boto3's dynamodb object. We will
 	use it to add more robust and safe queries in the future. 
 
@@ -14,7 +14,7 @@ class Dataset:
 				"secret": iam_secret_key 
 			}
 	table : str
-		A string representing the dynamodb table to use.
+		A string representing the dynamodb table to use given the iam_role.
 			e.g. "Players"
 
 	Attributes
@@ -23,8 +23,9 @@ class Dataset:
 		This is where we store iam_role
 	dynamodb : boto3.resource object
 		Boto3 resoure object for dynamodb. Uses iam_role and the table parameter
-		to connect to dynamodb from aws
-	'''
+		to connect to dynamodb from aws. We use this object for all interactions
+		with dynamodb.
+	"""
 	def __init__(self, iam_role, table):
 		self.iam_role = iam_role
 		self.dynamodb = boto3.resource('dynamodb',
@@ -34,14 +35,16 @@ class Dataset:
 		).Table(table)
 
 	def get(self, query_map, filter_expressions=None):
-		'''
-		get method takes some query map and some filter options
-		then returns a json response of some data item
+		"""
+		Get method takes some query map and some filter options
+		then returns a json object representing that entire item entry within dynamodb
 
 		Parameters
 		----------
-		queryMap : str
-			query the dynamodb table for the following key value pairs.
+		queryMap : dict
+			Query the dynamodb table for the following key value pairs. Make
+			sure you give the primary/partition key as a key value pair within
+			this dictionary.
 				e.g. {"Umpires": "jordan baker", ...}
 		FilterExpressions : boto3.dynamodb.conditions.(Attr/Key)
 			Filter the results given some attribute/key filter option. If None,
@@ -51,15 +54,17 @@ class Dataset:
 		Returns
 		----------
 		dict
-			matched item element within the database. If no such element exists returns
-			empty dict
+			Matched item element within the database. If no such element exists returns
+			empty dict. Response represents an entire element within the table. For
+			example, if this dataset is connected to the Umpires Table, the return
+			would be a json response of all the statistics about a singular umpire.
 				e.g. {
 					"attr1": "val1",
 					"attr2": "val2",
 					...
 				}
 		
-		'''
+		"""
 		if not filter_expressions:
 			data = self.dynamodb.get_item(Key=query_map)
 		else:
@@ -69,15 +74,15 @@ class Dataset:
 		return data['Item']
 
 	def scan(self, query=None, filter_expressions=None):
-		'''
-		scan method takes some query keyword and some filter options
-		then returns a json response of relevant search
-		results 
+		"""
+		Scan method takes some query keyword and some filter options
+		then returns a json response consisting of relevant dynamodb
+		elements. 
 
 		Parameters
 		----------
 		query : str
-			query the dynamodb table for this following string.
+			Query the dynamodb table for this following string.
 				e.g. "jordan baker"
 		FilterExpressions : boto3.dynamodb.conditions.(Attr/Key)
 			Filter the results given some attribute/key filter option. If None,
@@ -87,15 +92,17 @@ class Dataset:
 		Returns
 		----------
 		list of dictionaries
-			matched item elements within the database. If no such elements exists returns
-			empty dict
+			Matched item elements within the database. If no such elements exists returns
+			empty dict. One dictionary represents an entire item within dynamodb.
+			For example, if this dataset is connected to the Umpires table, one dictionary
+			would give all the statistics about a single Umpire.
 				e.g. [{
 					"attr1": "val1",
 					"attr2": "val2",
 					...
 				}, ...]
 		
-		'''
+		"""
 		if not filter_expressions and not query:
 			data = self.dynamodb.scan()
 		elif not query and filter_expressions:

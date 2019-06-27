@@ -6,7 +6,6 @@ import boto3
 import time
 from boto3.dynamodb.conditions import Key, Attr
 sys.path.append('./src')
-from Umpires import getUmpires
 from Datasets import Dataset
 from CloudSearch import Search
 with open('.config.json') as f:
@@ -21,8 +20,20 @@ games_dataset = Dataset(configs['iam-user'], 'Refrating-Games')
 umpires_text_search = Search(configs['iam-user'], configs['cloud-search']['umpires-url'])
 games_text_search = Search(configs['iam-user'], configs['cloud-search']['games-url'])
 
+# TODO Remove this ('/') endpoint for future versions
 @app.route('/', methods=['GET'])
 def getUmpire():
+	"""
+	Test URL to ensure dynamodb connection is stable
+
+	Response
+	----------
+	If this endpoint is working you should get this exact json object:
+	{
+		"Umpires": "jordan baker",
+		"id": 1
+	}
+	""" 
 	if request.method == 'GET':
 		data = json.dumps(umpires_dataset.get({"Umpires":"jordan baker"}), use_decimal=True)
 		resp = Response(data, status=200, mimetype='application/json')
@@ -30,25 +41,108 @@ def getUmpire():
 
 @app.route('/search', methods=['GET'])
 def search():
+	"""
+	Search URL which takes a string in the form of a get request and
+	compares that query against a dynamodb table by interfacing through CloudSearch
+
+	Get
+	----------
+	search : string
+		query string which will be sent to aws cloudsearch to find relevant search
+		results.
+			e.g. ?search="jordan baker"
+
+	Response
+	----------
+	{"umpire-search-results": [{...}, {...}, ...], "game-search-results": [{...}, {...}, ...]}
+		The "umpires" value and the "games" value are similarly formatted such that
+		each array contains several dictionaries representing relevant search results. Left most
+		indices contain more relevant search results. Each dictionary would be an entire data entry 
+		from their respective table. For example, a dictionary under the umpires key
+		would represent all of the statistics about some arbitrary umpire while in 
+		games one dictionary would represent all the statistics about some game. Finally,
+		every dictionary has a _score key with a decimal value representing how relevant
+		that score is. As stated before, left most indices will have higher scores because
+		they are more relevant.
+			e.g. 
+			{
+				"umpire-search-results": 
+					[
+						{
+							"Umpires": "jordan baker", 
+							...
+							"_score": "0.7546"
+						}, 
+						...
+					], 
+				"game-search-results": [...]
+			}
+	"""
 	if request.method == 'GET':
 		query = request.args.get('search')
 		data = {
-			'umpires': umpires_text_search.get(query), 
-			'games': games_text_search.get(query)
+			'umpire-search-results': umpires_text_search.get(query), 
+			'game-search-results': games_text_search.get(query)
 		}
 		data = json.dumps(data, use_decimal=True)
 		resp = Response(data, status=200, mimetype='application/json')
 		return resp
 
-@app.route('/get-all-umps', methods=['GET'])
+@app.route('/get-all-umps')
 def getAllUmps():
-	if request.method == 'GET':
-		data = json.dumps(umpires_dataset.scan(), use_decimal=True)
-		resp = Response(data, status=200, mimetype='application/json')
-		return resp
+	"""
+	Returns every umpire within the Umpires dynamodb table
 
+	Response
+	----------
+	array of dictionaries
+		Every dictionary within this array contains all of the statistics
+		regarding a singular umpire. The response will resemble the following:
+			e.g. 
+			[
+				{
+					"Umpires": "jordan baker"
+					"attr1": "val1",
+					"attr2": "val2",
+					...
+				}, ...
+			]
+	"""
+	data = json.dumps(umpires_dataset.scan(), use_decimal=True)
+	resp = Response(data, status=200, mimetype='application/json')
+	return resp
+
+# TODO handle start and end times differently with actual time objects 
+# instead of just integers
 @app.route('/get-games', methods=['GET'])
 def getGames():
+	"""
+	Returns all the data from every game within some given time frame
+
+	Get
+	----------
+	start : integer
+		beginning pointer for the time frame of which we will select games from
+	end : integer
+		ending pointer for the time frame of which we will select games from
+
+	Response
+	----------
+	array of dictionaries
+		Every dictionary within this array contains all of the statistics
+		regarding a singular game. Every game that occurred within the start
+		and end parameters timeframe will be selected for this array.
+		The response will resemble the following:
+			e.g. 
+			[
+				{
+					"Umpires": "jordan baker"
+					"attr1": "val1",
+					"attr2": "val2",
+					...
+				}, ...
+			]
+	"""
 	if request.method == 'GET':
 		try:
 			start = int(request.args.get('start'))

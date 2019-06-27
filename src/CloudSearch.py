@@ -1,7 +1,7 @@
 import boto3
 import numpy as np
 class Search:
-	'''
+	"""
 	The Search class is our wrapper around boto3's cloud search object. We will
 	use it to add more robust and safe queries in the future. 
 
@@ -24,8 +24,9 @@ class Search:
 		This is where we store iam_role
 	cloudsearch : boto3.client object
 		Boto3 client object for cloudsearchdomain. Uses iam_role and the search_url
-		to connect to cloudsearch from aws
-	'''
+		to connect to cloudsearch from aws. We use this object for all interactions
+		with CloudSearch.
+	"""
 	def __init__(self, iam_role, search_url):
 		self.iam_role = iam_role
 		self.cloudsearch = boto3.client('cloudsearchdomain', 
@@ -36,27 +37,32 @@ class Search:
 		)
 
 	def get(self, query):
-		'''
-		get method takes some query string and returns a json response of relevant search
+		"""
+		Get method takes some query string and returns a json response of relevant search
 		results 
 
 		Parameters
 		----------
 		query : str
 			the search statement which will be indexed against dynamodb. 
-				e.g. "jordan baker"
+				e.g. "jordan baker" 
 
 		Returns
 		----------
-		list where left most indices contain more relevant searches
-			e.g. [{
-					"attr1": "val",
-					"attr2": "val2",
-					... 
-					"_score": "0.7653421"}
-			}, ...]
+		list of dictionaries
+			List where left most indices contain more relevant searches. If no such 
+			elements exists returns empty array. One dictionary represents an 
+			entire item within dynamodb. For example, if this dataset is connected 
+			to the Umpires table, one dictionary would give all the statistics 
+			about a single Umpire.
+				e.g. [{
+						"attr1": "val",
+						"attr2": "val2",
+						... 
+						"_score": "0.7653421"}
+				}, ...]
 		
-		'''
+		"""
 		data = self.cloudsearch.search(query=query,
 			queryParser='simple',
 			size=10, 
