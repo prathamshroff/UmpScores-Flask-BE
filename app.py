@@ -1,9 +1,8 @@
 import flask
-from flask import Flask, jsonify, request
-import json
+from flask import Flask, jsonify, request, Response
+import simplejson as json
 import sys, os
 import boto3
-import decimal 
 import time
 from boto3.dynamodb.conditions import Key, Attr
 sys.path.append('./src')
@@ -13,15 +12,7 @@ from CloudSearch import Search
 with open('.config.json') as f:
 	configs = json.load(f)
 
-# TODO list comprehension instead of decimal encoder?
-class DecimalEncoder(json.JSONEncoder):
-    def default(self, o):
-        if isinstance(o, decimal.Decimal):
-            return float(o)
-        return super(DecimalEncoder, self).default(o)
-
 app = Flask(__name__)
-app.json_encoder = DecimalEncoder
 app.config["DEBUG"] = True
 
 # Custom boto3 wrappers. Will handle data sanitization and malicious queries in the future
@@ -38,13 +29,16 @@ def search():
 			'umpires': umpires_text_search.get(query), 
 			'games': games_text_search.get(query)
 		}
-		return jsonify(data), 200
+		data = json.dumps(data, use_decimal=True)
+		resp = Response(data, status=200, mimetype='application/json')
+		return resp
 
 @app.route('/get-all-umps', methods=['GET'])
 def getAllUmps():
 	if request.method == 'GET':
-		data = jsonify(umpires_dataset.scan())
-		return data, 200
+		data = json.dumps(umpires_dataset.scan(), use_decimal=True)
+		resp = Response(data, status=200, mimetype='application/json')
+		return resp
 
 @app.route('/get-games', methods=['GET'])
 def getGames():
@@ -56,10 +50,11 @@ def getGames():
 			return 'Please give start and end number fields', 200
 
 		filterExpression = Attr('timeStamp').between(start, end)
-		data = jsonify(
-			games_dataset.scan(FilterExpression=filterExpression)
+		data = json.dumps(
+			games_dataset.scan(FilterExpression=filterExpression), use_decimal=True
 		)
-		return data, 200
+		resp = Response(data, status=200, mimetype='application/json')
+		return resp
 
 if __name__ == '__main__':
 	# getUmpires()
