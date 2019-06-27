@@ -136,9 +136,8 @@ def getGames():
 			e.g. 
 			[
 				{
-					"Umpires": "jordan baker"
-					"attr1": "val1",
-					"attr2": "val2",
+					"Games": "Game1"
+					"Umpire": "ryan additon",
 					...
 				}, ...
 			]
