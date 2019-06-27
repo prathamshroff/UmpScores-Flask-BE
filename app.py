@@ -21,6 +21,13 @@ games_dataset = Dataset(configs['iam-user'], 'Refrating-Games')
 umpires_text_search = Search(configs['iam-user'], configs['cloud-search']['umpires-url'])
 games_text_search = Search(configs['iam-user'], configs['cloud-search']['games-url'])
 
+@app.route('/', methods=['GET'])
+def getUmpire():
+	if request.method == 'GET':
+		data = json.dumps(umpires_dataset.get({"Umpires":"jordan baker"}), use_decimal=True)
+		resp = Response(data, status=200, mimetype='application/json')
+		return resp
+
 @app.route('/search', methods=['GET'])
 def search():
 	if request.method == 'GET':
