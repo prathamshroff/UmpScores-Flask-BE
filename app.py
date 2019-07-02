@@ -1,4 +1,3 @@
-import flask
 from flask import Flask, jsonify, request, Response
 import simplejson as json
 import sys, os
@@ -15,7 +14,7 @@ app = Flask(__name__)
 app.config["DEBUG"] = True
 
 # Custom boto3 wrappers. Will handle data sanitization and malicious queries in the future
-umpires_dataset = Dataset(configs['iam-user'], 'Refrating-Umpires')
+umpires_dataset = Dataset(configs['iam-user'], 'refrating-umpires-v1-search')
 games_dataset = Dataset(configs['iam-user'], 'Refrating-Games')
 umpires_text_search = Search(configs['iam-user'], configs['cloud-search']['umpires-url'])
 games_text_search = Search(configs['iam-user'], configs['cloud-search']['games-url'])
@@ -30,12 +29,12 @@ def getUmpire():
 	----------
 	If this endpoint is working you should get this exact json object:
 	{
-		"Umpires": "jordan baker",
-		"id": 1
+		"ump": "Bill Welke",
+		...
 	}
 	""" 
 	if request.method == 'GET':
-		data = json.dumps(umpires_dataset.get({"Umpires":"jordan baker"}), use_decimal=True)
+		data = json.dumps(umpires_dataset.get({"ump":"Bill Welke"}), use_decimal=True)
 		resp = Response(data, status=200, mimetype='application/json')
 		return resp
 
@@ -69,7 +68,7 @@ def search():
 				"umpire-search-results": 
 					[
 						{
-							"Umpires": "jordan baker", 
+							"ump": "Bill Welke", 
 							...
 							"_score": "0.7546"
 						}, 
