@@ -29,17 +29,6 @@ cloudsearch = boto3.client('cloudsearchdomain',
 cache = []
 
 def parseRawUmpire2019():
-	def fixEmptyString(item):
-		if type(item) == float:
-			if math.isnan(item):
-				return "n/a"
-		return item
-
-	def fixEmptyNumber(item):
-		if math.isnan(item):
-			return -1
-		return item
-
 	string_fields = [
 		'Data source',
 		'ump',
@@ -64,20 +53,16 @@ def parseRawUmpire2019():
 		'Umpire School/Camp Instructor (Y/N)',
 		'Other Leagues'
 	]
-
-	dataset = pd.read_excel(raw_filepath, index=False)
-	for field in number_fields:
-		dataset[field] = dataset[field].apply(fixEmptyNumber)
-
-	for field in string_fields:
-		dataset[field] = dataset[field].apply(fixEmptyString)
-
+	values = {key: 'n/a' for key in string_fields}
+	values.update({key: -1 for key in number_fields})
+	dataset = pd.read_excel(raw_filepath, index=False).fillna(value=values)
 	dataset.to_excel(refined_filepath)
 
 def uploadUmpires():
 	df = pd.read_excel(refined_filepath, keep_default_na=False, index=False)
 	data = df.to_dict()
-	keys = [key for key in data]
+	keys = list(data.keys())
+	
 	with table.batch_writer() as batch:
 		for item_id in range(len(data[keys[0]])):
 			item = {key: data[key][item_id] for key in keys}
