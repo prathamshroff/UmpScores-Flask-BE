@@ -18,7 +18,7 @@ with open('.config.json') as f:
 app = Flask(__name__)
 api = Api(app, default ="Umpires and Games")
 CORS(app)
-app.config["DEBUG"] = True
+app.config["RESTPLUS_MASK_SWAGGER"] = False
 
 # Custom boto3 wrappers. Will handle data sanitization and malicious queries in the future
 umpires_dataset = Dataset(configs['iam-user'], 'refrating-umpires-v1')
@@ -123,4 +123,11 @@ class GetGames(Resource):
 if __name__ == '__main__':
     # getUmpires()
     # app.run('0.0.0.0', port=80)
-    app.run('127.0.0.1', port=3000)
+    if sys.argv[1] == 'p':
+        print('Starting in production mode')
+        app.config["DEBUG"] = False
+        app.run('0.0.0.0', port=80)
+    else:
+        print('Starting in testing mode')
+        app.config["DEBUG"] = True
+        app.run('127.0.0.1', port=3000)
