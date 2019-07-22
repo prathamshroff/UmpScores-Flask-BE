@@ -10,6 +10,8 @@ class CloudSearchPP():
 			aws_secret_access_key = iam['secret'],
 			region_name='us-east-1'
 		)
+		# Cache originally empty. Cache will only retrieve stuff from corresponding
+		# dynamodb table.
 		self.cache = []
 
 	def emptyCloudSearch(self):
@@ -27,6 +29,7 @@ class CloudSearchPP():
 			print('CloudSearch already empty')
 			return
 		for i in range(len(items)):
+			# Cloudsearch returns data as a dict {id1: {data}, id2: {data}, ...}
 			item_id = items[i].pop('id')
 			deletion_list.append({
 				'type': 'delete',
@@ -43,6 +46,7 @@ class CloudSearchPP():
 		"""Updates cloudsearch with all recently uploaded dynamodb items
 		"""
 		local_cache = []
+		# Once again cache is updated from 
 		for item in self.cache:
 			item = {re.sub('[/().\s-]', '_', key): item[key] for key in item}
 			ump = re.sub('[/().\s-]', '_', item['ump'])

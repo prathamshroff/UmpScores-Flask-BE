@@ -23,12 +23,15 @@ class DynamodbPP():
 		keys = list(data.keys())
 		
 		with self.table.batch_writer() as batch:
+			# data['number'] = [5, 4, 3, 78, ...] which is an array of values for every row
 			for item_id in range(len(data[keys[0]])):
 				item = {key: data[key][item_id] for key in keys}
 				for key in keys:
 					if type(item[key]) == float or type(item[key]) == int:
 						item[key] = Decimal(str(item[key]))
 				try:
+					# cloudsearch cache just means new items were added to dynamodb
+					# therefore we need to add them to cloudsearch
 					self.cloudsearchpp.cache.append(item)
 					batch.put_item(
 						Item=item

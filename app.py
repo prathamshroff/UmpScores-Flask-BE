@@ -26,14 +26,15 @@ games_dataset = Dataset(configs['iam-user'], 'Refrating-Games')
 umpires_text_search = Search(configs['iam-user'], configs['cloud-search']['umpires-url'])
 games_text_search = Search(configs['iam-user'], configs['cloud-search']['games-url'])
 
-umpire_model = api.model('Umpires', UmpireModel)
-game_model = api.model('Games', GameModel)
+umpire_model = api.model('Umpire', UmpireModel)
+game_model = api.model('Game', GameModel)
 search_api_object = api.model('SearchAPIObject', 
     {
         'umpire-search-results': fields.List(fields.Nested(umpire_model)),
         'game-search-results': fields.List(fields.Nested(game_model))
     }
 )
+umpires_model = api.model('Umpires', {'items': fields.List(fields.Nested(umpire_model))})
 
 search_parser = api.parser()
 search_parser.add_argument('q', type=str, help=
@@ -71,7 +72,7 @@ class QuerySearch(Resource):
 
 @api.route('/get-all-umps')
 class GetAllUmps(Resource):
-    @api.marshal_list_with(umpire_model)
+    @api.response(200, 'OK', umpires_model)
     def get(self):
         """
         Returns every umpire within the Umpires dynamodb table
@@ -82,7 +83,8 @@ class GetAllUmps(Resource):
         Umpires. Ideally, this dataset will be updated/changed at some set periodic interval to include
         recent game statistics.
         """
-        data = json.dumps({'items': umpires_dataset.scan()}, use_decimal=True)
+        data = umpires_dataset.scan()
+        data = json.dumps({'items': data}, use_decimal=True)
         resp = Response(data, status=200, mimetype='application/json')
         return resp
 
@@ -123,10 +125,11 @@ class GetGames(Resource):
 if __name__ == '__main__':
     # getUmpires()
     # app.run('0.0.0.0', port=80)
-    if sys.argv[1] == 'p':
-        print('Starting in production mode')
-        app.config["DEBUG"] = False
-        app.run('0.0.0.0', port=80)
+    if len(sys.argv) > 1:
+        if sys.argv[1] == 'p':
+            print('Starting in production mode')
+            app.config["DEBUG"] = False
+            app.run('0.0.0.0', port=80)
     else:
         print('Starting in testing mode')
         app.config["DEBUG"] = True
