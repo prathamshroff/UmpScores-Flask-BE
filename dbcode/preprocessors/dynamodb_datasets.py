@@ -4,11 +4,51 @@ import botocore
 import pandas as pd
 from decimal import Decimal
 import simplejson as json
+import os
 #TODO use simplejson for decimal if possible
+
+class Datasets():
+    def __fillna(df, string_fields, cloudsearchpp):
+        """Fills in empty fields with -1 for number values and 'n/a' for strings
+        """
+        values = {key: 'n/a' for key in string_fields}
+
+        number_fields = list(df.columns)
+        for column in string_fields:
+            number_fields.remove(column)
+
+        values.update({key: -1 for key in number_fields})
+
+        self.cloudsearchpp = cloudsearchpp
+
+        df = df.fillna(value=values)
+        return df
+
+    def make_umps():
+        """Makes refined/2019.csv
+        """
+        string_fields = [
+            'Data source',
+            'ump',
+            'name'
+        ]
+        profiles = pd.read_excel('datasets/raw/umpire2019.xlsx')
+        stats = pd.read_csv('datasets/raw/umpire_bcr_2019.csv')
+        df = pd.merge(profiles, stats, left_on='ump', right_on='name')	
+        dataset = __fillna(df, string_fields)
+        dataset = dataset.drop(columns=['Unnamed: 0', 'name'])
+        dataset.to_csv('datasets/refined/umps2019.csv', index=False)
+        print(dataset.columns)
+
+    if __name__ == '__main__':
+        make_umps()
+ 
+        
 class DynamodbPP():
+
 	def __init__(self, config, iam, table_name, cloudsearchpp):
 		self.__table_name = table_name
-		self.table = boto3.resource('dynamodb',
+		self.table = boto3.resource('dynamodb', 
 			aws_access_key_id = iam['key'], 
 			aws_secret_access_key = iam['secret'],
 			region_name='us-east-1'
