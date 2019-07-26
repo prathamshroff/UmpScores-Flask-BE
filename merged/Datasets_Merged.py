@@ -73,8 +73,8 @@ class src():
 		to connect to dynamodb from aws. We use this object for all interactions
 		with dynamodb.
 	"""
-
-	def get(self, query_map, filter_expressions=None):
+    
+    def get(self, query_map, filter_expressions=None):
 		"""
 		Get method takes some query map and some filter options
 		then returns a json object representing that entire item entry within dynamodb
@@ -112,8 +112,8 @@ class src():
 		if 'Item' not in data:
 			return {}
 		return data['Item']
-
-	def scan(self, query=None, filter_expressions=None):
+        
+    def scan(self, query=None, filter_expressions=None):
 		"""
 		Scan method takes some query keyword and some filter options
 		then returns a json response consisting of relevant dynamodb
