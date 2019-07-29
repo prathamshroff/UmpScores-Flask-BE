@@ -1,6 +1,52 @@
+import pandas as pd
+import os
 import boto3
-class Dataset:
+
+def __init__(self, iam_role, table, cloudsearchpp):
+		self.iam_role = iam_role
+		self.dynamodb = boto3.resource('dynamodb',
+			aws_access_key_id = self.iam_role['key'], 
+			aws_secret_access_key = self.iam_role['secret'],
+			region_name='us-east-1'
+		).Table(table) 
+		self.cloudsearchpp = cloudsearchpp
+         
+class dynamodb():
+
+    def __fillna(df, string_fields):
+	"""Fills in empty fields with -1 for number values and 'n/a' for strings
 	"""
+	values = {key: 'n/a' for key in string_fields}
+
+	number_fields = list(df.columns)
+	for column in string_fields:
+		number_fields.remove(column)
+
+	values.update({key: -1 for key in number_fields})
+
+	df = df.fillna(value=values)
+	return df
+
+    def make_umps():
+	"""Makes refined/2019.csv
+	"""
+	string_fields = [
+		'Data source',
+		'ump',
+		'name'
+	]
+	profiles = pd.read_excel('datasets/raw/umpire2019.xlsx')
+	stats = pd.read_csv('datasets/raw/umpire_bcr_2019.csv')
+	df = pd.merge(profiles, stats, left_on='ump', right_on='name')	
+	dataset = __fillna(df, string_fields)
+	dataset = dataset.drop(columns=['Unnamed: 0', 'name'])
+	dataset.to_csv('datasets/refined/umps2019.csv', index=False)
+	print(dataset.columns)
+
+    if __name__ == '__main__':
+	    make_umps()
+
+    """
 	The Dataset class is our wrapper around boto3's dynamodb object. We will
 	use it to add more robust and safe queries in the future. 
 
@@ -26,15 +72,8 @@ class Dataset:
 		to connect to dynamodb from aws. We use this object for all interactions
 		with dynamodb.
 	"""
-	def __init__(self, iam_role, table):
-		self.iam_role = iam_role
-		self.dynamodb = boto3.resource('dynamodb',
-			aws_access_key_id = self.iam_role['key'], 
-			aws_secret_access_key = self.iam_role['secret'],
-			region_name='us-east-1'
-		).Table(table)
-
-	def get(self, query_map, filter_expressions=None):
+    
+    def get(self, query_map, filter_expressions=None):
 		"""
 		Get method takes some query map and some filter options
 		then returns a json object representing that entire item entry within dynamodb
@@ -72,8 +111,8 @@ class Dataset:
 		if 'Item' not in data:
 			return {}
 		return data['Item']
-
-	def scan(self, query=None, filter_expressions=None):
+        
+    def scan(self, query=None, filter_expressions=None):
 		"""
 		Scan method takes some query keyword and some filter options
 		then returns a json response consisting of relevant dynamodb
@@ -112,3 +151,5 @@ class Dataset:
 		if 'Items' not in data:
 			return {}
 		return data['Items']
+
+print('')

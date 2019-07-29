@@ -5,27 +5,18 @@ import botocore
 import numpy as np
 
 def __init__(self, config, iam,  iam_role, search_url):
-    	self.iam_role = iam_role
-		self.cloudsearch = boto3.client('cloudsearchdomain', 
-			endpoint_url = config['cloud-search']['umpires-url'],
-			aws_access_key_id = iam['key'], 
-			aws_secret_access_key = iam['secret'],
-			region_name='us-east-1'
-		)
-		# Cache originally empty. Cache will only retrieve stuff from corresponding
-		# dynamodb table.
-		self.cache = []
+	self.cloudsearch = boto3.client('cloudsearchdomain', 
+	endpoint_url = config['cloud-search']['umpires-url'],
+		aws_access_key_id = iam['key'], 
+		aws_secret_access_key = iam['secret'],
+		region_name='us-east-1'
+	)
+	# Cache originally empty. Cache will only retrieve stuff from corresponding
+	# dynamodb table.
+	self.iam_role = iam_role
+	self.cache = []
 
-def __init__(self, iam_role, search_url):
-		self.iam_role = iam_role
-		self.cloudsearch = boto3.client('cloudsearchdomain', 
-			endpoint_url=search_url,
-			aws_access_key_id = self.iam_role['key'], 
-			aws_secret_access_key = self.iam_role['secret'],
-			region_name='us-east-1'
-		)
-
-class preprocessors():
+class cloudsearch():
     def emptyCloudSearch(self):
 		"""Empties all items out of this cloud search
 		"""
@@ -77,8 +68,6 @@ class preprocessors():
 
 
 		print('CloudSearch for Umpires refreshed')
-
-class src():
     """
 	The Search class is our wrapper around boto3's cloud search object. We will
 	use it to add more robust and safe queries in the future. 

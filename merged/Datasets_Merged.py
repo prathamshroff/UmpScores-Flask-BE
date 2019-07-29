@@ -2,15 +2,16 @@ import pandas as pd
 import os
 import boto3
 
-def __init__(self, iam_role, table):
+def __init__(self, iam_role, table, cloudsearchpp):
 		self.iam_role = iam_role
 		self.dynamodb = boto3.resource('dynamodb',
 			aws_access_key_id = self.iam_role['key'], 
 			aws_secret_access_key = self.iam_role['secret'],
 			region_name='us-east-1'
 		).Table(table) 
+		self.cloudsearchpp = cloudsearchpp
          
-class preprocessors():
+class dynamodb():
 
     def __fillna(df, string_fields):
 	"""Fills in empty fields with -1 for number values and 'n/a' for strings
@@ -44,8 +45,6 @@ class preprocessors():
 
     if __name__ == '__main__':
 	    make_umps()
-
-class src():
 
     """
 	The Dataset class is our wrapper around boto3's dynamodb object. We will
