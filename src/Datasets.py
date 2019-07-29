@@ -12,15 +12,15 @@ def __init__(self, iam_role, table, cloudsearchpp):
                                    ).Table(table)
     self.cloudsearchpp = cloudsearchpp
 
-    
 class dynamodb():
 
     def __fillna(df, string_fields):
+        """Fills in empty fields with -1 for number values and 'n/a' for strings
+        """
+        values = {key: 'n/a' for key in string_fields}
 
-    values = {key: 'n/a' for key in string_fields}
-
-      number_fields = list(df.columns)
-       for column in string_fields:
+        number_fields = list(df.columns)
+        for column in string_fields:
             number_fields.remove(column)
 
         values.update({key: -1 for key in number_fields})
@@ -34,7 +34,7 @@ class dynamodb():
         string_fields = [
             'Data source',
             'ump',
-                'name'
+            'name'
         ]
         profiles = pd.read_excel('datasets/raw/umpire2019.xlsx')
         stats = pd.read_csv('datasets/raw/umpire_bcr_2019.csv')
@@ -154,6 +154,3 @@ class dynamodb():
         if 'Items' not in data:
             return {}
         return data['Items']
-
-
-print('')
