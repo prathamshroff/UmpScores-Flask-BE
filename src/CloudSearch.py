@@ -5,28 +5,17 @@ import botocore
 import numpy as np
 
 
-def __init__(self, config, iam, iam_role, search_url):
-    self.iam_role = iam_role
-    self.cloudsearch = boto3.client('cloudsearchdomain',
-    	endpoint_url=config['cloud-search']['umpires-url'],
-        aws_access_key_id=iam['key'],
-        aws_secret_access_key=iam['secret'],
-        region_name='us-east-1'
-    )
-    # Cache originally empty. Cache will only retrieve stuff from corresponding
-    # dynamodb table.
-    self.cache = []
 
 
 class cloudsearch():
-	def __init__(self, config, iam, iam_role, search_url):
+	def __init__(self, iam_role, search_url):
 		self.iam_role = iam_role
 		self.cloudsearch = boto3.client('cloudsearchdomain',
-			endpoint_url=config['cloud-search']['umpires-url'],
-			aws_access_key_id=iam['key'],
-			aws_secret_access_key=iam['secret'],
-			region_name='us-east-1'
-		)
+                endpoint_url=search_url,
+                aws_access_key_id=self.iam_role['key'],
+                aws_secret_access_key=self.iam_role['secret'],
+				region_name='us-east-1'
+        )
 		# Cache originally empty. Cache will only retrieve stuff from corresponding
 		# dynamodb table.
 		self.cache = []
