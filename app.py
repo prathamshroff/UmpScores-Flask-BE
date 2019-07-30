@@ -21,10 +21,10 @@ CORS(app)
 app.config["RESTPLUS_MASK_SWAGGER"] = False
 
 # Custom boto3 wrappers. Will handle data sanitization and malicious queries in the future
-umpires_dataset = dynamodb(configs['iam-user'], 'refrating-umpires-v1')
-games_dataset = dynamodb(configs['iam-user'], 'Refrating-Games')
-umpires_text_search = cloudsearch(configs['iam-user'], configs['cloud-search']['umpires-url'])
-games_text_search = cloudsearch(configs['iam-user'], configs['cloud-search']['games-url'])
+umpires_dataset = dynamodb.__init__(configs['iam-user'], 'refrating-umpires-v1','cloudsearch')
+games_dataset = dynamodb.__init__(configs['iam-user'], 'Refrating-Games', 'cloudsearchpp')
+umpires_text_search = cloudsearch.__init__(configs['iam-user'], configs['cloud-search']['umpires-url'])
+games_text_search = cloudsearch.__init__(configs['iam-user'], configs['cloud-search']['games-url'])
 
 umpire_model = api.model('Umpire', UmpireModel)
 game_model = api.model('Game', GameModel)
