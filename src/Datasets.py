@@ -39,7 +39,7 @@ class dynamodb():
         stats = pd.read_csv('datasets/raw/umpire_bcr_2019.csv')
         df = pd.merge(profiles, stats, left_on='ump', right_on='name')
         dataset = __fillna(df, string_fields)
-        dataset = dataset.drop(columns=['Unnamed: 0', 'name'])
+        dataset = dataset.drop(columns=['Unnamed: 0', 'name']) 
         dataset.to_csv('datasets/refined/umps2019.csv', index=False)
         print(dataset.columns)
 
