@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 import boto3
-
+import Decimal
 class Table():
     """
     The Dataset class is our wrapper around boto3's dynamodb object. We will
@@ -29,15 +29,17 @@ class Table():
         to connect to dynamodb from aws. We use this object for all interactions
         with dynamodb.
     """
-    def __init__(self, iam_role, table, cloudsearchpp):
+    def __init__(self, iam_role, table, cloudsearch):
         self.iam_role = iam_role
+        self.__table_name = table
         self.dynamodb = boto3.resource('dynamodb',
             aws_access_key_id=self.iam_role['key'],
             aws_secret_access_key=self.iam_role['secret'],
             region_name='us-east-1'
             ).Table(table)
-        self.cloudsearchpp = cloudsearchpp
+        self.cloudsearch = cloudsearch
 
+    @staticmethod
     def __fillna(df, string_fields):
         """Fills in empty fields with -1 for number values and 'n/a' for strings
         """
@@ -52,6 +54,7 @@ class Table():
         df = df.fillna(value=values)
         return df
 
+    @staticmethod
     def make_umps():
         """Makes refined/2019.csv
         """
@@ -63,7 +66,7 @@ class Table():
         profiles = pd.read_excel('datasets/raw/umpire2019.xlsx')
         stats = pd.read_csv('datasets/raw/umpire_bcr_2019.csv')
         df = pd.merge(profiles, stats, left_on='ump', right_on='name')
-        dataset = __fillna(df, string_fields)
+        dataset = Table.__fillna(df, string_fields)
         dataset = dataset.drop(columns=['Unnamed: 0', 'name']) 
         dataset.to_csv('datasets/refined/umps2019.csv', index=False)
         print(dataset.columns)
@@ -157,7 +160,7 @@ class Table():
         data = df.to_dict()
         keys = list(data.keys())
         
-        with self.table.batch_writer() as batch:
+        with self.dynamodb.batch_writer() as batch:
             # data['number'] = [5, 4, 3, 78, ...] which is an array of values for every row
             for item_id in range(len(data[keys[0]])):
                 item = {key: data[key][item_id] for key in keys}
@@ -167,7 +170,7 @@ class Table():
                 try:
                     # cloudsearch cache just means new items were added to dynamodb
                     # therefore we need to add them to cloudsearch
-                    self.cloudsearchpp.cache.append(item)
+                    self.cloudsearch.cache.append(item)
                     batch.put_item(
                         Item=item
                     )
@@ -183,8 +186,8 @@ class Table():
     def clearTable(self, primary_key, sort_key = None):
         """Deletes every item from this dynamodb table
         """
-        scan = self.table.scan()
-        with self.table.batch_writer() as batch:
+        scan = self.dynamodb.scan()
+        with self.dynamodb.batch_writer() as batch:
             if sort_key == None:
                 for each in scan['Items']:
                     batch.delete_item(

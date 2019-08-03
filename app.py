@@ -21,8 +21,8 @@ CORS(app)
 app.config["RESTPLUS_MASK_SWAGGER"] = False
 
 # Custom boto3 wrappers. Will handle data sanitization and malicious queries in the future
-umpires_text_search = Search(configs['iam-user'], configs['cloud-search']['umpires-url'])
-games_text_search = Search(configs['iam-user'], configs['cloud-search']['games-url'])
+umpires_text_search = Search(configs['iam-user'], configs['cloudsearch']['umpires-url'])
+games_text_search = Search(configs['iam-user'], configs['cloudsearch']['games-url'])
 umpires_dataset = Table(configs['iam-user'], 'refrating-umpires-v1', umpires_text_search)
 games_dataset = Table(configs['iam-user'], 'Refrating-Games', games_text_search)
 
