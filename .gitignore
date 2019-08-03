@@ -281,3 +281,5 @@ $RECYCLE.BIN/
 
 config.json
 .config.json
+.vscode/
+*.pem
