@@ -9,7 +9,7 @@ from flask import Flask, request
 from flask_restplus import Resource, Api, reqparse, fields
 from models import UmpireModel, GameModel
 sys.path.append('./src')
-from Datasets import Dataset
+from Datasets import Table
 from CloudSearch import Search
 
 with open('.config.json') as f:
@@ -21,10 +21,11 @@ CORS(app)
 app.config["RESTPLUS_MASK_SWAGGER"] = False
 
 # Custom boto3 wrappers. Will handle data sanitization and malicious queries in the future
-umpires_dataset = Dataset(configs['iam-user'], 'refrating-umpires-v1')
-games_dataset = Dataset(configs['iam-user'], 'Refrating-Games')
-umpires_text_search = Search(configs['iam-user'], configs['cloud-search']['umpires-url'])
-games_text_search = Search(configs['iam-user'], configs['cloud-search']['games-url'])
+umpires_text_search = Search(configs['iam-user'], configs['cloudsearch']['umpires-url'])
+games_text_search = Search(configs['iam-user'], configs['cloudsearch']['games-url'])
+umpires_dataset = Table(configs['iam-user'], 'refrating-umpires-v1', umpires_text_search)
+games_dataset = Table(configs['iam-user'], 'Refrating-Games', games_text_search)
+
 
 umpire_model = api.model('Umpire', UmpireModel)
 game_model = api.model('Game', GameModel)
