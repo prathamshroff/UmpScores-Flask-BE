@@ -1,7 +1,8 @@
 import pandas as pd
 import os
 import boto3
-import Decimal
+from decimal import Decimal
+import botocore
 class Table():
     """
     The Dataset class is our wrapper around boto3's dynamodb object. We will
@@ -69,7 +70,6 @@ class Table():
         dataset = Table.__fillna(df, string_fields)
         dataset = dataset.drop(columns=['Unnamed: 0', 'name']) 
         dataset.to_csv('datasets/refined/umps2019.csv', index=False)
-        print(dataset.columns)
 
     def get(self, query_map, filter_expressions=None):
         """
