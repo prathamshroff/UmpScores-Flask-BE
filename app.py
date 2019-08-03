@@ -9,10 +9,10 @@ from flask import Flask, request
 from flask_restplus import Resource, Api, reqparse, fields
 from models import UmpireModel, GameModel
 sys.path.append('./src')
-from Datasets import dynamodb
-from CloudSearch import cloudsearch
+from Datasets import Table
+from CloudSearch import Search
 
-with open('config.json') as f:
+with open('.config.json') as f:
     configs = json.load(f)
 
 app = Flask(__name__)
@@ -21,10 +21,11 @@ CORS(app)
 app.config["RESTPLUS_MASK_SWAGGER"] = False
 
 # Custom boto3 wrappers. Will handle data sanitization and malicious queries in the future
-umpires_dataset = dynamodb(configs['iam-user'], 'refrating-umpires-v1','cloudsearch')
-games_dataset = dynamodb(configs['iam-user'], 'Refrating-Games', 'cloudsearchpp')
-umpires_text_search = cloudsearch(configs['iam-user'], configs['cloud-search']['umpires-url'])
-games_text_search = cloudsearch(configs['iam-user'], configs['cloud-search']['games-url'])
+umpires_text_search = Search(configs['iam-user'], configs['cloud-search']['umpires-url'])
+games_text_search = Search(configs['iam-user'], configs['cloud-search']['games-url'])
+umpires_dataset = Table(configs['iam-user'], 'refrating-umpires-v1', umpires_text_search)
+games_dataset = Table(configs['iam-user'], 'Refrating-Games', games_text_search)
+
 
 umpire_model = api.model('Umpire', UmpireModel)
 game_model = api.model('Game', GameModel)

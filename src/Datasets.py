@@ -2,8 +2,33 @@ import pandas as pd
 import os
 import boto3
 
-class dynamodb():
+class Table():
+    """
+    The Dataset class is our wrapper around boto3's dynamodb object. We will
+    use it to add more robust and safe queries in the future. 
 
+    Parameters
+    ----------
+    iam_role : dict
+        A dictionary containing the iam role for the corresponding 
+        dynamodb table. Should look as follows:
+            e.g. {
+                "key": iam_access_key,
+                "secret": iam_secret_key 
+            }
+    table : str
+        A string representing the dynamodb table to use given the iam_role.
+            e.g. "Players"
+
+    Attributes
+    ----------
+    iam_role : dict
+        This is where we store iam_role
+    dynamodb : boto3.resource object
+        Boto3 resoure object for dynamodb. Uses iam_role and the table parameter
+        to connect to dynamodb from aws. We use this object for all interactions
+        with dynamodb.
+    """
     def __init__(self, iam_role, table, cloudsearchpp):
         self.iam_role = iam_role
         self.dynamodb = boto3.resource('dynamodb',
@@ -42,36 +67,6 @@ class dynamodb():
         dataset = dataset.drop(columns=['Unnamed: 0', 'name']) 
         dataset.to_csv('datasets/refined/umps2019.csv', index=False)
         print(dataset.columns)
-
-    if __name__ == '__main__':
-        make_umps()
-
-    """
-	The Dataset class is our wrapper around boto3's dynamodb object. We will
-	use it to add more robust and safe queries in the future. 
-
-	Parameters
-	----------
-	iam_role : dict
-		A dictionary containing the iam role for the corresponding 
-		dynamodb table. Should look as follows:
-			e.g. {
-				"key": iam_access_key,
-				"secret": iam_secret_key 
-			}
-	table : str
-		A string representing the dynamodb table to use given the iam_role.
-			e.g. "Players"
-
-	Attributes
-	----------
-	iam_role : dict
-		This is where we store iam_role
-	dynamodb : boto3.resource object
-		Boto3 resoure object for dynamodb. Uses iam_role and the table parameter
-		to connect to dynamodb from aws. We use this object for all interactions
-		with dynamodb.
-	"""
 
     def get(self, query_map, filter_expressions=None):
         """
@@ -153,3 +148,54 @@ class dynamodb():
         if 'Items' not in data:
             return {}
         return data['Items']
+
+    #TODO Change this method to take in a dict/pandas.dataframe, gets rid of refined_filepath
+    def uploadUmpires(self, refined_filepath): 
+        """Uploads every item within some filepath to the dynamodb table
+        """
+        df = pd.read_csv(refined_filepath, keep_default_na=False)
+        data = df.to_dict()
+        keys = list(data.keys())
+        
+        with self.table.batch_writer() as batch:
+            # data['number'] = [5, 4, 3, 78, ...] which is an array of values for every row
+            for item_id in range(len(data[keys[0]])):
+                item = {key: data[key][item_id] for key in keys}
+                for key in keys:
+                    if type(item[key]) == float or type(item[key]) == int:
+                        item[key] = Decimal(str(item[key]))
+                try:
+                    # cloudsearch cache just means new items were added to dynamodb
+                    # therefore we need to add them to cloudsearch
+                    self.cloudsearchpp.cache.append(item)
+                    batch.put_item(
+                        Item=item
+                    )
+                except botocore.exceptions.ClientError as e:
+                    print("Error couldn't upload the following row: \n", item)
+                    exit(0)
+                except botocore.exceptions.ParamValidationError as e:
+                    print("Wrong Item type: {0}".format(item))
+                    exit(0)
+
+        print('Dynamodb table for {0} refreshed'.format(self.__table_name))
+
+    def clearTable(self, primary_key, sort_key = None):
+        """Deletes every item from this dynamodb table
+        """
+        scan = self.table.scan()
+        with self.table.batch_writer() as batch:
+            if sort_key == None:
+                for each in scan['Items']:
+                    batch.delete_item(
+                        Key = {
+                            primary_key: each[primary_key]
+                    })
+            else:
+                for each in scan['Items']:
+                    batch.delete_item(
+                        Key = {
+                            primary_key: each[primary_key],
+                            sort_key: each[sort_key]
+                    })
+        print('Dynamodb table for {0} emtpied'.format(self.__table_name))
