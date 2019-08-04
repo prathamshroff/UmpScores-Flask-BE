@@ -283,3 +283,5 @@ config.json
 .config.json
 .vscode/
 *.pem
+output-data/
+*.csv
