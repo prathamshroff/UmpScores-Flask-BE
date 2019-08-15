@@ -161,9 +161,11 @@ class Table():
                     )
                 except botocore.exceptions.ClientError as e:
                     print("Error couldn't upload the following row: \n", item)
+                    print(e)
                     exit(0)
                 except botocore.exceptions.ParamValidationError as e:
                     print("Wrong Item type: {0}".format(item))
+                    print(e)
                     exit(0)
 
         print('Dynamodb table for {0} refreshed'.format(self.__table_name))
