@@ -3,6 +3,8 @@ import os
 import boto3
 from decimal import Decimal
 import botocore
+import time
+
 class Table():
     """
     The Dataset class is our wrapper around boto3's dynamodb object. We will
@@ -138,7 +140,7 @@ class Table():
         return data['Items']
 
     #TODO Change this method to take in a dict/pandas.dataframe, gets rid of refined_filepath
-    def uploadUmpires(self, refined_filepath): 
+    def uploadUmpires(self, refined_filepath, backoff=50): 
         """Uploads every item within some filepath to the dynamodb table
         """
         df = pd.read_csv(refined_filepath, keep_default_na=False)
@@ -152,40 +154,73 @@ class Table():
                 for key in keys:
                     if type(item[key]) == float or type(item[key]) == int:
                         item[key] = Decimal(str(item[key]))
-                try:
-                    # cloudsearch cache just means new items were added to dynamodb
-                    # therefore we need to add them to cloudsearch
-                    self.cloudsearch.cache.append(item)
-                    batch.put_item(
-                        Item=item
-                    )
-                except botocore.exceptions.ClientError as e:
-                    print("Error couldn't upload the following row: \n", item)
-                    print(e)
-                    exit(0)
-                except botocore.exceptions.ParamValidationError as e:
-                    print("Wrong Item type: {0}".format(item))
-                    print(e)
-                    exit(0)
+                while True:
+                    try:
+                        # cloudsearch cache just means new items were added to dynamodb
+                        # therefore we need to add them to cloudsearch
+                        batch.put_item(
+                            Item=item
+                        )
+                        self.cloudsearch.cache.append(item)
+                        break
+                    except botocore.exceptions.ClientError as e:
+                        time.sleep(backoff / 1000)
+                        backoff *= 2
+                        if (backoff / 1000 > 60):
+                            print('Exponential Backoff Failed. Load too heavy!')
+                            exit(0)
+                        else:
+                            print(e)
+                            print('Increasing backoff to {0}'.format(backoff))
+                    except botocore.exceptions.ParamValidationError as e:
+
+                        print("Wrong Item type")
+                        print(e)
+                        exit(0)
+
 
         print('Dynamodb table for {0} refreshed'.format(self.__table_name))
 
-    def clearTable(self, primary_key, sort_key = None):
+    def clearTable(self, primary_key, sort_key = None, backoff=50):
         """Deletes every item from this dynamodb table
         """
         scan = self.dynamodb.scan()
         with self.dynamodb.batch_writer() as batch:
             if sort_key == None:
                 for each in scan['Items']:
-                    batch.delete_item(
-                        Key = {
-                            primary_key: each[primary_key]
-                    })
+                    while True:
+                        try:
+                            batch.delete_item(
+                                Key = {
+                                    primary_key: each[primary_key]
+                            })
+                            break
+                        except botocore.exceptions.ClientError as e:
+                            time.sleep(backoff / 1000)
+                            backoff *= 2
+                            if (backoff / 1000 > 60):
+                                print('Exponential Backoff Failed. Load too heavy!')
+                                exit(0)
+                            else:
+                                print(e)
+                                print('Increasing backoff to {0}'.format(backoff))
             else:
                 for each in scan['Items']:
-                    batch.delete_item(
-                        Key = {
-                            primary_key: each[primary_key],
-                            sort_key: each[sort_key]
-                    })
+                    while True:
+                        try:
+                            batch.delete_item(
+                                Key = {
+                                    primary_key: each[primary_key],
+                                    sort_key: each[sort_key]
+                            })
+                            break
+                        except botocore.exceptions.ClientError as e:
+                            time.sleep(backoff / 1000)
+                            backoff *= 2
+                            if (backoff / 1000 > 60):
+                                print('Exponential Backoff Failed. Load too heavy!')
+                                exit(0)
+                            else:
+                                print(e)
+                                print('Increasing backoff to {0}'.format(backoff))
         print('Dynamodb table for {0} emtpied'.format(self.__table_name))
