@@ -32,6 +32,8 @@ class Table():
         to connect to dynamodb from aws. We use this object for all interactions
         with dynamodb.
     """
+    RETRY_EXCEPTIONS = ('ProvisionedThroughputExceededException', 
+        'ThrottlingException')
     def __init__(self, iam_role, table, cloudsearch):
         self.iam_role = iam_role
         self.__table_name = table
@@ -40,11 +42,16 @@ class Table():
             aws_secret_access_key=self.iam_role['secret'],
             region_name='us-east-1'
             ).Table(table)
+        self.client = boto3.client('dynamodb',
+            aws_access_key_id = self.iam_role['key'],
+            aws_secret_access_key = self.iam_role['secret'],
+            region_name='us-east-1')
         self.cloudsearch = cloudsearch
 
     @staticmethod
     def fillna(df, string_fields):
-        """Fills in empty fields with -1 for number values and 'n/a' for strings
+        """
+        Fills in empty fields with -1 for number values and 'n/a' for strings
         """
         values = {key: 'n/a' for key in string_fields}
 
@@ -163,7 +170,15 @@ class Table():
                         )
                         self.cloudsearch.cache.append(item)
                         break
+                    except botocore.exceptions.ParamValidationError as e:
+
+                        print("Wrong Item type")
+                        print(e)
+                        exit(0)
                     except botocore.exceptions.ClientError as e:
+                        if err.response['Error']['Code'] not in RETRY_EXCEPTIONS:
+                            print('Unknown Error {0}'.format(e))
+                            return     
                         time.sleep(backoff / 1000)
                         backoff *= 2
                         if (backoff / 1000 > 60):
@@ -172,11 +187,9 @@ class Table():
                         else:
                             print(e)
                             print('Increasing backoff to {0}'.format(backoff))
-                    except botocore.exceptions.ParamValidationError as e:
-
-                        print("Wrong Item type")
-                        print(e)
-                        exit(0)
+                    except Exception as e:
+                        print("WTF IS HAPPENING\n {0} \n WTF IS HAPPENING".format(e))
+                        return
 
 
         print('Dynamodb table for {0} refreshed'.format(self.__table_name))
@@ -184,43 +197,51 @@ class Table():
     def clearTable(self, primary_key, sort_key = None, backoff=50):
         """Deletes every item from this dynamodb table
         """
-        scan = self.dynamodb.scan()
+        
+        paginator = self.client.get_paginator('scan')
+        operation_parameters = {
+            'TableName': self.__table_name
+        }
+        page_iterator = paginator.paginate(**operation_parameters)
         with self.dynamodb.batch_writer() as batch:
-            if sort_key == None:
+            for scan in page_iterator:
                 for each in scan['Items']:
+                    if sort_key == None:
+                        key = {
+                            'Key': {
+                                primary_key: each[primary_key]['S']
+                            }
+                        }
+                    else:
+                        key = {
+                            'Key': {
+                                primary_key: each[primary_key]['S'],
+                                sort_key: Decimal(each[sort_key]['N'])
+                            }
+                        }
                     while True:
                         try:
-                            batch.delete_item(
-                                Key = {
-                                    primary_key: each[primary_key]
-                            })
+                            batch.delete_item(**key)
+                            print('Deleted pk: {0}, sk: {1}'.format(each[primary_key]['S'], each[sort_key]['N']))
                             break
+
                         except botocore.exceptions.ClientError as e:
-                            time.sleep(backoff / 1000)
-                            backoff *= 2
-                            if (backoff / 1000 > 60):
-                                print('Exponential Backoff Failed. Load too heavy!')
-                                exit(0)
+                            errcode = e.response['Error']['Code']
+                            if errcode in RETRY_EXCEPTIONS:
+                                time.sleep(backoff / 1000)
+                                backoff *= 2
+                                if (backoff / 1000 > 60):
+                                    print('Exponential Backoff Failed. Load too heavy!')
+                                    exit(0)
+                                else:
+                                    print('Increasing backoff to {0}'.format(backoff))
+                            elif errcode == 'ValidationException':
+                                print('Incorrect primary or sort key, used: {0}, {1}'.format(
+                                    each[primary_key]['S'], each[sort_key]['N']))
+                                return
                             else:
                                 print(e)
-                                print('Increasing backoff to {0}'.format(backoff))
-            else:
-                for each in scan['Items']:
-                    while True:
-                        try:
-                            batch.delete_item(
-                                Key = {
-                                    primary_key: each[primary_key],
-                                    sort_key: each[sort_key]
-                            })
-                            break
-                        except botocore.exceptions.ClientError as e:
-                            time.sleep(backoff / 1000)
-                            backoff *= 2
-                            if (backoff / 1000 > 60):
-                                print('Exponential Backoff Failed. Load too heavy!')
-                                exit(0)
-                            else:
-                                print(e)
-                                print('Increasing backoff to {0}'.format(backoff))
+                        except Exception as e:
+                            print('Uncaught super exception: {0}'.format(e))
+
         print('Dynamodb table for {0} emtpied'.format(self.__table_name))
