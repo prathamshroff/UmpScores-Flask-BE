@@ -4,6 +4,10 @@ import boto3
 from decimal import Decimal
 import botocore
 import time
+#TODO LIST: 
+# Modify scan to iterate through entire list
+# TODO limit item to primary and sort keys
+
 
 class Table():
     """
@@ -147,54 +151,55 @@ class Table():
         return data['Items']
 
     #TODO Change this method to take in a dict/pandas.dataframe, gets rid of refined_filepath
-    def uploadUmpires(self, refined_filepath, backoff=50): 
+    def uploadUmpires(self, refined_filepath, backoff = 50): 
         """Uploads every item within some filepath to the dynamodb table
         """
         df = pd.read_csv(refined_filepath, keep_default_na=False)
         data = df.to_dict()
         keys = list(data.keys())
         
-        with self.dynamodb.batch_writer() as batch:
-            # data['number'] = [5, 4, 3, 78, ...] which is an array of values for every row
-            for item_id in range(len(data[keys[0]])):
-                item = {key: data[key][item_id] for key in keys}
-                for key in keys:
-                    if type(item[key]) == float or type(item[key]) == int:
-                        item[key] = Decimal(str(item[key]))
-                while True:
-                    try:
-                        # cloudsearch cache just means new items were added to dynamodb
-                        # therefore we need to add them to cloudsearch
-                        batch.put_item(
-                            Item=item
-                        )
-                        self.cloudsearch.cache.append(item)
-                        break
-                    except botocore.exceptions.ParamValidationError as e:
+        # data['number'] = [5, 4, 3, 78, ...] which is an array of values for every row
+        for item_id in range(len(data[keys[0]])):
+            item = {key: data[key][item_id] for key in keys}
+            for key in keys:
+                if type(item[key]) == float or type(item[key]) == int:
+                    item[key] = Decimal(str(item[key]))
+            while True:
+                try:
+                    # cloudsearch cache just means new items were added to dynamodb
+                    # therefore we need to add them to cloudsearch
+                    self.dynamodb.put_item(
+                        Item=item
+                    )
 
-                        print("Wrong Item type")
-                        print(e)
-                        exit(0)
-                    except botocore.exceptions.ClientError as e:
-                        if err.response['Error']['Code'] not in RETRY_EXCEPTIONS:
-                            print('Unknown Error {0}'.format(e))
-                            return     
-                        time.sleep(backoff / 1000)
+                    self.cloudsearch.cache.append(item)
+                    time.sleep(backoff / 1000)
+                    break
+                except botocore.exceptions.ParamValidationError as e:
+
+                    print("Wrong Item type")
+                    print(e)
+                    exit(0)
+                except botocore.exceptions.ClientError as e:
+                    errcode = e.response['Error']['Code']
+                    if errcode in Table.RETRY_EXCEPTIONS:
                         backoff *= 2
                         if (backoff / 1000 > 60):
                             print('Exponential Backoff Failed. Load too heavy!')
-                            exit(0)
+                            exit(1)
                         else:
-                            print(e)
                             print('Increasing backoff to {0}'.format(backoff))
-                    except Exception as e:
-                        print("WTF IS HAPPENING\n {0} \n WTF IS HAPPENING".format(e))
-                        return
+                    else:
+                        print(e)
+                        exit(1)
+                except Exception as e:
+                    print("Unknown Error {0}".format(e))
+                    return
 
 
         print('Dynamodb table for {0} refreshed'.format(self.__table_name))
 
-    def clearTable(self, primary_key, sort_key = None, backoff=50):
+    def clearTable(self, primary_key, sort_key = None, backoff = 300):
         """Deletes every item from this dynamodb table
         """
         
@@ -203,45 +208,45 @@ class Table():
             'TableName': self.__table_name
         }
         page_iterator = paginator.paginate(**operation_parameters)
-        with self.dynamodb.batch_writer() as batch:
-            for scan in page_iterator:
-                for each in scan['Items']:
-                    if sort_key == None:
-                        key = {
-                            'Key': {
-                                primary_key: each[primary_key]['S']
-                            }
-                        }
-                    else:
-                        key = {
-                            'Key': {
-                                primary_key: each[primary_key]['S'],
-                                sort_key: Decimal(each[sort_key]['N'])
-                            }
-                        }
-                    while True:
-                        try:
-                            batch.delete_item(**key)
-                            print('Deleted pk: {0}, sk: {1}'.format(each[primary_key]['S'], each[sort_key]['N']))
-                            break
-
-                        except botocore.exceptions.ClientError as e:
-                            errcode = e.response['Error']['Code']
-                            if errcode in RETRY_EXCEPTIONS:
-                                time.sleep(backoff / 1000)
-                                backoff *= 2
-                                if (backoff / 1000 > 60):
-                                    print('Exponential Backoff Failed. Load too heavy!')
-                                    exit(0)
-                                else:
-                                    print('Increasing backoff to {0}'.format(backoff))
-                            elif errcode == 'ValidationException':
-                                print('Incorrect primary or sort key, used: {0}, {1}'.format(
-                                    each[primary_key]['S'], each[sort_key]['N']))
-                                return
+        for scan in page_iterator:
+            while True:
+                try:
+                    with self.dynamodb.batch_writer() as batch:
+                        for each in scan['Items']:
+                            if sort_key == None:
+                                key = {
+                                    'Key': {
+                                        primary_key: each[primary_key]['S']
+                                    }
+                                }
                             else:
-                                print(e)
-                        except Exception as e:
-                            print('Uncaught super exception: {0}'.format(e))
+                                key = {
+                                    'Key': {
+                                        primary_key: each[primary_key]['S'],
+                                        sort_key: Decimal(each[sort_key]['N'])
+                                    }
+                                }
+                                batch.delete_item(**key)
+                                time.sleep(backoff / 1000)
+                                print('Deleted pk: {0}, sk: {1}'.format(each[primary_key]['S'], each[sort_key]['N']))
+                    break
+                except botocore.exceptions.ClientError as e:
+                    errcode = e.response['Error']['Code']
+                    if errcode in Table.RETRY_EXCEPTIONS:
+                        backoff *= 2
+                        if (backoff / 1000 > 60):
+                            print('Exponential Backoff Failed. Load too heavy!')
+                            exit(0)
+                        else:
+                            print('Increasing backoff to {0}'.format(backoff))
+                    elif errcode == 'ValidationException':
+                        print('Incorrect primary or sort key, used: {0}, {1}'.format(
+                            each[primary_key]['S'], each[sort_key]['N']))
+                        return
+                    else:
+                        print(e)
+                except Exception as e:
+                    print('Uncaught super exception: {0}'.format(e))
+
 
         print('Dynamodb table for {0} emtpied'.format(self.__table_name))

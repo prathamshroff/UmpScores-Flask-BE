@@ -8,8 +8,9 @@ from Datasets import Table
 
 configs = eval(open('../.config.json').read())
 iam = configs["iam-user"]
-umpires_text_search = Search(iam, configs['cloudsearch']['umpires-url'])
+umpires_text_search = Search(iam, configs['cloudsearch']['umpires-url'], 'refrating-umpires')
 umpires_dataset = Table(iam, 'refrating-team-stats-v1', umpires_text_search)
+
 
 def dataPrep():
 	filepaths = [
@@ -79,3 +80,5 @@ def loadYear(parent_folder, string_fields):
 if __name__ == '__main__':
 	dataPrep()
 	dataUpload()
+	umpires_text_search.emptyCloudSearch()
+	umpires_text_search.refreshCloudSearch()

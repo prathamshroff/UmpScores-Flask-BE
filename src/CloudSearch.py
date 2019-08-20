@@ -3,6 +3,9 @@ import re
 import simplejson as json
 import botocore
 import numpy as np
+# TODO LIST:
+# Implement auto indexingwith only primary keys
+
 class Search():
 	"""
 	The Search class is our wrapper around boto3's cloud search object. We will
@@ -30,15 +33,21 @@ class Search():
 		to connect to cloudsearch from aws. We use this object for all interactions
 		with CloudSearch.
 	"""
-	def __init__(self, iam_role, search_url):
+	def __init__(self, iam_role, search_url, domain_name):
 		self.iam_role = iam_role
 		self.cloudsearch = boto3.client('cloudsearchdomain',
-                endpoint_url=search_url,
-                aws_access_key_id=self.iam_role['key'],
-                aws_secret_access_key=self.iam_role['secret'],
+				endpoint_url=search_url,
+				aws_access_key_id=self.iam_role['key'],
+				aws_secret_access_key=self.iam_role['secret'],
 				region_name='us-east-1'
-        )
+		)
+		self.client = boto3.client('cloudsearch',
+			aws_access_key_id = self.iam_role['key'],
+			aws_secret_access_key = self.iam_role['secret'],
+			region_name = 'us-east-1'
+		)
 		self.cache = []
+		self.__domain_name = domain_name
 
 
 	def emptyCloudSearch(self):
@@ -69,25 +78,37 @@ class Search():
 		)
 		print('CloudSearch for umpires emptied')
 
-	def refreshCloudSearch(self):
+	def refreshCloudSearch(self, primary_key = 'name', sort_key = 'data_year'):
 		"""Updates cloudsearch with all recently uploaded dynamodb items
 		"""
 		local_cache = []
 		# Once again cache is updated from
 		for item in self.cache:
 			item = {re.sub('[/().\s-]', '_', key): item[key] for key in item}
-			ump = re.sub('[/().\s-]', '_', item['ump'])
+			primary = re.sub('[/().\s-]', '_', item[primary_key])
 			new_item = {
 				'type': 'add',
-				'id': '{0}_{1}'.format(ump, item['number']),
-				'fields': {key.lower(): item[key] for key in item}
+				'id': '{0}_{1}'.format(primary, item[sort_key]),
+				'fields': {
+					primary_key.lower(): item[primary_key], 
+					sort_key.lower(): item[sort_key]
+				}
 			}
 			local_cache.append(new_item)
 		data = json.dumps(local_cache, use_decimal=True)
-		self.cloudsearch.upload_documents(
-			documents=data,
-			contentType='application/json'
-		)
+		try:
+			self.cloudsearch.upload_documents(
+				documents=data,
+				contentType='application/json'
+			)
+		except botocore.exceptions.ClientError as e:
+			errcode = e.response['Error']['Code']
+			if errcode == 'DocumentServiceException':
+				resp = self.client.describe_index_fields(DomainName = self.__domain_name)['IndexFields']
+				existing_fields = [field['Options']['IndexFieldName'] for field in resp]
+				my_fields = [field_name for field_name in local_cache[0]['fields']]
+				print('Expected keys: {0}\nFound keys: {1}'.format(existing_fields, my_fields))
+				exit(1)
 		self.cache = []
 
 		print('CloudSearch for Umpires refreshed')
@@ -125,3 +146,7 @@ class Search():
 									returnFields="_score,_all_fields")
 		arr = [x['fields'] for x in data['hits']['hit']]
 		return arr
+
+	def put(self, item):
+		self.cache.append(item)
+		self.refreshCloudSearch()
