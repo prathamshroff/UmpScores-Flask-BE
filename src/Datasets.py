@@ -155,6 +155,7 @@ class Table():
         """Uploads every item within some filepath to the dynamodb table
         """
         df = pd.read_csv(refined_filepath, keep_default_na=False)
+        df = df.drop(columns=['Unnamed: 0'])
         data = df.to_dict()
         keys = list(data.keys())
         

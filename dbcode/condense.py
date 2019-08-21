@@ -8,7 +8,8 @@ from Datasets import Table
 
 configs = eval(open('../.config.json').read())
 iam = configs["iam-user"]
-umpires_text_search = Search(iam, configs['cloudsearch']['umpires-url'], 'refrating-umpires')
+umpires_text_search = Search(iam, configs['cloudsearch']['umpires']['url'], 
+	configs['cloudsearch']['umpires']['name'])
 umpires_dataset = Table(iam, 'refrating-team-stats-v1', umpires_text_search)
 
 
