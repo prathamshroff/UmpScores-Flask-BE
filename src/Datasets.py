@@ -38,7 +38,7 @@ class Table():
     """
     RETRY_EXCEPTIONS = ('ProvisionedThroughputExceededException', 
         'ThrottlingException')
-    def __init__(self, iam_role, table, cloudsearch):
+    def __init__(self, iam_role, table, cloudsearch=None):
         self.iam_role = iam_role
         self.__table_name = table
         self.dynamodb = boto3.resource('dynamodb',
@@ -172,8 +172,8 @@ class Table():
                     self.dynamodb.put_item(
                         Item=item
                     )
-
-                    self.cloudsearch.cache.append(item)
+                    if self.cloudsearch != None:
+                        self.cloudsearch.cache.append(item)
                     time.sleep(backoff / 1000)
                     break
                 except botocore.exceptions.ParamValidationError as e:
@@ -214,22 +214,25 @@ class Table():
                 try:
                     with self.dynamodb.batch_writer() as batch:
                         for each in scan['Items']:
+                            primary_type = 'N' if 'N' in each[primary_key] else 'S'
                             if sort_key == None:
                                 key = {
                                     'Key': {
-                                        primary_key: each[primary_key]['S']
+                                        primary_key: each[primary_key][primary_type]
                                     }
                                 }
                             else:
+                                sort_type = 'N' if 'N' in each[sort_key] else 'S'
                                 key = {
                                     'Key': {
-                                        primary_key: each[primary_key]['S'],
-                                        sort_key: Decimal(each[sort_key]['N'])
+                                        primary_key: each[primary_key][primary_type],
+                                        sort_key: Decimal(each[sort_key][sort_type])
                                     }
                                 }
                                 batch.delete_item(**key)
                                 time.sleep(backoff / 1000)
-                                print('Deleted pk: {0}, sk: {1}'.format(each[primary_key]['S'], each[sort_key]['N']))
+                                print('Deleted pk: {0}, sk: {1}'.format(each[primary_key][primary_type], 
+                                    each[sort_key][sort_type]))
                     break
                 except botocore.exceptions.ClientError as e:
                     errcode = e.response['Error']['Code']
@@ -241,8 +244,7 @@ class Table():
                         else:
                             print('Increasing backoff to {0}'.format(backoff))
                     elif errcode == 'ValidationException':
-                        print('Incorrect primary or sort key, used: {0}, {1}'.format(
-                            each[primary_key]['S'], each[sort_key]['N']))
+                        print('Incorrect primary or sort key, used')
                         return
                     else:
                         print(e)
