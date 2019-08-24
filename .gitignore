@@ -284,3 +284,6 @@ config.json
 .vscode/
 *.pem
 *.csv
+*.jpg
+*.jpeg
+*.png
