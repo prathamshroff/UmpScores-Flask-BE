@@ -26,7 +26,7 @@ umpires_text_search = Search(configs['iam-user'], configs['cloudsearch']['umpire
 games_text_search = Search(configs['iam-user'], configs['cloudsearch']['games']['url'],
         configs['cloudsearch']['games']['name'])
 umpires_dataset = Table(configs['iam-user'], 'refrating-team-stats-v1', umpires_text_search)
-games_dataset = Table(configs['iam-user'], 'Refrating-Games', games_text_search)
+games_dataset = Table(configs['iam-user'], 'refrating-game-stats-v1', games_text_search)
 
 
 umpire_model = api.model('Umpire', UmpireModel)
@@ -66,8 +66,7 @@ class QuerySearch(Resource):
         """
         query = request.args.get('q')
         data = {
-            'umpire-search-results': umpires_text_search.get(query), 
-            'game-search-results': games_text_search.get(query)
+            'items': umpires_text_search.get(query), 
         }
         data = json.dumps(data, use_decimal=True)
         resp = Response(data, status=200, mimetype='application/json')
@@ -90,6 +89,7 @@ class GetAllUmps(Resource):
         data = json.dumps({'items': data}, use_decimal=True)
         resp = Response(data, status=200, mimetype='application/json')
         return resp
+
 
 # TODO handle start and end times differently with actual time objects 
 # instead of just integers

@@ -109,7 +109,7 @@ class Table():
             return {}
         return data['Item']
 
-    def scan(self, query=None, filter_expressions=None):
+    def scan(self, **kwargs):
         """
         Scan method takes some query keyword and some filter options
         then returns a json response consisting of relevant dynamodb
@@ -120,7 +120,7 @@ class Table():
         query : str
                 Query the dynamodb table for this following string.
                         e.g. "jordan baker"
-        FilterExpressions : boto3.dynamodb.conditions.(Attr/Key)
+        filter_expressions : boto3.dynamodb.conditions.(Attr/Key)
                 Filter the results given some attribute/key filter option. If None,
                 FilterExpressions will not be sent.
                         e.g. Attr('timeStamp').between(start, end)
@@ -139,23 +139,22 @@ class Table():
                         }, ...]
 
         """
-        if not filter_expressions and not query:
-            data = self.dynamodb.scan()
-        elif not query and filter_expressions:
-            data = self.dynamodb.scan(FilterExpressions=filter_expressions)
-        else:
-            data = self.dynamodb.scan(
-                query=query, FilterExpressions=filter_expressions)
+        data = self.dynamodb.scan(**kwargs)
+        # if not filter_expressions:
+        #     data = self.dynamodb.scan()
+        # else:
+        #     data = self.dynamodb.scan(FilterExpressions=filter_expressions)
         if 'Items' not in data:
             return {}
         return data['Items']
 
     #TODO Change this method to take in a dict/pandas.dataframe, gets rid of refined_filepath
-    def uploadUmpires(self, refined_filepath, backoff = 50): 
+    def uploadFilepath(self, refined_filepath, backoff_init = 50): 
         """Uploads every item within some filepath to the dynamodb table
         """
         df = pd.read_csv(refined_filepath, keep_default_na=False)
-        df = df.drop(columns=['Unnamed: 0'])
+        if 'Unnamed: 0' in df.columns:
+            df = df.drop(columns=['Unnamed: 0'])
         data = df.to_dict()
         keys = list(data.keys())
         
@@ -165,6 +164,7 @@ class Table():
             for key in keys:
                 if type(item[key]) == float or type(item[key]) == int:
                     item[key] = Decimal(str(item[key]))
+            backoff = backoff_init
             while True:
                 try:
                     # cloudsearch cache just means new items were added to dynamodb
@@ -200,7 +200,7 @@ class Table():
 
         print('Dynamodb table for {0} refreshed'.format(self.__table_name))
 
-    def clearTable(self, primary_key, sort_key = None, backoff = 300):
+    def clearTable(self, primary_key, sort_key = None, backoff_init = 50):
         """Deletes every item from this dynamodb table
         """
         
@@ -210,6 +210,7 @@ class Table():
         }
         page_iterator = paginator.paginate(**operation_parameters)
         for scan in page_iterator:
+            backoff = backoff_init
             while True:
                 try:
                     with self.dynamodb.batch_writer() as batch:
