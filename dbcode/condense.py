@@ -9,6 +9,9 @@ import base64
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
 from decimal import Decimal
+#TODO LIST:
+# Don't add non existent s3 images to database
+
 configs = eval(open('../.config.json').read())
 iam = configs["iam-user"]
 umpires_cloudsearch = Search(iam, configs['cloudsearch']['umpires']['url'], 
@@ -47,7 +50,13 @@ def umpire_id_lookup_reset():
 	df = pd.read_csv('name_id.csv')
 	if 'ump' in df:
 		df = df.rename(columns={'ump':'name'})
-		df.to_csv('name_id.csv')
+	if 'ump_profile_pic' not in df.columns:
+		get_url = lambda name: 'https://{0}.s3.amazonaws.com/umpires/{1}+{2}'.format(configs['media_bucket'],
+			*name.split())
+		df['ump_profile_pic'] = df['name'].apply(lambda row: get_url(row))
+	if 'Unnamed: 0' in df.columns:
+		df = df.drop(columns=['Unnamed: 0'])
+	df.to_csv('name_id.csv')
 	umpire_id_lookup.uploadFilepath('name_id.csv')
 
 def dataPrep():
@@ -149,8 +158,8 @@ def loadYear(parent_folder, string_fields):
 	return filedata
 
 if __name__ == '__main__':
-	# umpire_id_lookup_reset()
-	media_refresh()
+	umpire_id_lookup_reset()
+	# media_refresh()
 	# dataPrep()
 	# dataUpload()
 	# umpires_cloudsearch.emptyCloudSearch()

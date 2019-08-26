@@ -7,28 +7,38 @@ from boto3.dynamodb.conditions import Key, Attr
 from flask_cors import CORS
 from flask import Flask, request
 from flask_restplus import Resource, Api, reqparse, fields
-from models import UmpireModel, GameModel
+
+
+# Import custom dependencies
+from models import *
+with open('.config.json') as f:
+    configs = json.load(f)
 sys.path.append('./src')
 from Datasets import Table
 from CloudSearch import Search
 
-with open('.config.json') as f:
-    configs = json.load(f)
 
+# Setup flask cors and swagger
 app = Flask(__name__)
 api = Api(app, default ="Umpires and Games")
 CORS(app)
 app.config["RESTPLUS_MASK_SWAGGER"] = False
 
-# Custom boto3 wrappers. Will handle data sanitization and malicious queries in the future
+
+# Connect boto3 resources
 umpires_text_search = Search(configs['iam-user'], configs['cloudsearch']['umpires']['url'], 
     configs['cloudsearch']['umpires']['name'])
 games_text_search = Search(configs['iam-user'], configs['cloudsearch']['games']['url'],
         configs['cloudsearch']['games']['name'])
 umpires_dataset = Table(configs['iam-user'], 'refrating-team-stats-v1', umpires_text_search)
 games_dataset = Table(configs['iam-user'], 'refrating-game-stats-v1', games_text_search)
+umpire_id_lookup = Table(configs['iam-user'], 'refrating-umps-lookup')
 
 
+# all ump data
+
+# Create swagger documentation objects
+umpire_id_model = api.model('Umpire ID Pair', UmpireIDPair)
 umpire_model = api.model('Umpire', UmpireModel)
 game_model = api.model('Game', GameModel)
 search_api_object = api.model('SearchAPIObject', 
@@ -38,7 +48,6 @@ search_api_object = api.model('SearchAPIObject',
     }
 )
 umpires_model = api.model('Umpires', {'items': fields.List(fields.Nested(umpire_model))})
-
 search_parser = api.parser()
 search_parser.add_argument('q', type=str, help=
     '''query string which will find relevant Umpire, and Game data
@@ -46,6 +55,7 @@ search_parser.add_argument('q', type=str, help=
     ?q="jordan baker"''', required=True)
 
 
+# Setup endpoints
 @api.route('/search')
 class QuerySearch(Resource):
     @api.doc(parser=search_parser)
@@ -72,31 +82,44 @@ class QuerySearch(Resource):
         resp = Response(data, status=200, mimetype='application/json')
         return resp
 
-@api.route('/get-all-umps')
+@api.route('/get-all-ump-ids')
 class GetAllUmps(Resource):
-    @api.response(200, 'OK', umpires_model)
+    @api.response(200, 'OK', umpire_id_model)
     def get(self):
         """
-        Returns every umpire within the Umpires dynamodb table
+        Returns the names and our unique identifiers for every umpire within our dataset
 
         Description
         ----------
-        Will return a list of every Umpire object we own. Used for the front end to periodically cache 
-        Umpires. Ideally, this dataset will be updated/changed at some set periodic interval to include
-        recent game statistics.
+        Will return a list of all umpire names and id's. Can be used as a quick hash map
+        to convert id's into names and vice versa, or to simply have a list of all umpire names
         """
-        data = umpires_dataset.scan()
+        data = umpire_id_lookup.scan()
         data = json.dumps({'items': data}, use_decimal=True)
         resp = Response(data, status=200, mimetype='application/json')
         return resp
 
 
-# TODO handle start and end times differently with actual time objects 
-# instead of just integers
+
+@api.route('/get-all-umps')
+class GetAllUmps(Resource):
+    @api.response(200, 'OK', umpire_id_model)
+    def get(self):
+        """
+        Returns the names and our unique identifiers for every umpire within our dataset
+
+        Description
+        ----------
+        Will return a list of all umpire names and id's. Can be used as a quick hash map
+        to convert id's into names and vice versa, or to simply have a list of all umpire names
+        """
+        data = json.dumps({'items': ALL_UMPIRE_DATA}, use_decimal=True)
+        resp = Response(data, status=200, mimetype='application/json')
+        return resp
+
 get_games_parser = api.parser()
-get_games_parser.add_argument('start', type=int, help='Starting point for the timeframe', required=True)
+get_games_parser.add_argument('start', type=int, help='20xx/xx/xx', required=True)
 get_games_parser.add_argument('end', type=int, help='Ending point for the timeframe', required=True)
-@api.deprecated
 @api.route('/get-games', methods=['GET'])
 class GetGames(Resource):
     @api.marshal_list_with(game_model)
@@ -117,8 +140,10 @@ class GetGames(Resource):
                 end = int(request.args.get('end'))
             except ValueError as e:
                 return 'Please give start and end number fields', 200
-
-            filterExpression = Attr('timeStamp').between(start, end)
+            print('README')
+            print(start)
+            print(end)
+            filterExpression = Attr('date').between(start, end)
             data = json.dumps(
                 {'items': games_dataset.scan(FilterExpression=filterExpression)}, use_decimal=True
             )
@@ -128,6 +153,7 @@ class GetGames(Resource):
 if __name__ == '__main__':
     # getUmpires()
     # app.run('0.0.0.0', port=80)
+    ALL_UMPIRE_DATA = umpires_dataset.scan()
     if len(sys.argv) > 1:
         if sys.argv[1] == 'p':
             print('Starting in production mode')
@@ -137,3 +163,6 @@ if __name__ == '__main__':
         print('Starting in testing mode')
         app.config["DEBUG"] = True
         app.run('127.0.0.1', port=3000)
+
+
+

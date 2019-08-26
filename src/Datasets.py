@@ -4,11 +4,6 @@ import boto3
 from decimal import Decimal
 import botocore
 import time
-#TODO LIST: 
-# Modify scan to iterate through entire list
-# TODO limit item to primary and sort keys
-
-
 class Table():
     """
     The Dataset class is our wrapper around boto3's dynamodb object. We will
@@ -139,14 +134,21 @@ class Table():
                         }, ...]
 
         """
-        data = self.dynamodb.scan(**kwargs)
-        # if not filter_expressions:
-        #     data = self.dynamodb.scan()
-        # else:
-        #     data = self.dynamodb.scan(FilterExpressions=filter_expressions)
-        if 'Items' not in data:
-            return {}
-        return data['Items']
+        response = self.dynamodb.scan(**kwargs)
+        data = response['Items']
+        iteration = 0
+        total_time = 0
+        while 'LastEvaluatedKey' in response:  
+            now = time.time()
+            response = self.dynamodb.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
+            local_time = time.time() - now
+            total_time += local_time
+            print('{0} iteration {1} loading new page in {2}s'.format(self.__table_name, 
+                iteration, local_time))
+            iteration +=1
+            data.extend(response['Items'])
+        print(total_time)
+        return data
 
     #TODO Change this method to take in a dict/pandas.dataframe, gets rid of refined_filepath
     def uploadFilepath(self, refined_filepath, backoff_init = 50): 
