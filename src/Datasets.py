@@ -138,7 +138,8 @@ class Table():
         data = response['Items']
         iteration = 0
         total_time = 0
-        while 'LastEvaluatedKey' in response:  
+        while 'LastEvaluatedKey' in response: 
+            print(data) 
             now = time.time()
             response = self.dynamodb.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
             local_time = time.time() - now

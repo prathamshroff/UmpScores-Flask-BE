@@ -16,15 +16,6 @@ with open('.config.json') as f:
 sys.path.append('./src')
 from Datasets import Table
 from CloudSearch import Search
-
-
-# Setup flask cors and swagger
-app = Flask(__name__)
-api = Api(app, default ="Umpires and Games")
-CORS(app)
-app.config["RESTPLUS_MASK_SWAGGER"] = False
-
-
 # Connect boto3 resources
 umpires_text_search = Search(configs['iam-user'], configs['cloudsearch']['umpires']['url'], 
     configs['cloudsearch']['umpires']['name'])
@@ -33,6 +24,15 @@ games_text_search = Search(configs['iam-user'], configs['cloudsearch']['games'][
 umpires_dataset = Table(configs['iam-user'], 'refrating-team-stats-v1', umpires_text_search)
 games_dataset = Table(configs['iam-user'], 'refrating-game-stats-v1', games_text_search)
 umpire_id_lookup = Table(configs['iam-user'], 'refrating-umps-lookup')
+ALL_UMPIRE_DATA = umpires_dataset.scan()
+
+
+# Setup flask cors and swagger
+app = Flask(__name__)
+api = Api(app, default ="Umpires and Games")
+CORS(app)
+app.config["RESTPLUS_MASK_SWAGGER"] = False
+
 
 
 # all ump data
@@ -118,8 +118,8 @@ class GetAllUmps(Resource):
         return resp
 
 get_games_parser = api.parser()
-get_games_parser.add_argument('start', type=int, help='20xx/xx/xx', required=True)
-get_games_parser.add_argument('end', type=int, help='Ending point for the timeframe', required=True)
+get_games_parser.add_argument('start', type=str, help='20xx-xx-xx', required=True)
+get_games_parser.add_argument('end', type=str, help='Ending point for the timeframe', required=True)
 @api.route('/get-games', methods=['GET'])
 class GetGames(Resource):
     @api.marshal_list_with(game_model)
@@ -136,16 +136,15 @@ class GetGames(Resource):
         """
         if request.method == 'GET':
             try:
-                start = int(request.args.get('start'))
-                end = int(request.args.get('end'))
+                start = str(request.args.get('start'))
+                end = str(request.args.get('end'))
             except ValueError as e:
                 return 'Please give start and end number fields', 200
-            print('README')
-            print(start)
-            print(end)
             filterExpression = Attr('date').between(start, end)
+            resp = games_dataset.scan(FilterExpression=filterExpression)
+            print(resp)
             data = json.dumps(
-                {'items': games_dataset.scan(FilterExpression=filterExpression)}, use_decimal=True
+                {'items': resp}, use_decimal=True
             )
             resp = Response(data, status=200, mimetype='application/json')
             return resp
@@ -153,7 +152,6 @@ class GetGames(Resource):
 if __name__ == '__main__':
     # getUmpires()
     # app.run('0.0.0.0', port=80)
-    ALL_UMPIRE_DATA = umpires_dataset.scan()
     if len(sys.argv) > 1:
         if sys.argv[1] == 'p':
             print('Starting in production mode')

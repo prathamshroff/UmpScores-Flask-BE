@@ -9,6 +9,7 @@ import base64
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
 from decimal import Decimal
+import time
 #TODO LIST:
 # Don't add non existent s3 images to database
 
@@ -21,14 +22,29 @@ team_stats_table = Table(iam, 'refrating-team-stats-v1', umpires_cloudsearch)
 game_stats_table = Table(iam, 'refrating-game-stats-v1')
 s3_client = boto3.client('s3', aws_access_key_id = iam['key'],
 	aws_secret_access_key = iam['secret'])
-
+games_date_lookup = Table(iam, 'refrating-games-lookup')
 umpire_id_lookup = Table(iam, 'refrating-umps-lookup')
+def create_game_date_csv():
+	root = 'output-data/Game-Stats'
+	folders = [os.path.join(root, folder) for folder in os.listdir(root)]
+	files = []
+	for folder in folders:
+		files.append(os.path.join(folder, 'merged.csv'))
+	df = pd.read_csv(files[0])
+	df = df[['game', 'date']]
+	for i in range(1, len(files)):
+		file = pd.read_csv(files[i])[['game', 'date']]
+		df = pd.concat((df, file))
+	if 'Unnamed: 0' in df.columns:
+		df = df.drop(columns=['Unnamed: 0'])
+	df.to_csv('game_date.csv')
 
 def media_refresh():
 	media_folder = 'ref_images'
 	objects = s3_client.list_objects(Bucket=configs['media_bucket'])
 	if 'Contents' in objects:
 		for resp in objects['Contents']:
+			print('Deleting {0}'.format(resp['Key']))
 			s3_client.delete_object(Bucket=configs['media_bucket'], Key=resp['Key'])
 
 	filenames = os.listdir('ref_images')
@@ -41,8 +57,10 @@ def media_refresh():
 			args = {
 				'ContentType': 'image/jpeg'
 			}
+			bucket_obj_name = os.path.join('umpires', lookup['name'])
+			print('uploading {0}'.format(bucket_obj_name))
 			s3_client.upload_fileobj(img, configs['media_bucket'], 
-				Key = os.path.join('umpires', lookup['name']),
+				Key = bucket_obj_name,
 				ExtraArgs = args)
 
 def umpire_id_lookup_reset():
@@ -59,13 +77,14 @@ def umpire_id_lookup_reset():
 	df.to_csv('name_id.csv')
 	umpire_id_lookup.uploadFilepath('name_id.csv')
 
-def dataPrep():
-	filepaths = [
-		'output-data/Team-Stats',
-		'output-data/Game-Stats'
-		# 'output-data/Pitcher-Stats'
-	]
 
+def drop_y(df):
+    # list comprehension of the cols that end with '_y'
+    to_drop = [x for x in df if x.endswith('_y')]
+    df.drop(to_drop, axis=1, inplace=True)
+    return df
+
+def dataPrep(filepaths):
 	for path in filepaths:
 		data = loadYear(path, ['name', 'ump', 'team', 'blindspot_pitch', 'favorite_ump',
 			'most_hated_ump', 'favorite_pitcher', 'most_hated_pitcher'])
@@ -82,17 +101,23 @@ def dataPrep():
 			merge = data[year][panda_files[0]]
 			for i in range(1, len(panda_files)):
 				merge = pd.merge(data[year][panda_files[i]], merge, left_on=on, 
-					right_on=on)
+					right_on=on, suffixes=('', '_y'))
+
+			if path == 'output-data/Team-Stats':
+				if 'ump_profile_pic' not in merge.columns:
+					get_url = lambda name: 'https://{0}.s3.amazonaws.com/umpires/{1}+{2}'.format(configs['media_bucket'],
+						*name.split())
+					merge['ump_profile_pic'] = merge['name'].apply(lambda row: get_url(row))
+
+			if path == 'output-data/Game-Stats':
+				date_format = lambda date: date.replace('/', '-')
+				merge['date'] = merge['date'].apply(lambda row: date_format(row))
+			merge = drop_y(merge)
 			merge.to_csv(os.path.join(os.path.join(path, year), 'merged.csv'))
 
 #TODO ADD NUMBER SORTKEY TO DATA
-def dataUpload():
+def dataUpload(filepaths):
 	# filepaths = 'output-data/Team-Stats'
-	filepaths = [
-		'output-data/Team-Stats',
-		'output-data/Game-Stats'
-		# 'output-data/Pitcher-Stats'
-	]
 	for path in filepaths:
 		folders = [os.path.join(path, folder) for folder in os.listdir(path)]
 		refined_files = [os.path.join(folder, 'merged.csv') for folder in folders]
@@ -158,9 +183,17 @@ def loadYear(parent_folder, string_fields):
 	return filedata
 
 if __name__ == '__main__':
-	umpire_id_lookup_reset()
+	tasks = [
+		# 'output-data/Team-Stats',
+		'output-data/Game-Stats'
+		# 'output-data/Pitcher-Stats'
+	]
+	stamp = time.time()
+	create_game_date_csv()
+	# umpire_id_lookup_reset()
 	# media_refresh()
-	# dataPrep()
-	# dataUpload()
+	# dataPrep(tasks)
+	# dataUpload(tasks)
 	# umpires_cloudsearch.emptyCloudSearch()
 	# umpires_cloudsearch.refreshCloudSearch()
+	print('Completed all tasks in {0}s'.format(time.time() - stamp))
