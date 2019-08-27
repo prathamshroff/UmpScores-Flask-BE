@@ -182,9 +182,9 @@ def drop_y(df):
 	pd.DataFrame
 		returns a DataFrame which removed all potential duplicate columns
 	"""
-    to_drop = [x for x in df if x.endswith('_y')]
-    df.drop(to_drop, axis=1, inplace=True)
-    return df
+	to_drop = [x for x in df if x.endswith('_y')]
+	df.drop(to_drop, axis=1, inplace=True)
+	return df
 
 
 def dataPrep(filepaths):
