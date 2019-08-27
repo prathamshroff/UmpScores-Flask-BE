@@ -50,8 +50,9 @@ class Search():
 		self.__domain_name = domain_name
 
 
-	def emptyCloudSearch(self):
-		"""Empties all items out of this cloud search
+	def clear(self):
+		"""
+		Completely deletes all items out of this cloudsearch resource
 		"""
 		data = self.cloudsearch.search(
 			query='matchall',
@@ -78,11 +79,21 @@ class Search():
 		)
 		print('CloudSearch for umpires emptied')
 
-	def refreshCloudSearch(self, primary_key = 'name', sort_key = 'data_year'):
-		"""Updates cloudsearch with all recently uploaded dynamodb items
+	def flush(self, primary_key = 'name', sort_key = 'data_year'):
+		"""
+		Updates cloudsearch with all recently uploaded corresponding dynamodb items.
+		More specifically, we're effectively flushing this cloudsearch's cache and uploading
+		the contents of its cache to cloudsearch
+
+		Parameters
+		----------
+       primary_key : str
+            string representing the primary key for this dynamodb table
+        sort_key : str
+            string representing the sort key for this dynamodb table. If 
+            no sort key exists leave as None
 		"""
 		local_cache = []
-		# Once again cache is updated from
 		for item in self.cache:
 			item = {re.sub('[/().\s-]', '_', key): item[key] for key in item}
 			primary = re.sub('[/().\s-]', '_', item[primary_key])
@@ -148,5 +159,15 @@ class Search():
 		return arr
 
 	def put(self, item):
+		"""
+		Adds some data item to this cloudsearch's cache and then immediately
+		flushes the cache.
+
+		Parameters
+		----------
+		item : dict
+			some dict object who's key schema resembles that as specified
+			by this cloudsearch domain
+		"""
 		self.cache.append(item)
-		self.refreshCloudSearch()
+		self.flush()

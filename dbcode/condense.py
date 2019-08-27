@@ -67,8 +67,8 @@ def create_game_date():
 		df = df.drop(columns=['Unnamed: 0'])
 	df.to_csv('game_date.csv')
 
-	games_date_lookup.clearTable('game', sort_key='date')
-	games_date_lookup.uploadFilepath('game_date.csv')
+	games_date_lookup.clear('game', sort_key='date')
+	games_date_lookup.upload('game_date.csv')
 
 
 def media_refresh():
@@ -152,7 +152,7 @@ def umpire_id_lookup_reset():
 	the ump column is renamed to name, and a url to the umpire profile pic is included
 	in the data. 
 	"""
-	umpire_id_lookup.clearTable('name', sort_key='id')
+	umpire_id_lookup.clear('name', sort_key='id')
 	df = pd.read_csv('name_id.csv')
 	if 'ump' in df:
 		df = df.rename(columns={'ump':'name'})
@@ -165,7 +165,7 @@ def umpire_id_lookup_reset():
 	if 'Unnamed: 0' in df.columns:
 		df = df.drop(columns=['Unnamed: 0'])
 	df.to_csv('name_id.csv')
-	umpire_id_lookup.uploadFilepath('name_id.csv')
+	umpire_id_lookup.upload('name_id.csv')
 
 
 def drop_y(df):
@@ -270,15 +270,15 @@ def dataUpload(filepaths):
 		refined_files = [os.path.join(folder, 'merged.csv') for folder in folders]
 
 		if path == 'output-data/Team-Stats':
-			team_stats_table.clearTable('name', sort_key = 'data_year')
+			team_stats_table.clear('name', sort_key = 'data_year')
 			table = team_stats_table
 
 		elif path == 'output-data/Game-Stats':
-			game_stats_table.clearTable('game')
+			game_stats_table.clear('game')
 			table = game_stats_table
 
 		for file in refined_files:
-			table.uploadFilepath(file)
+			table.upload(file)
 
 
 def loadYear(parent_folder, string_fields):
@@ -344,6 +344,6 @@ if __name__ == '__main__':
 	umpire_id_lookup_reset()
 	media_refresh()
 	dataUpload(tasks)
-	umpires_cloudsearch.emptyCloudSearch()
-	umpires_cloudsearch.refreshCloudSearch()
+	umpires_cloudsearch.clear()
+	umpires_cloudsearch.flush()
 	print('Completed all tasks in {0}s'.format(time.time() - stamp))

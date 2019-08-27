@@ -108,30 +108,21 @@ class Table():
         """
         Scan method takes some query keyword and some filter options
         then returns a json response consisting of relevant dynamodb
-        elements. 
-
-        Parameters
-        ----------
-        query : str
-                Query the dynamodb table for this following string.
-                        e.g. "jordan baker"
-        filter_expressions : boto3.dynamodb.conditions.(Attr/Key)
-                Filter the results given some attribute/key filter option. If None,
-                FilterExpressions will not be sent.
-                        e.g. Attr('timeStamp').between(start, end)
+        elements. Uses a paginator to effectively iterate through every item
 
         Returns
         ----------
         list of dictionaries
-                Matched item elements within the database. If no such elements exists returns
-                empty dict. One dictionary represents an entire item within dynamodb.
-                For example, if this dataset is connected to the Umpires table, one dictionary
-                would give all the statistics about a single Umpire.
-                        e.g. [{
-                                "attr1": "val1",
-                                "attr2": "val2",
-                                ...
-                        }, ...]
+            Matched item elements within the database. If no such elements exists returns
+            empty dict. One dictionary represents an entire item within dynamodb.
+            For example, if this dataset is connected to the Umpires table, one dictionary
+            would give all the statistics about a single Umpire.
+                e.g. [{
+                    "attr1": "val1",
+                    "attr2": "val2",
+                    ...
+                }, 
+                ...]
 
         """
         response = self.dynamodb.scan(**kwargs)
@@ -140,7 +131,7 @@ class Table():
         total_time = 0
         while 'LastEvaluatedKey' in response: 
             now = time.time()
-            response = self.dynamodb.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
+            response = self.dynamodb.scan(**kwargs, ExclusiveStartKey=response['LastEvaluatedKey'])
             local_time = time.time() - now
             total_time += local_time
             print('{0} iteration {1} loading new page in {2}s'.format(self.__table_name, 
@@ -150,9 +141,18 @@ class Table():
         print(total_time)
         return data
 
-    #TODO Change this method to take in a dict/pandas.dataframe, gets rid of refined_filepath
-    def uploadFilepath(self, refined_filepath, backoff_init = 50): 
-        """Uploads every item within some filepath to the dynamodb table
+    def upload(self, refined_filepath, backoff_init = 50): 
+        """
+        Uploads every item within some filepath to this dynamodb table
+
+        Parameters
+        ----------
+        refined_filepath : str
+            string representing the relative path to some data file
+        backoff_init
+            initial seed for our backoff value. Upon a throttle or throughput
+            exception which we get from having too high of a request wait, we exponentiate
+            backoff and wait for new backoff durations to reduce throughput rate.
         """ 
         df = pd.read_csv(refined_filepath, keep_default_na=False)
         if 'Unnamed: 0' in df.columns:
@@ -202,10 +202,22 @@ class Table():
 
         print('Dynamodb table for {0} refreshed'.format(self.__table_name))
 
-    def clearTable(self, primary_key, sort_key = None, backoff_init = 50):
-        """Deletes every item from this dynamodb table
+    def clear(self, primary_key, sort_key = None, backoff_init = 50):
         """
-        
+        Completely deletes every item within this dynamodb table
+
+        Parameters
+        ----------
+        primary_key : str
+            string representing the primary key for this dynamodb table
+        sort_key : str
+            string representing the sort key for this dynamodb table. If 
+            no sort key exists leave as None
+        backoff_init
+            initial seed for our backoff value. Upon a throttle or throughput
+            exception which we get from having too high of a request wait, we exponentiate
+            backoff and wait for new backoff durations to reduce throughput rate.
+        """ 
         paginator = self.client.get_paginator('scan')
         operation_parameters = {
             'TableName': self.__table_name
