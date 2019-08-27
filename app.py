@@ -42,7 +42,7 @@ game_date_pair = api.model('Game Date Pair', GameDatePair)
 get_games_model = api.model('Get Games Model', {'games': fields.List(fields.Nested(game_date_pair))})
 
 umpire_model = api.model('Umpire', UmpireModel)
-get_all_umps_model = api.model('Umpire', {'umpires': fields.List(fields.Nested(umpire_model))})
+get_all_umps_model = api.model('UmpireList', {'umpires': fields.List(fields.Nested(umpire_model))})
 
 umpire_id_pair = api.model('Umpire ID Pair', UmpireIDPair)
 get_all_umpire_id_pairs = api.model('Umpire ID Pairs', {'umpires': fields.List(fields.Nested(umpire_id_pair))})
