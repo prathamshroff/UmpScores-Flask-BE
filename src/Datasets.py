@@ -139,7 +139,6 @@ class Table():
         iteration = 0
         total_time = 0
         while 'LastEvaluatedKey' in response: 
-            print(data) 
             now = time.time()
             response = self.dynamodb.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
             local_time = time.time() - now
@@ -154,7 +153,7 @@ class Table():
     #TODO Change this method to take in a dict/pandas.dataframe, gets rid of refined_filepath
     def uploadFilepath(self, refined_filepath, backoff_init = 50): 
         """Uploads every item within some filepath to the dynamodb table
-        """
+        """ 
         df = pd.read_csv(refined_filepath, keep_default_na=False)
         if 'Unnamed: 0' in df.columns:
             df = df.drop(columns=['Unnamed: 0'])
@@ -218,25 +217,29 @@ class Table():
                 try:
                     with self.dynamodb.batch_writer() as batch:
                         for each in scan['Items']:
-                            primary_type = 'N' if 'N' in each[primary_key] else 'S'
+
+                            primary_val = Decimal(each[primary_key]['N']) if 'N' in each[primary_key] \
+                                else each[primary_key]['S']
+
                             if sort_key == None:
                                 key = {
                                     'Key': {
-                                        primary_key: each[primary_key][primary_type]
+                                        primary_key: primary_val
                                     }
                                 }
                             else:
-                                sort_type = 'N' if 'N' in each[sort_key] else 'S'
+                                sort_val = Decimal(each[sort_key]['N']) if 'N' in each[sort_key] \
+                                    else each[sort_key]['S']
                                 key = {
                                     'Key': {
-                                        primary_key: each[primary_key][primary_type],
-                                        sort_key: Decimal(each[sort_key][sort_type])
+                                        primary_key: primary_val,
+                                        sort_key: sort_val
                                     }
                                 }
                                 batch.delete_item(**key)
                                 time.sleep(backoff / 1000)
-                                print('Deleted pk: {0}, sk: {1}'.format(each[primary_key][primary_type], 
-                                    each[sort_key][sort_type]))
+                                print('Deleted pk: {0}, sk: {1}'.format(primary_val, 
+                                    sort_val))
                     break
                 except botocore.exceptions.ClientError as e:
                     errcode = e.response['Error']['Code']

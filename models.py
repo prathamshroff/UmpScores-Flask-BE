@@ -1,4 +1,8 @@
 from flask_restplus import fields
+GameDatePair = {
+    'game': fields.Integer,
+    'date': fields.String 
+}
 GameModel = {
 	'Games': fields.String,
 	'Umpire': fields.String,

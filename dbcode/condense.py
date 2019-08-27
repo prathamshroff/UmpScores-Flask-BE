@@ -39,6 +39,7 @@ def create_game_date_csv():
 		df = df.drop(columns=['Unnamed: 0'])
 	df.to_csv('game_date.csv')
 
+
 def media_refresh():
 	media_folder = 'ref_images'
 	objects = s3_client.list_objects(Bucket=configs['media_bucket'])
@@ -190,6 +191,8 @@ if __name__ == '__main__':
 	]
 	stamp = time.time()
 	create_game_date_csv()
+	games_date_lookup.clearTable('game', sort_key='date')
+	games_date_lookup.uploadFilepath('game_date.csv')
 	# umpire_id_lookup_reset()
 	# media_refresh()
 	# dataPrep(tasks)
