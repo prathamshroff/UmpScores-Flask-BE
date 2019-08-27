@@ -26,7 +26,7 @@ games_text_search = Search(configs['iam-user'], configs['cloudsearch']['games'][
 umpires_dataset = Table(configs['iam-user'], 'refrating-team-stats-v1', umpires_text_search)
 games_dataset = Table(configs['iam-user'], 'refrating-game-stats-v1', games_text_search)
 umpire_id_lookup = Table(configs['iam-user'], 'refrating-umps-lookup')
-# ALL_UMPIRE_DATA = umpires_dataset.scan()
+ALL_UMPIRE_DATA = umpires_dataset.scan()
 games_date_lookup = Table(configs['iam-user'], 'refrating-games-lookup')
 
 
