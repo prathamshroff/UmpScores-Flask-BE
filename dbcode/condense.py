@@ -64,6 +64,19 @@ def media_refresh():
 				Key = bucket_obj_name,
 				ExtraArgs = args)
 
+	logos = [os.path.join('team_logos', file) for file in os.listdir('team_logos')]
+
+	for logo in logos:
+		with open(logo, 'rb') as file:
+			team_name = logo.split('/')[1].split('.')[0]
+			keyname = 'logos/{0}'.format(team_name)
+			print('uploading {0}'.format(keyname))
+			s3_client.upload_fileobj(file, configs['media_bucket'],
+				Key = keyname,
+				ExtraArgs = {
+					'ContentType': 'image/png'
+				})
+
 def umpire_id_lookup_reset():
 	umpire_id_lookup.clearTable('name', sort_key='id')
 	df = pd.read_csv('name_id.csv')
@@ -185,7 +198,7 @@ def loadYear(parent_folder, string_fields):
 
 if __name__ == '__main__':
 	tasks = [
-		# 'output-data/Team-Stats',
+		'output-data/Team-Stats',
 		'output-data/Game-Stats'
 		# 'output-data/Pitcher-Stats'
 	]
@@ -193,10 +206,10 @@ if __name__ == '__main__':
 	create_game_date_csv()
 	games_date_lookup.clearTable('game', sort_key='date')
 	games_date_lookup.uploadFilepath('game_date.csv')
-	# umpire_id_lookup_reset()
-	# media_refresh()
-	# dataPrep(tasks)
-	# dataUpload(tasks)
-	# umpires_cloudsearch.emptyCloudSearch()
-	# umpires_cloudsearch.refreshCloudSearch()
+	umpire_id_lookup_reset()
+	media_refresh()
+	dataPrep(tasks)
+	dataUpload(tasks)
+	umpires_cloudsearch.emptyCloudSearch()
+	umpires_cloudsearch.refreshCloudSearch()
 	print('Completed all tasks in {0}s'.format(time.time() - stamp))
