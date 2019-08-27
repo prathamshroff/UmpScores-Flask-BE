@@ -12,19 +12,47 @@ from decimal import Decimal
 import time
 #TODO LIST:
 # Don't add non existent s3 images to database
+if os.path.exists('../.config.json'):
+	configs = eval(open('../.config.json').read())
+	iam = configs["iam-user"]
+else:
+	print('Oops, could not find refrating-be/.config.json!')
+	exit(1)
 
-configs = eval(open('../.config.json').read())
-iam = configs["iam-user"]
+
+# Creating AWS objects
 umpires_cloudsearch = Search(iam, configs['cloudsearch']['umpires']['url'], 
 	configs['cloudsearch']['umpires']['name'])
-team_stats_table = Table(iam, 'refrating-team-stats-v1', umpires_cloudsearch)
 
+team_stats_table = Table(iam, 'refrating-team-stats-v1', umpires_cloudsearch)
 game_stats_table = Table(iam, 'refrating-game-stats-v1')
-s3_client = boto3.client('s3', aws_access_key_id = iam['key'],
-	aws_secret_access_key = iam['secret'])
 games_date_lookup = Table(iam, 'refrating-games-lookup')
 umpire_id_lookup = Table(iam, 'refrating-umps-lookup')
-def create_game_date_csv():
+
+s3_client = boto3.client('s3', aws_access_key_id = iam['key'],
+	aws_secret_access_key = iam['secret'])
+
+
+def create_game_date():
+	"""
+	Creates the game_date.csv file and repopulates the refrating-games-lookup dynamodb
+	table
+
+	Requirements
+	----------
+	Before running this, make sure you have done the following:
+	dbcode/output-data/* exists and if not, download output-data from drive
+	You've ran dataPrep() against output-data Game-Stats effectively updating 
+		all of its merged.csv files. If you have not done this yet, do before
+		running this.
+
+	Algorithm
+	----------
+	Iterates through every merged.csv file in output-date/Game-Stats directory and identifies
+	all of the unique game-date rows. Creates a table containing only these two
+	indexable rows and writes it to game_date.csv and finishes by emptying then reuploading
+	game_date.csv data to the refrating-games-lookup dynamodb table
+	"""
 	root = 'output-data/Game-Stats'
 	folders = [os.path.join(root, folder) for folder in os.listdir(root)]
 	files = []
@@ -39,8 +67,38 @@ def create_game_date_csv():
 		df = df.drop(columns=['Unnamed: 0'])
 	df.to_csv('game_date.csv')
 
+	games_date_lookup.clearTable('game', sort_key='date')
+	games_date_lookup.uploadFilepath('game_date.csv')
+
 
 def media_refresh():
+	"""
+	Empties and reuploads umpire images and team logos
+
+	Requirements
+	----------
+	Before running this, make sure you have done the following:
+	dbcode/ref_images exists, otherwise download ref_images from drive
+	dbcode/team_logos exists, otherwise download team_logos from drive
+	refrating-umps-lookup dynamodb Table has most recent information.
+		See umpire_id_lookup_reset on how to update this table
+
+	Algorithm
+	----------
+	First it empties every item from the ref rating bucket. Afterwards,
+	it iterates through every image in ref_images folder which you can obtain from 
+	google drive or by asking Chris Ackerman. These image names are hashed
+	using our data team's ids for that respective umpire. I convert the number hash 
+	filename into a human readable filename containing the umpire's name where spaces are
+	replaced with plus signs in s3 upon uploading by looking up the id in our
+	refrating-umps-lookup table. The url for the ref images will be
+	s3_url/umpires/<first_name>+<last_name>.jpg
+
+	After I've uploaded every ref image, I will continue to upload every team logo.
+	I do this by iterating through the team_logos folder of which you can find on drive,
+	and simply reading then uploading those png's to s3. The url schema for these images
+	will be s3_url/logos/<logo_file_name>.png
+	"""
 	media_folder = 'ref_images'
 	objects = s3_client.list_objects(Bucket=configs['media_bucket'])
 	if 'Contents' in objects:
@@ -58,7 +116,7 @@ def media_refresh():
 			args = {
 				'ContentType': 'image/jpeg'
 			}
-			bucket_obj_name = os.path.join('umpires', lookup['name'])
+			bucket_obj_name = 'umpires/{0}.jpg'.format(lookup['name'])
 			print('uploading {0}'.format(bucket_obj_name))
 			s3_client.upload_fileobj(img, configs['media_bucket'], 
 				Key = bucket_obj_name,
@@ -69,7 +127,7 @@ def media_refresh():
 	for logo in logos:
 		with open(logo, 'rb') as file:
 			team_name = logo.split('/')[1].split('.')[0]
-			keyname = 'logos/{0}'.format(team_name)
+			keyname = 'logos/{0}.png'.format(team_name)
 			print('uploading {0}'.format(keyname))
 			s3_client.upload_fileobj(file, configs['media_bucket'],
 				Key = keyname,
@@ -77,14 +135,32 @@ def media_refresh():
 					'ContentType': 'image/png'
 				})
 
+
 def umpire_id_lookup_reset():
+	"""
+	Empties and reuploads the refrating-umps-lookup dynamodb table
+
+	Requirements
+	----------
+	Before running this, make sure you have done the following:
+	dbcode/name_id.csv exists and if not, ask Chris Ackerman to give you this file
+
+	Algorithm
+	----------
+	Empties the entirety of refrating-umps-lookup and then reuploads it with 
+	content from the newly parsed name_id.csv file. name_id.csv is parsed such that
+	the ump column is renamed to name, and a url to the umpire profile pic is included
+	in the data. 
+	"""
 	umpire_id_lookup.clearTable('name', sort_key='id')
 	df = pd.read_csv('name_id.csv')
 	if 'ump' in df:
 		df = df.rename(columns={'ump':'name'})
 	if 'ump_profile_pic' not in df.columns:
-		get_url = lambda name: 'https://{0}.s3.amazonaws.com/umpires/{1}+{2}'.format(configs['media_bucket'],
-			*name.split())
+		get_url = lambda name: 'https://{0}.s3.amazonaws.com/umpires/{1}+{2}.jpg'.format(
+			configs['media_bucket'],
+			*name.split()
+		)
 		df['ump_profile_pic'] = df['name'].apply(lambda row: get_url(row))
 	if 'Unnamed: 0' in df.columns:
 		df = df.drop(columns=['Unnamed: 0'])
@@ -93,12 +169,48 @@ def umpire_id_lookup_reset():
 
 
 def drop_y(df):
-    # list comprehension of the cols that end with '_y'
+	"""
+	Removes duplicate columns which emerged from merging pd.DataFrames
+
+	Parameters
+	----------
+	df : pd.DataFrame
+		some table which has recently been merged with another pd.DataFrame
+
+	Returns
+	----------
+	pd.DataFrame
+		returns a DataFrame which removed all potential duplicate columns
+	"""
     to_drop = [x for x in df if x.endswith('_y')]
     df.drop(to_drop, axis=1, inplace=True)
     return df
 
+
 def dataPrep(filepaths):
+	"""
+	Generates merged.csv files within every directory inside filepaths
+
+	Requirements
+	----------
+	Before running this, make sure you have done the following:
+	dbcode/output-data exists otherwise download output-data from drive
+
+	Parameters
+	----------
+	filepaths : list
+		filepaths should be a list of which folders directly inside output-data exist.
+			e.g. filepaths = ['output-data/Team-Stats', 'output-data/Game-Stats', ...]
+	
+	Algorithm
+	----------
+	dataPrep iterates through every year folder within filepaths.
+	Once inside of some year-folder, it will compress all of those csv files into
+	a singular csv file called 'merged.csv'. This merged.csv file will then be used
+	for future operations. dataPrep will also parse csv files according to which filepath
+	the files reside under. For example, Team-Stats files require different sanitization
+	in comparison to Game-Stats files.
+	"""
 	for path in filepaths:
 		data = loadYear(path, ['name', 'ump', 'team', 'blindspot_pitch', 'favorite_ump',
 			'most_hated_ump', 'favorite_pitcher', 'most_hated_pitcher'])
@@ -129,9 +241,30 @@ def dataPrep(filepaths):
 			merge = drop_y(merge)
 			merge.to_csv(os.path.join(os.path.join(path, year), 'merged.csv'))
 
-#TODO ADD NUMBER SORTKEY TO DATA
+
 def dataUpload(filepaths):
-	# filepaths = 'output-data/Team-Stats'
+	"""
+	Empties and reuploads merged.csv files to corresponding dynamodb resources
+
+	Requirements
+	----------
+	Before running this, make sure you have done the following:
+	dbcode/output-data exists otherwise download output-data from drive
+	Ensure you have recently ran dataPrep in order to reupdate the merged.csv files
+
+	Parameters
+	----------
+	filepaths : list
+		filepaths should be a list of which folders directly inside output-data exist.
+			e.g. filepaths = ['output-data/Team-Stats', 'output-data/Game-Stats', ...]
+
+	Algorithm
+	----------
+	Iterates through every filepath in filepaths and uploads the merged.csv files
+	found within that filepath to their corresponding dynamodb resources. Before
+	any uploads happen naturally, we completely empty the table first to ensure
+	duplicate and corrupted data is cleared out.
+	"""
 	for path in filepaths:
 		folders = [os.path.join(path, folder) for folder in os.listdir(path)]
 		refined_files = [os.path.join(folder, 'merged.csv') for folder in folders]
@@ -147,8 +280,11 @@ def dataUpload(filepaths):
 		for file in refined_files:
 			table.uploadFilepath(file)
 
+
 def loadYear(parent_folder, string_fields):
-	"""Turns all of the files 
+	"""
+	Turns all of csv files within some parent_folder into a python readable object keyed by
+	the files path and year.
 
 	Parameters
 	----------
@@ -203,12 +339,10 @@ if __name__ == '__main__':
 		# 'output-data/Pitcher-Stats'
 	]
 	stamp = time.time()
-	create_game_date_csv()
-	games_date_lookup.clearTable('game', sort_key='date')
-	games_date_lookup.uploadFilepath('game_date.csv')
+	dataPrep(tasks)
+	create_game_date()
 	umpire_id_lookup_reset()
 	media_refresh()
-	dataPrep(tasks)
 	dataUpload(tasks)
 	umpires_cloudsearch.emptyCloudSearch()
 	umpires_cloudsearch.refreshCloudSearch()
