@@ -38,11 +38,11 @@ crews = Table(iam, 'refrating-crews')
 data_year_range = range(2013, 2020)
 
 # ALL_UMPIRE_DATA = team_stats_dataset.scan()
-ALL_UMPIRE_KEYS = umpire_id_lookup.scan()
-ALL_UMPIRE_NAMES = [obj['name'] for obj in ALL_UMPIRE_KEYS]
-RANKINGS_OBJECT = create_rankings_object(careers_season, team_stats_dataset, ALL_UMPIRE_NAMES, data_year_range)
-RANKINGS_OBJECT = json.dumps(RANKINGS_OBJECT, use_decimal=True)
-RANKINGS_OBJECT = Response(RANKINGS_OBJECT, status=200, mimetype='application/json')
+# ALL_UMPIRE_KEYS = umpire_id_lookup.scan()
+# ALL_UMPIRE_NAMES = [obj['name'] for obj in ALL_UMPIRE_KEYS]
+# RANKINGS_OBJECT = create_rankings_object(careers_season, team_stats_dataset, ALL_UMPIRE_NAMES, data_year_range)
+# RANKINGS_OBJECT = json.dumps(RANKINGS_OBJECT, use_decimal=True)
+# RANKINGS_OBJECT = Response(RANKINGS_OBJECT, status=200, mimetype='application/json')
 print('Created RANKINGS Object')
 
 
@@ -65,9 +65,10 @@ app.config["RESTPLUS_MASK_SWAGGER"] = False
 umpire_id_pair = api.model('Umpire ID Pair', UmpireIDPair)
 get_all_umpire_id_pairs = api.model('Umpire ID Pairs', {'umpires': fields.List(fields.Nested(umpire_id_pair))})
 
-rankings_api_object = api.model('Ranking Umpire Item', RankingsObjects)
+# rankings_api_object = api.model('Ranking Umpire Item', RankingsObjects)
 umpire_model = api.model('Umpire', UmpireObject)
 career_model = api.model('Career', CareerObject)
+umpire_game_model = api.model('Umpire Game', UmpireGameObject)
 
 # Parsers
 # ----------
@@ -83,6 +84,10 @@ umpire_parser.add_argument('name', type=str, help=
 
     ?name=jordan baker or ?name=jordan%20baker''', required=True)
 
+game_parser = api.parser()
+game_parser.add_argument('game', type=int, help=
+    '''game id
+    ?game=564837''')
 
 @api.route('/umpire')
 class Umpire(Resource):
@@ -105,14 +110,14 @@ class Umpire(Resource):
         return resp
 
 
-@api.route('/rankings')
-class Rankings(Resource):
-    @api.response(200, 'OK', rankings_api_object)
-    def get(self):
-        """
-        Returns a list of all umpire objects from every year in the rankings format
-        """ 
-        return RANKINGS_OBJECT
+# @api.route('/rankings')
+# class Rankings(Resource):
+#     @api.response(200, 'OK', rankings_api_object)
+#     def get(self):
+#         """
+#         Returns a list of all umpire objects from every year in the rankings format
+#         """ 
+#         return RANKINGS_OBJECT
 
 
 
@@ -180,6 +185,25 @@ class GetAllUmps(Resource):
         resp = Response(data, status=200, mimetype='application/json')
         return resp
 
+
+@api.route('/umpireGames')
+class UmpireGames(Resource):
+    @api.doc(parser = game_parser)
+    @api.response(200, 'OK', umpire_game_model)
+    def get(self):
+        """
+        Returns a game object for some umpire given the game id
+
+        Description
+        ----------
+        Will return a game object for some umpire given the game id. See below for
+        return format
+        """
+        game = int(request.args.get('game'))
+        data = create_umpire_game_object(game, games_dataset, data_year_range)
+        data = json.dumps(data, use_decimal=True)
+        resp = Response(data, status=200, mimetype='application/json')
+        return resp
 
 # get_games_parser = api.parser()
 # get_games_parser.add_argument('start', type=str, help='20xx-xx-xx', required=True)

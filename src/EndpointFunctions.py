@@ -132,7 +132,43 @@ def create_career_object(name, career_seasonal_table, crews_table, career_range_
 			career[year] = data
 	return career
 
-
+def create_umpire_game_object(game, games_table, data_range):
+	umpire_game = {}
+	for year in data_range:
+		resp = games_table.get({'game': game}, 
+			AttributesToGet = ['hometeam','awayteam', 'date', 'bad_call_ratio', 'preference', 'BCR_SL', 
+				'BCR_FT', 'BCR_CU', 'BCR_FF', 'BCR_SI', 'BCR_CH', 'BCR_FC', 'BCR_EP', 
+				'BCR_KC', 'BCR_FS', 'BCR_KN', 'BCR_FO', 
+				'total_call', 'call_strike'
+			]
+		)
+		columns_rename(resp, {
+			'BCR_SL': 'bcrSL',
+			'BCR_FT': 'bcrFT',
+			'BCR_CU': 'bcrCU',
+			'BCR_FF': 'bcrFF',
+			'BCR_SI': 'bcrSI',
+			'BCR_CH': 'bcrCH',
+			'BCR_FC': 'bcrFC',
+			'BCR_EP': 'bcrEP',
+			'BCR_KC': 'bcrKC',
+			'BCR_FS': 'bcrFS',
+			# 'BCR_PO': 'bcrPO',
+			'BCR_KN': 'bcrKN',
+			# 'BCR_SC': 'bcrSC',
+			'BCR_FO': 'bcrFO',
+			# 'BCR_UN': 'bcrUN',
+			# 'BCR_FA': 'bcrFA',
+			# 'BCR_IN': 'bcrIN',
+			'preference': 'teamPref',
+			'bad_call_ratio': 'bcr',
+			'awayteam': 'away',
+			'hometeam': 'home',
+			'total_call': 'ballsCalled',
+			'call_strike': 'strikesCalled'
+		})
+		umpire_game[year] = resp
+	return umpire_game
 
 
 

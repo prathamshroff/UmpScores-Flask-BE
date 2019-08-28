@@ -1,4 +1,35 @@
 from flask_restplus import fields
+UmpireGameObject = {
+    'home': fields.String,
+    'away': fields.String,
+    'date': fields.String,
+    # 'pitchesCalled': fields.Float,
+    'bcr': fields.Float,
+    'teamPref': fields.String,
+    'bcrSL': fields.Float,
+    'bcrFT': fields.Float,
+    'bcrCU': fields.Float,
+    'bcrFF': fields.Float,
+    'bcrSI': fields.Float,
+    'bcrCH': fields.Float,
+    'bcrFC': fields.Float,
+    'bcrEP': fields.Float,
+    'bcrKC': fields.Float,
+    'bcrFS': fields.Float,
+    # 'bcrPO': fields.Float,
+    'bcrKN': fields.Float,
+    # 'bcrSC': fields.Float,
+    'bcrFO': fields.Float,
+    # 'bcrUN': fields.Float,
+    # 'bcrFA': fields.Float,
+    'bcrIN': fields.Float,
+    'ballsCalled': fields.Float,
+    'strikesCalled': fields.Float
+    # 'consistency': fields.Float,
+    # 'walksPerInning': fields.Float,
+    # 'strikeoutsPerInning': fields.Float,
+    # 'walksToStrikeoutsRatio'
+}
 CareerObject = {
     # 'season': fields.Integer,
     'status': fields.String,
