@@ -25,7 +25,7 @@ def create_rankings_object(career_seasonal_table, team_stats_table, umpire_names
 
 			if career_resp != {}:
 				columns_rename(career_resp, {
-					'bad_call_ratio': 'bcr',
+					'bad_call_ratio': 'icr',
 					'total_call': 'pitchesCalled',
 					'games': 'gamesUmped'
 				})
@@ -78,7 +78,7 @@ def create_umpire_object(name, career_table, career_seasonal_table, crews_table,
 				'id': ump_id
 			})
 			columns_rename(data, {
-				'BCR_': 'bcr',
+				'BCR_': 'icr',
 				'crew': 'crewNumber',
 				'crew_chief': 'isCrewChief',
 				'total_call': 'pitchesCalled',
@@ -109,24 +109,24 @@ def create_career_object(name, career_seasonal_table, crews_table, career_range_
 			data.update(season_resp)
 			data.update(crew_resp)
 			columns_rename(data, {
-				'BCR_SL': 'bcrSL',
-				'BCR_FT': 'bcrFT',
-				'BCR_CU': 'bcrCU',
-				'BCR_FF': 'bcrFF',
-				'BCR_SI': 'bcrSI',
-				'BCR_CH': 'bcrCH',
-				'BCR_FC': 'bcrFC',
-				'BCR_EP': 'bcrEP',
-				'BCR_KC': 'bcrKC',
-				'BCR_FS': 'bcrFS',
-				'BCR_PO': 'bcrPO',
-				'BCR_KN': 'bcrKN',
-				'BCR_SC': 'bcrSC',
-				'BCR_FO': 'bcrFO',
-				'BCR_UN': 'bcrUN',
-				'BCR_FA': 'bcrFA',
-				'BCR_IN': 'bcrIN',
-				'BCR_{0}'.format(year): 'bcr',
+				'BCR_SL': 'icrSL',
+				'BCR_FT': 'icrFT',
+				'BCR_CU': 'icrCU',
+				'BCR_FF': 'icrFF',
+				'BCR_SI': 'icrSI',
+				'BCR_CH': 'icrCH',
+				'BCR_FC': 'icrFC',
+				'BCR_EP': 'icrEP',
+				'BCR_KC': 'icrKC',
+				'BCR_FS': 'icrFS',
+				'BCR_PO': 'icrPO',
+				'BCR_KN': 'icrKN',
+				'BCR_SC': 'icrSC',
+				'BCR_FO': 'icrFO',
+				'BCR_UN': 'icrUN',
+				'BCR_FA': 'icrFA',
+				'BCR_IN': 'icrIN',
+				'BCR_{0}'.format(year): 'icr',
 				'total_call': 'pitchesCalled',
 				'games': 'gamesUmped'
 				})
@@ -145,25 +145,25 @@ def create_umpire_game_object(game, games_table, data_range):
 			]
 		)
 		columns_rename(resp, {
-			'BCR_SL': 'bcrSL',
-			'BCR_FT': 'bcrFT',
-			'BCR_CU': 'bcrCU',
-			'BCR_FF': 'bcrFF',
-			'BCR_SI': 'bcrSI',
-			'BCR_CH': 'bcrCH',
-			'BCR_FC': 'bcrFC',
-			'BCR_EP': 'bcrEP',
-			'BCR_KC': 'bcrKC',
-			'BCR_FS': 'bcrFS',
-			# 'BCR_PO': 'bcrPO',
-			'BCR_KN': 'bcrKN',
-			# 'BCR_SC': 'bcrSC',
-			'BCR_FO': 'bcrFO',
-			# 'BCR_UN': 'bcrUN',
-			# 'BCR_FA': 'bcrFA',
-			# 'BCR_IN': 'bcrIN',
+			'BCR_SL': 'icrSL',
+			'BCR_FT': 'icrFT',
+			'BCR_CU': 'icrCU',
+			'BCR_FF': 'icrFF',
+			'BCR_SI': 'icrSI',
+			'BCR_CH': 'icrCH',
+			'BCR_FC': 'icrFC',
+			'BCR_EP': 'icrEP',
+			'BCR_KC': 'icrKC',
+			'BCR_FS': 'icrFS',
+			# 'BCR_PO': 'icrPO',
+			'BCR_KN': 'icrKN',
+			# 'BCR_SC': 'icrSC',
+			'BCR_FO': 'icrFO',
+			# 'BCR_UN': 'icrUN',
+			# 'BCR_FA': 'icrFA',
+			# 'BCR_IN': 'icrIN',
 			'preference': 'teamPref',
-			'bad_call_ratio': 'bcr',
+			'bad_call_ratio': 'icr',
 			'awayteam': 'away',
 			'hometeam': 'home',
 			'total_call': 'ballsCalled',
@@ -198,6 +198,10 @@ def create_team_object(name, team_stats_table, data_range):
 				'bcr': resp['BCR_{0}'.format(team)],
 				'seasonChangeBcr': prev['BCR_{0}'.format(team)] if prev != {} else -1
 			}
+			columns_rename(team_stats, {
+				'bcr': 'icr',
+				'seasonChangeBcr': 'seasonChangeIcr'
+			})
 			local.append(team_stats)
 		if local != []:
 			teams[year] = local
