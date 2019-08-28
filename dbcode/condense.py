@@ -429,8 +429,9 @@ def loadYear(parent_folder, string_fields):
 	"""
 	filepaths = {year: [os.path.join(os.path.join(parent_folder, year), file) for file in \
 		os.listdir(os.path.join(parent_folder, year)) if file != 'merged.csv'] for year in os.listdir(parent_folder)}
+
 	filedata = {year: {path: Table.fillna(pd.read_csv(path), string_fields) for \
-		path in filepaths[year]} for year in filepaths}
+		path in filepaths[year] if path[-4:] == '.csv'} for year in filepaths}
 	delete_files = []
 
 	for year in filedata:
@@ -460,12 +461,12 @@ if __name__ == '__main__':
 		# 'output-data/Pitcher-Stats'
 	]
 	stamp = time.time()
-	upload_career_change_range_file()
+	# upload_career_change_range_file()
 	# upload_career_range_file()
 	# upload_crew_update()
 	# upload_career_data()
 	# create_career_seasonal_data()
-	# dataPrep(tasks)
+	dataPrep(tasks)
 	# create_game_date()
 	# umpire_id_lookup_reset()
 	# media_refresh()
