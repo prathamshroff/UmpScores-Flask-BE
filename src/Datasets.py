@@ -64,7 +64,7 @@ class Table():
         df = df.fillna(value=values)
         return df
         
-    def get(self, query_map, filter_expressions=None):
+    def get(self, query_map, **kwargs):
         """
         Get method takes some query map and some filter options
         then returns a json object representing that entire item entry within dynamodb
@@ -95,11 +95,7 @@ class Table():
                         }
 
         """
-        if not filter_expressions:
-            data = self.dynamodb.get_item(Key=query_map)
-        else:
-            data = self.dynamodb.get_item(
-                Key=query_map, FilterExpressions=filter_expressions)
+        data = self.dynamodb.get_item(Key = query_map, **kwargs)
         if 'Item' not in data:
             return {}
         return data['Item']

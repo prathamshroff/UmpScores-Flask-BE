@@ -16,7 +16,7 @@ with open('.config.json') as f:
 sys.path.append('./src')
 from Datasets import Table
 from CloudSearch import Search
-
+from EndpointFunctions import *
 
 # Connect boto3 resources
 iam = configs['iam-user']
@@ -25,15 +25,21 @@ umpires_text_search = Search(iam, configs['cloudsearch']['umpires']['url'],
 games_text_search = Search(iam, configs['cloudsearch']['games']['url'],
         configs['cloudsearch']['games']['name'])
 
-umpires_dataset = Table(iam, 'refrating-team-stats-v1', umpires_text_search)
+team_stats_dataset = Table(iam, 'refrating-team-stats-v1', umpires_text_search)
 games_dataset = Table(iam, 'refrating-game-stats-v1', games_text_search)
 umpire_id_lookup = Table(iam, 'refrating-umps-lookup')
 games_date_lookup = Table(iam, 'refrating-games-lookup')
 careers_season = Table(iam, 'refrating-careers-season')
 
+data_year_range = range(2010, 2020)
 
-ALL_UMPIRE_DATA = umpires_dataset.scan()
-ALL_UMPIRE_IDS = umpire_id_lookup.scan()
+# ALL_UMPIRE_DATA = team_stats_dataset.scan()
+ALL_UMPIRE_KEYS = umpire_id_lookup.scan()
+ALL_UMPIRE_NAMES = [obj['name'] for obj in ALL_UMPIRE_KEYS]
+RANKINGS_OBJECT = create_rankings_object(careers_season, team_stats_dataset, ALL_UMPIRE_NAMES, data_year_range)
+RANKINGS_OBJECT = json.dumps(RANKINGS_OBJECT, use_decimal=True)
+RANKINGS_OBJECT = Response(RANKINGS_OBJECT, status=200, mimetype='application/json')
+print('Created RANKINGS Object')
 
 # Setup flask cors and swagger
 app = Flask(__name__)
@@ -60,6 +66,9 @@ search_api_object = api.model('SearchAPIObject',
     }
 )
 
+rankings_api_object = api.model('Ranking Umpire Item', {
+        str(year): fields.List(fields.Nested(RankingsObjects)) for year in data_year_range
+    })
 umpires_model = api.model('Umpires', {'items': fields.List(fields.Nested(umpire_model))})
 
 
@@ -76,8 +85,9 @@ class Rankings(Resource):
     def get(self):
         """
         Returns a list of all umpire objects from every year in the rankings format
-        """
-        ALL_UMPIRE_IDS
+        """ 
+        return RANKINGS_OBJECT
+
 
 @api.route('/search')
 class QuerySearch(Resource):
