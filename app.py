@@ -33,7 +33,7 @@ careers_season = Table(iam, 'refrating-careers-season')
 
 
 ALL_UMPIRE_DATA = umpires_dataset.scan()
-
+ALL_UMPIRE_IDS = umpire_id_lookup.scan()
 
 # Setup flask cors and swagger
 app = Flask(__name__)
@@ -73,7 +73,12 @@ search_parser.add_argument('q', type=str, help=
 @api.route('/rankings')
 class Rankings(Resource):
     @api.response(200, 'OK', rankings_api_object)
-# Setup endpoints
+    def get(self):
+        """
+        Returns a list of all umpire objects from every year in the rankings format
+        """
+        ALL_UMPIRE_IDS
+
 @api.route('/search')
 class QuerySearch(Resource):
     @api.doc(parser=search_parser)
@@ -114,8 +119,7 @@ class GetAllUmps(Resource):
         Will return a list of all umpire names and id's. Can be used as a quick hash map
         to convert id's into names and vice versa, or to simply have a list of all umpire names
         """
-        data = umpire_id_lookup.scan()
-        data = json.dumps({'umpires': data}, use_decimal=True)
+        data = json.dumps({'umpires': ALL_UMPIRE_IDS}, use_decimal=True)
         resp = Response(data, status=200, mimetype='application/json')
         return resp
 
