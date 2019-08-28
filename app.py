@@ -30,8 +30,12 @@ games_dataset = Table(iam, 'refrating-game-stats-v1', games_text_search)
 umpire_id_lookup = Table(iam, 'refrating-umps-lookup')
 games_date_lookup = Table(iam, 'refrating-games-lookup')
 careers_season = Table(iam, 'refrating-careers-season')
+careers_range = Table(iam, 'refrating-career-range')
+careers_range_change = Table(iam, 'refrating_career_range_change')
+careers = Table(iam, 'refrating-careers')
+crews = Table(iam, 'refrating-crews')
 
-data_year_range = range(2010, 2020)
+data_year_range = range(2013, 2020)
 
 # ALL_UMPIRE_DATA = team_stats_dataset.scan()
 ALL_UMPIRE_KEYS = umpire_id_lookup.scan()
@@ -41,42 +45,64 @@ RANKINGS_OBJECT = json.dumps(RANKINGS_OBJECT, use_decimal=True)
 RANKINGS_OBJECT = Response(RANKINGS_OBJECT, status=200, mimetype='application/json')
 print('Created RANKINGS Object')
 
-# Setup flask cors and swagger
+
+# Flask Objects
+# ----------
 app = Flask(__name__)
 api = Api(app, default ="Umpires and Games")
 CORS(app)
 app.config["RESTPLUS_MASK_SWAGGER"] = False
 
 
-# Create swagger documentation objects
-game_date_pair = api.model('Game Date Pair', GameDatePair)
-game_model = api.model('Game', GameModel)
-
-get_games_model = api.model('Get Games Model', {'games': fields.List(fields.Nested(game_model))})
-
-umpire_model = api.model('Umpire', UmpireModel)
-get_all_umps_model = api.model('UmpireList', {'umpires': fields.List(fields.Nested(umpire_model))})
+# Swagger Models
+# ----------
+# DEPRECATED
+# game_date_pair = api.model('Game Date Pair', GameDatePair)
+# game_model = api.model('Game', GameModel)
+# get_games_model = api.model('Get Games Model', {'games': fields.List(fields.Nested(game_model))})
+#DEPRECATED
 
 umpire_id_pair = api.model('Umpire ID Pair', UmpireIDPair)
 get_all_umpire_id_pairs = api.model('Umpire ID Pairs', {'umpires': fields.List(fields.Nested(umpire_id_pair))})
 
-search_api_object = api.model('SearchAPIObject', 
-    {
-        'umpire-search-results': fields.List(fields.Nested(umpire_model))
-    }
-)
+rankings_api_object = api.model('Ranking Umpire Item', RankingsObjects)
+umpire_model = api.model('Umpire', UmpireObject)
+career_model = api.model('Career', CareerObject)
 
-rankings_api_object = api.model('Ranking Umpire Item', {
-        str(year): fields.List(fields.Nested(RankingsObjects)) for year in data_year_range
-    })
-umpires_model = api.model('Umpires', {'items': fields.List(fields.Nested(umpire_model))})
-
-
+# Parsers
+# ----------
 search_parser = api.parser()
 search_parser.add_argument('q', type=str, help=
     '''query string which will find relevant Umpire, and Game data
         
     ?q="jordan baker"''', required=True)
+
+umpire_parser = api.parser()
+umpire_parser.add_argument('name', type=str, help=
+    '''umpire name to get
+
+    ?name=jordan baker or ?name=jordan%20baker''', required=True)
+
+
+@api.route('/umpire')
+class Umpire(Resource):
+    @api.doc(parser = umpire_parser)
+    @api.response(200, 'OK', umpire_model)
+    def get(self):
+        """
+        Will return a dict where keys represent years, and values are the umpire object
+
+        Description
+        ----------
+        Takes in some full umpire name and generates an umpire object
+        keyed by years where the values will be of the format of the below umpire
+        model
+        """
+        name = request.args.get('name')
+        data = create_umpire_object(name, careers, careers_season, crews, careers_range, data_year_range)
+        data = json.dumps(data, use_decimal=True)
+        resp = Response(data, status=200, mimetype='application/json')
+        return resp
 
 
 @api.route('/rankings')
@@ -89,32 +115,53 @@ class Rankings(Resource):
         return RANKINGS_OBJECT
 
 
-@api.route('/search')
-class QuerySearch(Resource):
-    @api.doc(parser=search_parser)
-    @api.response(200, 'OK', search_api_object)
+
+@api.route('/career')
+class Career(Resource):
+    @api.doc(parser = umpire_parser)
+    @api.response(200, 'OK', career_model)
     def get(self):
         """
-        Search query against our database and get relevant data
-        
+        Will return a career object about this umpire
+
         Description
         ----------
-        Takes in some arbitrary query string such as 'Jordan Baker'
-        and returns relevant umpire name results with their respective profile picture.
+        Takes in some full umpire name and generates a career object. Response will be
+        a dictionary where keys represent the year, and values will be the umpires career
+        stats for that year
         """
-        query = request.args.get('q')
-        resp = umpires_text_search.get(query)
-        for obj in resp:
-            obj.update({'ump_profile_pic': 'https://{0}.s3.amazonaws.com/umpires/{1}+{2}'.format(
-                configs['media_bucket'],
-                *obj['name'][0].split()
-            )})
-        data = {
-            'umpire-search-results': resp
-        }
+        name = request.args.get('name')
+        data = create_career_object(name, careers_season, crews, careers_range, careers_range_change, data_year_range)
         data = json.dumps(data, use_decimal=True)
         resp = Response(data, status=200, mimetype='application/json')
         return resp
+
+# @api.route('/search')
+# class QuerySearch(Resource):
+#     @api.doc(parser=search_parser)
+#     @api.response(200, 'OK', search_api_object)
+#     def get(self):
+#         """
+#         Search query against our database and get relevant data
+        
+#         Description
+#         ----------
+#         Takes in some arbitrary query string such as 'Jordan Baker'
+#         and returns relevant umpire name results with their respective profile picture.
+#         """
+#         query = request.args.get('q')
+#         resp = umpires_text_search.get(query)
+#         for obj in resp:
+#             obj.update({'ump_profile_pic': 'https://{0}.s3.amazonaws.com/umpires/{1}+{2}'.format(
+#                 configs['media_bucket'],
+#                 *obj['name'][0].split()
+#             )})
+#         data = {
+#             'umpire-search-results': resp
+#         }
+#         data = json.dumps(data, use_decimal=True)
+#         resp = Response(data, status=200, mimetype='application/json')
+#         return resp
 
 
 @api.route('/get-all-ump-ids')
@@ -129,61 +176,44 @@ class GetAllUmps(Resource):
         Will return a list of all umpire names and id's. Can be used as a quick hash map
         to convert id's into names and vice versa, or to simply have a list of all umpire names
         """
-        data = json.dumps({'umpires': ALL_UMPIRE_IDS}, use_decimal=True)
+        data = json.dumps({'umpires': ALL_UMPIRE_KEYS}, use_decimal=True)
         resp = Response(data, status=200, mimetype='application/json')
         return resp
 
 
-@api.route('/get-all-umps')
-class GetAllUmps(Resource):
-    @api.response(200, 'OK', get_all_umps_model)
-    def get(self):
-        """
-        Returns every umpire record we have
+# get_games_parser = api.parser()
+# get_games_parser.add_argument('start', type=str, help='20xx-xx-xx', required=True)
+# get_games_parser.add_argument('end', type=str, help='20xx-xx-xx', required=True)
+# @api.route('/get-games', methods=['GET'])
+# class GetGames(Resource):
+#     @api.response(200, 'OK', get_games_model)
+#     @api.doc(parser=get_games_parser)
+#     def get(self):
+#         """
+#         Returns every Game object within our database within some given time frame.
 
-        Description
-        ----------
-        Will return a roughly 10mb object containing every record for every umpire
-        that we have cached. 
-        """
-        data = json.dumps({'umpires': ALL_UMPIRE_DATA}, use_decimal=True)
-        resp = Response(data, status=200, mimetype='application/json')
-        return resp
-
-
-get_games_parser = api.parser()
-get_games_parser.add_argument('start', type=str, help='20xx-xx-xx', required=True)
-get_games_parser.add_argument('end', type=str, help='20xx-xx-xx', required=True)
-@api.route('/get-games', methods=['GET'])
-class GetGames(Resource):
-    @api.response(200, 'OK', get_games_model)
-    @api.doc(parser=get_games_parser)
-    def get(self):
-        """
-        Returns every Game object within our database within some given time frame.
-
-        Description
-        ----------
-        Will return every game object within some timeframe.
-        """
-        if request.method == 'GET':
-            try:
-                start = str(request.args.get('start'))
-                end = str(request.args.get('end'))
-            except ValueError as e:
-                return 'Please give start and end number fields', 200
-            filterExpression = Attr('date').between(start, end)
-            resp = games_date_lookup.scan(FilterExpression=filterExpression)
-            for i in range(len(resp)):
-                query = {
-                    'game': resp[i]['game']
-                }
-                resp[i] = games_dataset.get(query)
-            data = json.dumps(
-                {'games':resp}, use_decimal=True
-            )
-            resp = Response(data, status=200, mimetype='application/json')
-            return resp
+#         Description
+#         ----------
+#         Will return every game object within some timeframe.
+#         """
+#         if request.method == 'GET':
+#             try:
+#                 start = str(request.args.get('start'))
+#                 end = str(request.args.get('end'))
+#             except ValueError as e:
+#                 return 'Please give start and end number fields', 200
+#             filterExpression = Attr('date').between(start, end)
+#             resp = games_date_lookup.scan(FilterExpression=filterExpression)
+#             for i in range(len(resp)):
+#                 query = {
+#                     'game': resp[i]['game']
+#                 }
+#                 resp[i] = games_dataset.get(query)
+#             data = json.dumps(
+#                 {'games':resp}, use_decimal=True
+#             )
+#             resp = Response(data, status=200, mimetype='application/json')
+#             return resp
 
 
 if __name__ == '__main__':

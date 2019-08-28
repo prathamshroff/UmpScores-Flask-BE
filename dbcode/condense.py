@@ -29,12 +29,108 @@ game_stats_table = Table(iam, 'refrating-game-stats-v1')
 games_date_lookup = Table(iam, 'refrating-games-lookup')
 umpire_id_lookup = Table(iam, 'refrating-umps-lookup')
 careers_season = Table(iam, 'refrating-careers-season')
+careers = Table(iam, 'refrating-careers')
+careers_range = Table(iam, 'refrating-career-range')
+crews = Table(iam, 'refrating-crews')
+careers_range_change = Table(iam, 'refrating_career_range_change')
 
 s3_client = boto3.client('s3', aws_access_key_id = iam['key'],
 	aws_secret_access_key = iam['secret'])
 
 
-def create_career_data():
+def upload_career_change_range_file():
+	"""
+	Empties and reuploads Change_in_BCR_2010-2019.csv to refrating_career_range_change table
+
+	Requirements
+	----------
+	Before running this, make sure you have done the following:
+	dbcode/output-data/Career exists and if not, download output-data from drive
+	"""
+	root = 'output-data/Career/Change_in_BCR_2010-2019.csv'
+	df = pd.read_csv(root)
+	if 'ump' in df.columns:
+		df.rename(columns = {'ump': 'name'}, inplace = True)
+	if 'Unnamed: 0' in df.columns:
+		df = df.drop(columns = ['Unnamed: 0'])
+	df.to_csv(root)
+	careers_range_change.clear('name')
+	careers_range_change.upload(root)
+
+
+def upload_career_range_file():
+	"""
+	Empties and reuploads season_bcr_2010-2019.csv to refrating-career-range table
+
+	Requirements
+	----------
+	Before running this, make sure you have done the following:
+	dbcode/output-data/Career exists and if not, download output-data from drive
+	"""
+	root = 'output-data/Career/season_bcr_2010-2019.csv'
+	df = pd.read_csv(root)
+	if 'ump' in df.columns:
+		df.rename(columns = {'ump': 'name'}, inplace = True)
+	if 'Unnamed: 0' in df.columns:
+		df = df.drop(columns = ['Unnamed: 0'])
+	df.to_csv(root)
+	careers_range.clear('name')
+	careers_range.upload(root)
+
+
+def upload_crew_update():
+	"""
+	Iterates through output-data/Career/crew_update files, appends data_year onto those files
+	and uploads the files to refrating-crews dynamodb table.
+
+	Requirements
+	----------
+	Before running this, make sure you have done the following:
+	dbcode/output-data/Career exists and if not, download output-data from drive
+	"""
+	root = 'output-data/Career/crew_update'
+	filenames = [os.path.join(root, file) for file in os.listdir(root)]
+	string_fields = ['status', 'crew']
+	crews.clear('name', sort_key = 'data_year')
+	for file in filenames:
+		df = pd.read_csv(file)
+		df = Table.fillna(df, string_fields)
+		if 'data_year' not in df.columns:
+			df['data_year'] = [int(file.split('.')[0][-4:])] * df['name'].count()
+		if 'Unnamed: 0' in df.columns:
+			df = df.drop(columns = ['Unnamed: 0'])
+		if 'crew_dhief' in df.columns:
+			df.rename(columns = {'crew_dhief': 'crew_chief'}, inplace = True)
+		if 'crew_field' in df.columns:
+			df.rename(columns = {'crew_field': 'crew_chief'}, inplace = True)
+		df.to_csv(file)
+		crews.upload(file)
+	print('Uploaded crew data')
+
+
+def upload_career_data():
+	"""
+	Uploads dbcode/output-data/Career/career.csv to refrating-careers table and renames ump
+	column to name in that table
+
+	Requirements
+	----------
+	Before running this, make sure you have done the following:
+	dbcode/output-data/Career/career.csv exists and if not, download output-data from drive
+	"""
+	filename = 'output-data/Career/career.csv'
+	df = pd.read_csv(filename)
+	if 'ump' in df.columns:
+		df.rename(columns = {'ump': 'name'}, inplace = True)
+	if 'Unnamed: 0' in df.columns:
+		df = df.drop(columns = ['Unnamed: 0'])
+	df.to_csv(filename)
+	careers.clear('name')
+	careers.upload(filename)
+	print('Uploaded career.csv')
+
+
+def create_career_seasonal_data():
 	"""
 	Iterates through Career/season_bcr_year.csv files, appends data_year onto those files
 	and uploads the files to refrating-careers-season dynamodb table.
@@ -55,6 +151,7 @@ def create_career_data():
 			df = df.drop(columns = ['Unnamed: 0'])
 			df.to_csv(file)
 		careers_season.upload(file)
+	print('Uploaded career_seasonal_bcr data')
 
 
 def create_game_date():
@@ -179,7 +276,7 @@ def umpire_id_lookup_reset():
 	umpire_id_lookup.clear('name', sort_key='id')
 	df = pd.read_csv('name_id.csv')
 	if 'ump' in df:
-		df = df.rename(columns={'ump':'name'})
+		df.rename(columns={'ump':'name'}, inplace=True)
 	if 'ump_profile_pic' not in df.columns:
 		get_url = lambda name: 'https://{0}.s3.amazonaws.com/umpires/{1}+{2}.jpg'.format(
 			configs['media_bucket'],
@@ -363,7 +460,11 @@ if __name__ == '__main__':
 		# 'output-data/Pitcher-Stats'
 	]
 	stamp = time.time()
-	create_career_data()
+	upload_career_change_range_file()
+	# upload_career_range_file()
+	# upload_crew_update()
+	# upload_career_data()
+	# create_career_seasonal_data()
 	# dataPrep(tasks)
 	# create_game_date()
 	# umpire_id_lookup_reset()
