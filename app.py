@@ -42,8 +42,7 @@ ALL_UMPIRE_NAMES = [obj['name'] for obj in ALL_UMPIRE_KEYS]
 RANKINGS_OBJECT = create_rankings_object(careers_season, team_stats_dataset, ALL_UMPIRE_NAMES, data_year_range)
 RANKINGS_OBJECT = json.dumps(RANKINGS_OBJECT, use_decimal=True)
 RANKINGS_OBJECT = Response(RANKINGS_OBJECT, status=200, mimetype='application/json')
-print('Created RANKINGS Object')
-
+print('Finished caching heavy load data')
 
 # Flask Objects
 # ----------
@@ -64,7 +63,7 @@ app.config["RESTPLUS_MASK_SWAGGER"] = False
 umpire_id_pair = api.model('Umpire ID Pair', UmpireIDPair)
 get_all_umpire_id_pairs = api.model('Umpire ID Pairs', {'umpires': fields.List(fields.Nested(umpire_id_pair))})
 
-# rankings_api_object = api.model('Ranking Umpire Item', RankingsObjects)
+rankings_api_object = api.model('Ranking Umpire Item', RankingsObjects)
 umpire_model = api.model('Umpire', UmpireObject)
 career_model = api.model('Career', CareerObject)
 umpire_game_model = api.model('Umpire Game', UmpireGameObject)
