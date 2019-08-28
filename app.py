@@ -35,14 +35,13 @@ careers_range_change = Table(iam, 'refrating_career_range_change')
 careers = Table(iam, 'refrating-careers')
 crews = Table(iam, 'refrating-crews')
 
-data_year_range = range(2013, 2020)
+data_year_range = range(2010, 2020)
 
-# ALL_UMPIRE_DATA = team_stats_dataset.scan()
-# ALL_UMPIRE_KEYS = umpire_id_lookup.scan()
-# ALL_UMPIRE_NAMES = [obj['name'] for obj in ALL_UMPIRE_KEYS]
-# RANKINGS_OBJECT = create_rankings_object(careers_season, team_stats_dataset, ALL_UMPIRE_NAMES, data_year_range)
-# RANKINGS_OBJECT = json.dumps(RANKINGS_OBJECT, use_decimal=True)
-# RANKINGS_OBJECT = Response(RANKINGS_OBJECT, status=200, mimetype='application/json')
+ALL_UMPIRE_KEYS = umpire_id_lookup.scan()
+ALL_UMPIRE_NAMES = [obj['name'] for obj in ALL_UMPIRE_KEYS]
+RANKINGS_OBJECT = create_rankings_object(careers_season, team_stats_dataset, ALL_UMPIRE_NAMES, data_year_range)
+RANKINGS_OBJECT = json.dumps(RANKINGS_OBJECT, use_decimal=True)
+RANKINGS_OBJECT = Response(RANKINGS_OBJECT, status=200, mimetype='application/json')
 print('Created RANKINGS Object')
 
 
@@ -69,7 +68,8 @@ get_all_umpire_id_pairs = api.model('Umpire ID Pairs', {'umpires': fields.List(f
 umpire_model = api.model('Umpire', UmpireObject)
 career_model = api.model('Career', CareerObject)
 umpire_game_model = api.model('Umpire Game', UmpireGameObject)
-
+search_api_object = api.model('Search Items', SearchObject)
+team_model = api.model('Team', TeamObject)
 # Parsers
 # ----------
 search_parser = api.parser()
@@ -88,6 +88,26 @@ game_parser = api.parser()
 game_parser.add_argument('game', type=int, help=
     '''game id
     ?game=564837''')
+
+@api.route('/teams')
+class Teams(Resource):
+    @api.doc(parser = umpire_parser)
+    @api.response(200, 'OK', team_model)
+    def get(self):
+        """
+        Will return a dict where keys represent years, and values are the team object
+
+        Description
+        ----------
+        Takes in some full umpire name and generates a team object
+        keyed by years where the values will be of the format of the below team
+        model
+        """
+        name = request.args.get('name')
+        data = create_team_object(name, team_stats_dataset, data_year_range)
+        data = json.dumps(data, use_decimal=True)
+        resp = Response(data, status=200, mimetype='application/json')
+        return resp
 
 @api.route('/umpire')
 class Umpire(Resource):
@@ -110,14 +130,14 @@ class Umpire(Resource):
         return resp
 
 
-# @api.route('/rankings')
-# class Rankings(Resource):
-#     @api.response(200, 'OK', rankings_api_object)
-#     def get(self):
-#         """
-#         Returns a list of all umpire objects from every year in the rankings format
-#         """ 
-#         return RANKINGS_OBJECT
+@api.route('/rankings')
+class Rankings(Resource):
+    @api.response(200, 'OK', rankings_api_object)
+    def get(self):
+        """
+        Returns a list of all umpire objects from every year in the rankings format
+        """ 
+        return RANKINGS_OBJECT
 
 
 
@@ -141,32 +161,29 @@ class Career(Resource):
         resp = Response(data, status=200, mimetype='application/json')
         return resp
 
-# @api.route('/search')
-# class QuerySearch(Resource):
-#     @api.doc(parser=search_parser)
-#     @api.response(200, 'OK', search_api_object)
-#     def get(self):
-#         """
-#         Search query against our database and get relevant data
+@api.route('/search')
+class QuerySearch(Resource):
+    @api.doc(parser=search_parser)
+    @api.response(200, 'OK', search_api_object)
+    def get(self):
+        """
+        Search query against our database and get relevant data
         
-#         Description
-#         ----------
-#         Takes in some arbitrary query string such as 'Jordan Baker'
-#         and returns relevant umpire name results with their respective profile picture.
-#         """
-#         query = request.args.get('q')
-#         resp = umpires_text_search.get(query)
-#         for obj in resp:
-#             obj.update({'ump_profile_pic': 'https://{0}.s3.amazonaws.com/umpires/{1}+{2}'.format(
-#                 configs['media_bucket'],
-#                 *obj['name'][0].split()
-#             )})
-#         data = {
-#             'umpire-search-results': resp
-#         }
-#         data = json.dumps(data, use_decimal=True)
-#         resp = Response(data, status=200, mimetype='application/json')
-#         return resp
+        Description
+        ----------
+        Takes in some arbitrary query string such as 'Jordan Baker'
+        and returns relevant umpire name results with their respective profile picture.
+        """
+        query = request.args.get('q')
+        resp = umpires_text_search.get(query)
+        for obj in resp:
+            obj.update({'ump_profile_pic': 'https://{0}.s3.amazonaws.com/umpires/{1}+{2}'.format(
+                configs['media_bucket'],
+                *obj['name'][0].split()
+            )})
+        data = json.dumps(resp, use_decimal=True)
+        resp = Response(data, status=200, mimetype='application/json')
+        return resp
 
 
 @api.route('/get-all-ump-ids')

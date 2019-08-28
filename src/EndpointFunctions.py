@@ -12,7 +12,7 @@ def create_rankings_object(career_seasonal_table, team_stats_table, umpire_names
 					'name': name,
 					'data_year': year
 				},
-				AttributesToGet = ['season', 'name', 'games', 'total_call', 'bad_call_ratio']
+				AttributesToGet = ['name', 'games', 'total_call', 'bad_call_ratio']
 			)
 
 			# team_resp = team_stats_table.get(
@@ -29,6 +29,7 @@ def create_rankings_object(career_seasonal_table, team_stats_table, umpire_names
 					'total_call': 'pitchesCalled',
 					'games': 'gamesUmped'
 				})
+				career_resp.update({'season': year})
 				# career_resp['number'] = team_resp['number']
 				umpires[year].append(career_resp)
 	return umpires
@@ -129,6 +130,7 @@ def create_career_object(name, career_seasonal_table, crews_table, career_range_
 				'total_call': 'pitchesCalled',
 				'games': 'gamesUmped'
 				})
+			data.update({'season': year})
 			career[year] = data
 	return career
 
@@ -171,5 +173,33 @@ def create_umpire_game_object(game, games_table, data_range):
 	return umpire_game
 
 
+def create_team_object(name, team_stats_table, data_range):
+	teams = {}
+	first, last = name.lower().split()
+	name = ' '.join((first.capitalize(), last.capitalize()))
+	for year in data_range:
+		local = []
+		resp = team_stats_table.get({'name': name, 'data_year': year})
+		keys = list(resp.keys())
 
+		# Spaghetti line of code
+		team_names = list(set([key.replace('BCR_', '').split('_')[0] for key in keys if key.startswith('BCR_') and \
+			'home' != key.split('_')[1] and 'away' != key.split('_')[1] and 'H/A' not in key and \
+			'20' not in key.split('_')[1]]))
+		for team in team_names:
+			prev = team_stats_table.get({'name':name, 'data_year': year-1})
+
+			team_stats = {
+				'team': team,
+				'season': year,
+				'pitchesCalled': resp['total_call_{0}'.format(team)],
+				'ballsCalled': resp['call_ball_{0}'.format(team)],
+				'strikesCalled': resp['call_strike_{0}'.format(team)],
+				'bcr': resp['BCR_{0}'.format(team)],
+				'seasonChangeBcr': prev['BCR_{0}'.format(team)] if prev != {} else -1
+			}
+			local.append(team_stats)
+		if local != []:
+			teams[year] = local
+	return teams
 

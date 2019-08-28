@@ -1,4 +1,19 @@
 from flask_restplus import fields
+SearchObject = {
+    'ump_profile_pic': fields.String,
+    'name': fields.String,
+    'data_year': fields.Integer
+}
+TeamObject = {
+'team': fields.String,
+'season': fields.Integer,
+'gamesUmped': fields.Integer,
+'pitchesCalled': fields.Integer,
+'ballsCalled': fields.Integer,
+'strikesCalled': fields.Integer,
+'bcr': fields.Float,
+'seasonChangeBcr': fields.Float
+}
 UmpireGameObject = {
     'home': fields.String,
     'away': fields.String,

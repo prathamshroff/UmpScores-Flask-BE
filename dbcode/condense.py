@@ -461,12 +461,12 @@ if __name__ == '__main__':
 		# 'output-data/Pitcher-Stats'
 	]
 	stamp = time.time()
-	# upload_career_change_range_file()
-	# upload_career_range_file()
-	# upload_crew_update()
-	# upload_career_data()
-	# create_career_seasonal_data()
-	dataPrep(tasks)
+	upload_career_change_range_file()
+	upload_career_range_file()
+	upload_crew_update()
+	upload_career_data()
+	create_career_seasonal_data()
+	# dataPrep(tasks)
 	# create_game_date()
 	# umpire_id_lookup_reset()
 	# media_refresh()
