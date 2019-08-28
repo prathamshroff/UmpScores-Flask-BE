@@ -1,4 +1,15 @@
 from flask_restplus import fields
+RankingsObjects = {
+    'season': fields.Integer,
+    'name': fields.String,
+    'number': fields.Integer,
+    'age': fields.Integer,
+    'gamesUmped': fields.Integer,
+    'pitchesCalled': fields.Integer,
+    'bcr': fields.Float,
+    'mostAccurateTeam': fields.String,
+    'leastAccurateTeam': fields.String
+}
 GameDatePair = {
     'game': fields.Integer,
     'date': fields.String 

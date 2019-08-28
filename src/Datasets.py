@@ -164,6 +164,8 @@ class Table():
         for item_id in range(len(data[keys[0]])):
             item = {key: data[key][item_id] for key in keys}
             for key in keys:
+                if item[key] == '':
+                    item[key] = -1
                 if type(item[key]) == float or type(item[key]) == int:
                     item[key] = Decimal(str(item[key]))
             backoff = backoff_init
@@ -179,7 +181,6 @@ class Table():
                     time.sleep(backoff / 1000)
                     break
                 except botocore.exceptions.ParamValidationError as e:
-
                     print("Wrong Item type")
                     print(e)
                     exit(0)
@@ -192,6 +193,10 @@ class Table():
                             exit(1)
                         else:
                             print('Increasing backoff to {0}'.format(backoff))
+                    elif errcode == 'ValidationException':
+                        print(e)
+                        print(item)
+                        exit(1)
                     else:
                         print(e)
                         exit(1)

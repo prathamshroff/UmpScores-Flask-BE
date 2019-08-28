@@ -28,10 +28,24 @@ team_stats_table = Table(iam, 'refrating-team-stats-v1', umpires_cloudsearch)
 game_stats_table = Table(iam, 'refrating-game-stats-v1')
 games_date_lookup = Table(iam, 'refrating-games-lookup')
 umpire_id_lookup = Table(iam, 'refrating-umps-lookup')
+careers_season = Table(iam, 'refrating-careers-season')
 
 s3_client = boto3.client('s3', aws_access_key_id = iam['key'],
 	aws_secret_access_key = iam['secret'])
 
+
+def create_career_data():
+	season_career_bcrs = ['season_bcr_{0}.csv'.format(year) for year in range(2010, 2020)]
+	careers_season.clear('name', sort_key = 'data_year')
+	for file in season_career_bcrs:
+		file = os.path.join('output-data/Career', file)
+		df = pd.read_csv(file)
+
+		if 'data_year' not in df.columns:
+			df['data_year'] = [file.split('_')[2].split('.')[0]] * df['name'].count()
+			df = df.drop(columns = ['Unnamed: 0'])
+			df.to_csv(file)
+		careers_season.upload(file)
 
 def create_game_date():
 	"""
@@ -339,11 +353,12 @@ if __name__ == '__main__':
 		# 'output-data/Pitcher-Stats'
 	]
 	stamp = time.time()
-	dataPrep(tasks)
-	create_game_date()
-	umpire_id_lookup_reset()
-	media_refresh()
-	dataUpload(tasks)
-	umpires_cloudsearch.clear()
-	umpires_cloudsearch.flush()
+	create_career_data()
+	# dataPrep(tasks)
+	# create_game_date()
+	# umpire_id_lookup_reset()
+	# media_refresh()
+	# dataUpload(tasks)
+	# umpires_cloudsearch.clear()
+	# umpires_cloudsearch.flush()
 	print('Completed all tasks in {0}s'.format(time.time() - stamp))

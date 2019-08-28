@@ -19,14 +19,19 @@ from CloudSearch import Search
 
 
 # Connect boto3 resources
-umpires_text_search = Search(configs['iam-user'], configs['cloudsearch']['umpires']['url'], 
+iam = configs['iam-user']
+umpires_text_search = Search(iam, configs['cloudsearch']['umpires']['url'], 
     configs['cloudsearch']['umpires']['name'])
-games_text_search = Search(configs['iam-user'], configs['cloudsearch']['games']['url'],
+games_text_search = Search(iam, configs['cloudsearch']['games']['url'],
         configs['cloudsearch']['games']['name'])
-umpires_dataset = Table(configs['iam-user'], 'refrating-team-stats-v1', umpires_text_search)
-games_dataset = Table(configs['iam-user'], 'refrating-game-stats-v1', games_text_search)
-umpire_id_lookup = Table(configs['iam-user'], 'refrating-umps-lookup')
-games_date_lookup = Table(configs['iam-user'], 'refrating-games-lookup')
+
+umpires_dataset = Table(iam, 'refrating-team-stats-v1', umpires_text_search)
+games_dataset = Table(iam, 'refrating-game-stats-v1', games_text_search)
+umpire_id_lookup = Table(iam, 'refrating-umps-lookup')
+games_date_lookup = Table(iam, 'refrating-games-lookup')
+careers_season = Table(iam, 'refrating-careers-season')
+
+
 ALL_UMPIRE_DATA = umpires_dataset.scan()
 
 
@@ -65,6 +70,9 @@ search_parser.add_argument('q', type=str, help=
     ?q="jordan baker"''', required=True)
 
 
+@api.route('/rankings')
+class Rankings(Resource):
+    @api.response(200, 'OK', rankings_api_object)
 # Setup endpoints
 @api.route('/search')
 class QuerySearch(Resource):
