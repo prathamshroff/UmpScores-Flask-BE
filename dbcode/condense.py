@@ -35,6 +35,15 @@ s3_client = boto3.client('s3', aws_access_key_id = iam['key'],
 
 
 def create_career_data():
+	"""
+	Iterates through Career/season_bcr_year.csv files, appends data_year onto those files
+	and uploads the files to refrating-careers-season dynamodb table.
+
+	Requirements
+	----------
+	Before running this, make sure you have done the following:
+	dbcode/output-data/Career exists and if not, download output-data from drive
+	"""
 	season_career_bcrs = ['season_bcr_{0}.csv'.format(year) for year in range(2010, 2020)]
 	careers_season.clear('name', sort_key = 'data_year')
 	for file in season_career_bcrs:
@@ -46,6 +55,7 @@ def create_career_data():
 			df = df.drop(columns = ['Unnamed: 0'])
 			df.to_csv(file)
 		careers_season.upload(file)
+
 
 def create_game_date():
 	"""
