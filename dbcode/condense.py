@@ -3,8 +3,8 @@ import sys, os
 import math
 import simplejson as json
 sys.path.append('../src')
-from CloudSearch import Search
-from Datasets import Table
+from AWS.CloudSearch import Search
+from AWS.Datasets import Table
 import base64
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
@@ -481,16 +481,16 @@ if __name__ == '__main__':
 	]
 	stamp = time.time()
 	ump_game_lookup_refresh()
-	# upload_career_change_range_file()
-	# upload_career_range_file()
-	# upload_crew_update()
-	# upload_career_data()
-	# create_career_seasonal_data()
-	# dataPrep(tasks)
-	# create_game_date()
-	# umpire_id_lookup_reset()
-	# media_refresh()
-	# dataUpload(tasks)
-	# umpires_cloudsearch.clear()
-	# umpires_cloudsearch.flush()
+	upload_career_change_range_file()
+	upload_career_range_file()
+	upload_crew_update()
+	upload_career_data()
+	create_career_seasonal_data()
+	dataPrep(tasks)
+	create_game_date()
+	umpire_id_lookup_reset()
+	media_refresh()
+	dataUpload(tasks)
+	umpires_cloudsearch.clear()
+	umpires_cloudsearch.flush()
 	print('Completed all tasks in {0}s'.format(time.time() - stamp))
