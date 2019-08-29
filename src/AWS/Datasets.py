@@ -140,7 +140,7 @@ class Table():
     def query(self, **kwargs):
         return self.dynamodb.query(**kwargs)
         
-    def upload(self, refined_filepath, backoff_init = 50): 
+    def upload(self, refined_filepath, backoff_init = 50, exp_backoff = False): 
         """
         Uploads every item within some filepath to this dynamodb table
 
@@ -152,6 +152,9 @@ class Table():
             initial seed for our backoff value. Upon a throttle or throughput
             exception which we get from having too high of a request wait, we exponentiate
             backoff and wait for new backoff durations to reduce throughput rate.
+        exp_backoff : bool
+            if true, will use exponentially increasing waits in between requests. If false, will use
+            linearly increasing waits.
         """ 
         df = pd.read_csv(refined_filepath, keep_default_na=False)
         if 'Unnamed: 0' in df.columns:
@@ -178,6 +181,11 @@ class Table():
                     if self.cloudsearch != None:
                         self.cloudsearch.cache.append(item)
                     time.sleep(backoff / 1000)
+                    if backoff > backoff_init:
+                        if exp_backoff:
+                            backoff /= 2
+                        else:
+                            backoff -= backoff_init
                     break
                 except botocore.exceptions.ParamValidationError as e:
                     print("Wrong Item type")
@@ -186,7 +194,10 @@ class Table():
                 except botocore.exceptions.ClientError as e:
                     errcode = e.response['Error']['Code']
                     if errcode in Table.RETRY_EXCEPTIONS:
-                        backoff *= 2
+                        if exp_backoff:
+                            backoff *= 2
+                        else:
+                            backoff += backoff_init
                         if (backoff / 1000 > 60):
                             print('Exponential Backoff Failed. Load too heavy!')
                             exit(1)
@@ -206,7 +217,7 @@ class Table():
 
         print('Dynamodb table for {0} refreshed'.format(self.__table_name))
 
-    def clear(self, primary_key, sort_key = None, backoff_init = 50):
+    def clear(self, primary_key, sort_key = None, backoff_init = 50, exp_backoff = False):
         """
         Completely deletes every item within this dynamodb table
 
@@ -217,10 +228,13 @@ class Table():
         sort_key : str
             string representing the sort key for this dynamodb table. If 
             no sort key exists leave as None
-        backoff_init
+        backoff_init : int
             initial seed for our backoff value. Upon a throttle or throughput
             exception which we get from having too high of a request wait, we exponentiate
             backoff and wait for new backoff durations to reduce throughput rate.
+        exp_backoff : bool
+            if true, will use exponentially increasing waits in between requests. If false, will use
+            linearly increasing waits.
         """ 
         paginator = self.client.get_paginator('scan')
         operation_parameters = {
@@ -254,13 +268,21 @@ class Table():
                                 }
                                 batch.delete_item(**key)
                                 time.sleep(backoff / 1000)
+                                if backoff > backoff_init:
+                                    if exp_backoff:
+                                        backoff /= 2
+                                    else:
+                                        backoff -= backoff_init
                                 print('Deleted pk: {0}, sk: {1}'.format(primary_val, 
                                     sort_val))
                     break
                 except botocore.exceptions.ClientError as e:
                     errcode = e.response['Error']['Code']
                     if errcode in Table.RETRY_EXCEPTIONS:
-                        backoff *= 2
+                        if exp_backoff:
+                            backoff *= 2
+                        else:
+                            backoff += backoff_init
                         if (backoff / 1000 > 60):
                             print('Exponential Backoff Failed. Load too heavy!')
                             exit(0)
