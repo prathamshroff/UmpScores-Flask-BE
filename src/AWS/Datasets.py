@@ -137,6 +137,9 @@ class Table():
         print(total_time)
         return data
 
+    def query(self, **kwargs):
+        return self.dynamodb.query(**kwargs)
+        
     def upload(self, refined_filepath, backoff_init = 50): 
         """
         Uploads every item within some filepath to this dynamodb table

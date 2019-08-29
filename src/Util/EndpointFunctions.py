@@ -1,11 +1,13 @@
+# TODO /umpire is array (how do I handle season then??)
+# TODO uncomment /get-games
+from boto3.dynamodb.conditions import Key, Attr
 def columns_rename(d, columns_map):
 	for key in columns_map:
 		d[columns_map[key]] = d.pop(key)
 
 def create_rankings_object(career_seasonal_table, team_stats_table, umpire_names, year_range):
-	umpires = {}
+	umpires = []
 	for year in year_range:
-		umpires[year] = []
 		for name in umpire_names:
 			career_resp = career_seasonal_table.get(
 				{
@@ -31,7 +33,7 @@ def create_rankings_object(career_seasonal_table, team_stats_table, umpire_names
 				})
 				career_resp.update({'season': year})
 				# career_resp['number'] = team_resp['number']
-				umpires[year].append(career_resp)
+				umpires.append(career_resp)
 	return umpires
 
 def create_umpire_object(name, career_table, career_seasonal_table, crews_table, career_range_table,
@@ -92,7 +94,7 @@ def create_career_object(name, career_seasonal_table, crews_table, career_range_
 	data_range):
 	first, last = name.lower().split()
 	name = ' '.join((first.capitalize(), last.capitalize()))
-	career = {}
+	career = []
 	for year in data_range:
 		range_resp = career_range_table.get({'name': name}, AttributesToGet=['BCR_{0}'.format(year)])
 		season_resp = career_seasonal_table.get({'name': name, 'data_year': year},
@@ -131,12 +133,20 @@ def create_career_object(name, career_seasonal_table, crews_table, career_range_
 				'games': 'gamesUmped'
 				})
 			data.update({'season': year})
-			career[year] = data
+			career.append(data)
 	return career
 
-def create_umpire_game_object(game, games_table, data_range):
-	umpire_game = {}
-	for year in data_range:
+def create_umpire_game_object(name, games_table, ump_game_lookup):
+	umpire_games = []
+	first, last = name.lower().split()
+	name = ' '.join((first.capitalize(), last.capitalize()))
+	filterExpression = Key('name').eq(name)
+	resp = ump_game_lookup.query(
+		KeyConditionExpression = filterExpression
+	)['Items']
+
+	game_ids = [int(item['game']) for item in resp]
+	for game in game_ids:
 		resp = games_table.get({'game': game}, 
 			AttributesToGet = ['hometeam','awayteam', 'date', 'bad_call_ratio', 'preference', 'BCR_SL', 
 				'BCR_FT', 'BCR_CU', 'BCR_FF', 'BCR_SI', 'BCR_CH', 'BCR_FC', 'BCR_EP', 
@@ -144,66 +154,62 @@ def create_umpire_game_object(game, games_table, data_range):
 				'total_call', 'call_strike'
 			]
 		)
-		columns_rename(resp, {
-			'BCR_SL': 'icrSL',
-			'BCR_FT': 'icrFT',
-			'BCR_CU': 'icrCU',
-			'BCR_FF': 'icrFF',
-			'BCR_SI': 'icrSI',
-			'BCR_CH': 'icrCH',
-			'BCR_FC': 'icrFC',
-			'BCR_EP': 'icrEP',
-			'BCR_KC': 'icrKC',
-			'BCR_FS': 'icrFS',
-			# 'BCR_PO': 'icrPO',
-			'BCR_KN': 'icrKN',
-			# 'BCR_SC': 'icrSC',
-			'BCR_FO': 'icrFO',
-			# 'BCR_UN': 'icrUN',
-			# 'BCR_FA': 'icrFA',
-			# 'BCR_IN': 'icrIN',
-			'preference': 'teamPref',
-			'bad_call_ratio': 'icr',
-			'awayteam': 'away',
-			'hometeam': 'home',
-			'total_call': 'ballsCalled',
-			'call_strike': 'strikesCalled'
-		})
-		umpire_game[year] = resp
-	return umpire_game
+		if resp != {}:
+			columns_rename(resp, {
+				'BCR_SL': 'icrSL',
+				'BCR_FT': 'icrFT',
+				'BCR_CU': 'icrCU',
+				'BCR_FF': 'icrFF',
+				'BCR_SI': 'icrSI',
+				'BCR_CH': 'icrCH',
+				'BCR_FC': 'icrFC',
+				'BCR_EP': 'icrEP',
+				'BCR_KC': 'icrKC',
+				'BCR_FS': 'icrFS',
+				# 'BCR_PO': 'icrPO',
+				'BCR_KN': 'icrKN',
+				# 'BCR_SC': 'icrSC',
+				'BCR_FO': 'icrFO',
+				# 'BCR_UN': 'icrUN',
+				# 'BCR_FA': 'icrFA',
+				# 'BCR_IN': 'icrIN',
+				'preference': 'teamPref',
+				'bad_call_ratio': 'icr',
+				'awayteam': 'away',
+				'hometeam': 'home',
+				'total_call': 'ballsCalled',
+				'call_strike': 'strikesCalled'
+			})
+			umpire_games.append(resp)
+		else:
+			print(game)
+	return umpire_games
 
 
-def create_team_object(name, team_stats_table, data_range):
-	teams = {}
+def create_team_object(name, team, team_stats_table, data_range):
+	data = []
 	first, last = name.lower().split()
 	name = ' '.join((first.capitalize(), last.capitalize()))
 	for year in data_range:
-		local = []
 		resp = team_stats_table.get({'name': name, 'data_year': year})
 		keys = list(resp.keys())
 
 		# Spaghetti line of code
-		team_names = list(set([key.replace('BCR_', '').split('_')[0] for key in keys if key.startswith('BCR_') and \
-			'home' != key.split('_')[1] and 'away' != key.split('_')[1] and 'H/A' not in key and \
-			'20' not in key.split('_')[1]]))
-		for team in team_names:
-			prev = team_stats_table.get({'name':name, 'data_year': year-1})
+		prev = team_stats_table.get({'name':name, 'data_year': year-1})
 
-			team_stats = {
-				'team': team,
-				'season': year,
-				'pitchesCalled': resp['total_call_{0}'.format(team)],
-				'ballsCalled': resp['call_ball_{0}'.format(team)],
-				'strikesCalled': resp['call_strike_{0}'.format(team)],
-				'bcr': resp['BCR_{0}'.format(team)],
-				'seasonChangeBcr': prev['BCR_{0}'.format(team)] if prev != {} else -1
-			}
-			columns_rename(team_stats, {
-				'bcr': 'icr',
-				'seasonChangeBcr': 'seasonChangeIcr'
-			})
-			local.append(team_stats)
-		if local != []:
-			teams[year] = local
-	return teams
+		team_stats = {
+			'team': team,
+			'season': year,
+			'pitchesCalled': resp['total_call_{0}'.format(team)],
+			'ballsCalled': resp['call_ball_{0}'.format(team)],
+			'strikesCalled': resp['call_strike_{0}'.format(team)],
+			'bcr': resp['BCR_{0}'.format(team)],
+			'seasonChangeBcr': prev['BCR_{0}'.format(team)] if prev != {} else -1
+		}
+		columns_rename(team_stats, {
+			'bcr': 'icr',
+			'seasonChangeBcr': 'seasonChangeIcr'
+		})
+		data.append(team_stats)
+	return data
 

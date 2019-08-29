@@ -33,10 +33,29 @@ careers = Table(iam, 'refrating-careers')
 careers_range = Table(iam, 'refrating-career-range')
 crews = Table(iam, 'refrating-crews')
 careers_range_change = Table(iam, 'refrating_career_range_change')
-
+ump_game_lookup = Table(iam, 'refrating-ump-game-lookup')
 s3_client = boto3.client('s3', aws_access_key_id = iam['key'],
 	aws_secret_access_key = iam['secret'])
 
+def ump_game_lookup_refresh():
+	root = 'output-data/Game-Stats'
+	folders = [os.path.join(root, folder) for folder in os.listdir(root)]
+	filenames = [os.path.join(folder, 'game_bcr.csv') for folder in folders]
+	output = pd.DataFrame()
+	output['ump'] = []
+	output['game'] = []
+
+	for file in filenames:
+		df = pd.read_csv(file)[['ump', 'game']]
+		output = pd.concat((output, df))
+
+	output.rename(columns = {'ump': 'name'}, inplace = True)
+	if 'Unnamed: 0' in output.columns:
+		output = output.drop(columns = ['Unnamed: 0'])
+	output.to_csv('refrating_ump_game_lookup.csv')
+	
+	ump_game_lookup.clear('name', sort_key = 'game')
+	ump_game_lookup.upload('refrating_ump_game_lookup.csv')
 
 def upload_career_change_range_file():
 	"""
@@ -461,16 +480,17 @@ if __name__ == '__main__':
 		# 'output-data/Pitcher-Stats'
 	]
 	stamp = time.time()
-	upload_career_change_range_file()
-	upload_career_range_file()
-	upload_crew_update()
-	upload_career_data()
-	create_career_seasonal_data()
-	dataPrep(tasks)
-	create_game_date()
-	umpire_id_lookup_reset()
-	media_refresh()
-	dataUpload(tasks)
-	umpires_cloudsearch.clear()
-	umpires_cloudsearch.flush()
+	ump_game_lookup_refresh()
+	# upload_career_change_range_file()
+	# upload_career_range_file()
+	# upload_crew_update()
+	# upload_career_data()
+	# create_career_seasonal_data()
+	# dataPrep(tasks)
+	# create_game_date()
+	# umpire_id_lookup_reset()
+	# media_refresh()
+	# dataUpload(tasks)
+	# umpires_cloudsearch.clear()
+	# umpires_cloudsearch.flush()
 	print('Completed all tasks in {0}s'.format(time.time() - stamp))
