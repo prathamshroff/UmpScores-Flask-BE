@@ -180,7 +180,7 @@ class Table():
                     )
                     if self.cloudsearch != None:
                         self.cloudsearch.cache.append(item)
-                    time.sleep(backoff / 1000)
+                    
                     if backoff > backoff_init:
                         if exp_backoff:
                             backoff /= 2
@@ -194,6 +194,7 @@ class Table():
                 except botocore.exceptions.ClientError as e:
                     errcode = e.response['Error']['Code']
                     if errcode in Table.RETRY_EXCEPTIONS:
+                        time.sleep(backoff / 1000)
                         if exp_backoff:
                             backoff *= 2
                         else:
@@ -267,7 +268,6 @@ class Table():
                                     }
                                 }
                                 batch.delete_item(**key)
-                                time.sleep(backoff / 1000)
                                 if backoff > backoff_init:
                                     if exp_backoff:
                                         backoff /= 2
@@ -279,6 +279,7 @@ class Table():
                 except botocore.exceptions.ClientError as e:
                     errcode = e.response['Error']['Code']
                     if errcode in Table.RETRY_EXCEPTIONS:
+                        time.sleep(backoff / 1000)
                         if exp_backoff:
                             backoff *= 2
                         else:
