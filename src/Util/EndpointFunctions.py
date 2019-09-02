@@ -41,6 +41,8 @@ def create_umpire_object(name, career_table, career_seasonal_table, crews_table,
 	umpire = {}
 	first, last = name.lower().split()
 	name = ' '.join((first.capitalize(), last.capitalize()))
+
+
 	career_resp = career_table.get(
 		{
 			'name': name
@@ -192,24 +194,25 @@ def create_team_object(name, team, team_stats_table, data_range):
 	name = ' '.join((first.capitalize(), last.capitalize()))
 	for year in data_range:
 		resp = team_stats_table.get({'name': name, 'data_year': year})
-		keys = list(resp.keys())
+		if resp != {}:
+			keys = list(resp.keys())
 
-		# Spaghetti line of code
-		prev = team_stats_table.get({'name':name, 'data_year': year-1})
+			# Spaghetti line of code
+			prev = team_stats_table.get({'name':name, 'data_year': year-1})
 
-		team_stats = {
-			'team': team,
-			'season': year,
-			'pitchesCalled': resp['total_call_{0}'.format(team)],
-			'ballsCalled': resp['call_ball_{0}'.format(team)],
-			'strikesCalled': resp['call_strike_{0}'.format(team)],
-			'bcr': resp['BCR_{0}'.format(team)],
-			'seasonChangeBcr': prev['BCR_{0}'.format(team)] if prev != {} else -1
-		}
-		columns_rename(team_stats, {
-			'bcr': 'icr',
-			'seasonChangeBcr': 'seasonChangeIcr'
-		})
-		data.append(team_stats)
+			team_stats = {
+				'team': team,
+				'season': year,
+				'pitchesCalled': resp['total_call_{0}'.format(team)],
+				'ballsCalled': resp['call_ball_{0}'.format(team)],
+				'strikesCalled': resp['call_strike_{0}'.format(team)],
+				'bcr': resp['BCR_{0}'.format(team)],
+				'seasonChangeBcr': prev['BCR_{0}'.format(team)] if prev != {} else -1
+			}
+			columns_rename(team_stats, {
+				'bcr': 'icr',
+				'seasonChangeBcr': 'seasonChangeIcr'
+			})
+			data.append(team_stats)
 	return data
 

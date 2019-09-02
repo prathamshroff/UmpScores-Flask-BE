@@ -37,6 +37,7 @@ ump_game_lookup = Table(iam, 'refrating-ump-game-lookup')
 s3_client = boto3.client('s3', aws_access_key_id = iam['key'],
 	aws_secret_access_key = iam['secret'])
 
+
 def ump_game_lookup_refresh():
 	root = 'output-data/Game-Stats'
 	folders = [os.path.join(root, folder) for folder in os.listdir(root)]
@@ -364,6 +365,9 @@ def dataPrep(filepaths):
 			elif path == 'output-data/Game-Stats':
 				on = ['game']
 
+			elif path == 'output-data/Pitcher-Stats':
+				on = ['']
+
 			merge = data[year][panda_files[0]]
 			for i in range(1, len(panda_files)):
 				merge = pd.merge(data[year][panda_files[i]], merge, left_on=on, 
@@ -473,7 +477,8 @@ def loadYear(parent_folder, string_fields):
 		del filedata[year][path]
 	return filedata
 
-if __name__ == '__main__':
+
+def refresh_all_aws_resources():
 	tasks = [
 		'output-data/Team-Stats',
 		'output-data/Game-Stats'
@@ -494,3 +499,7 @@ if __name__ == '__main__':
 	umpires_cloudsearch.clear()
 	umpires_cloudsearch.flush()
 	print('Completed all tasks in {0}s'.format(time.time() - stamp))
+
+
+if __name__ == '__main__':
+	refresh_all_aws_resources()
