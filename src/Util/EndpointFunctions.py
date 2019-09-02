@@ -38,7 +38,6 @@ def create_rankings_object(career_seasonal_table, team_stats_table, umpire_names
 
 def create_umpire_object(name, career_table, career_seasonal_table, crews_table, career_range_table,
 	year_range):
-	umpire = {}
 	first, last = name.lower().split()
 	name = ' '.join((first.capitalize(), last.capitalize()))
 
@@ -52,44 +51,43 @@ def create_umpire_object(name, career_table, career_seasonal_table, crews_table,
 	first_name, last_name = career_resp['name'].split()
 	ump_id = career_resp['id']
 
+	year = year_range[-1]
 	range_table = career_range_table.get({
 		'name': name
 	})
-	for year in year_range:
-		career_seasonal_resp = career_seasonal_table.get(
-			{
-				'name': name,
-				'data_year': year	
-			},
-			AttributesToGet = ['total_call', 'games', 'BCR_', 'data_year']
-		)
-		crew_resp = crews_table.get(
-			{
-				'name': name,
-				'data_year': year
-			},
-			AttributesToGet = ['crew', 'status', 'crew_chief']
-		)
-		if career_seasonal_resp != {} and crew_resp != {} and range_table != {}:
-			if (career_seasonal_resp['BCR_'] == -1):
-				career_seasonal_resp.pop('data_year')
+	career_seasonal_resp = career_seasonal_table.get(
+		{
+			'name': name,
+			'data_year': year	
+		},
+		AttributesToGet = ['total_call', 'games', 'BCR_', 'data_year']
+	)
+	crew_resp = crews_table.get(
+		{
+			'name': name,
+			'data_year': year
+		},
+		AttributesToGet = ['crew', 'status', 'crew_chief']
+	)
+	if career_seasonal_resp != {} and crew_resp != {} and range_table != {}:
+		if (career_seasonal_resp['BCR_'] == -1):
+			career_seasonal_resp.pop('data_year')
 
-			data = career_seasonal_resp
-			data.update(crew_resp)
-			data.update({
-				'firstName': first_name, 
-				'last_name': last_name,
-				'id': ump_id
-			})
-			columns_rename(data, {
-				'BCR_': 'icr',
-				'crew': 'crewNumber',
-				'crew_chief': 'isCrewChief',
-				'total_call': 'pitchesCalled',
-				'games': 'gamesUmped'
-			})
-			umpire[year] = data
-	return umpire
+		data = career_seasonal_resp
+		data.update(crew_resp)
+		data.update({
+			'firstName': first_name, 
+			'last_name': last_name,
+			'id': ump_id
+		})
+		columns_rename(data, {
+			'BCR_': 'icr',
+			'crew': 'crewNumber',
+			'crew_chief': 'isCrewChief',
+			'total_call': 'pitchesCalled',
+			'games': 'gamesUmped'
+		})
+	return data
 
 
 def create_career_object(name, career_seasonal_table, crews_table, career_range_table, career_change_range_table, 
