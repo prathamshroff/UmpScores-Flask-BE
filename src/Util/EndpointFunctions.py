@@ -73,9 +73,6 @@ def create_umpire_object(name, career_table, career_seasonal_table, crews_table,
 		AttributesToGet = ['crew', 'status', 'crew_chief']
 	)
 	if career_seasonal_resp != {} and crew_resp != {} and range_table != {}:
-		if (career_seasonal_resp['BCR_'] == -1):
-			career_seasonal_resp.pop('data_year')
-
 		data = career_seasonal_resp
 		data.update(crew_resp)
 		data.update(range_table)
