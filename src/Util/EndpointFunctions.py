@@ -52,15 +52,18 @@ def create_umpire_object(name, career_table, career_seasonal_table, crews_table,
 	ump_id = career_resp['id']
 
 	year = year_range[-1]
-	range_table = career_range_table.get({
-		'name': name
-	})
+	range_table = career_range_table.get(
+		{
+			'name': name
+		},
+		AttributesToGet = ['BCR_{0}'.format(year)]
+	)
 	career_seasonal_resp = career_seasonal_table.get(
 		{
 			'name': name,
 			'data_year': year	
 		},
-		AttributesToGet = ['total_call', 'games', 'BCR_', 'data_year']
+		AttributesToGet = ['total_call', 'games', 'data_year']
 	)
 	crew_resp = crews_table.get(
 		{
@@ -75,13 +78,14 @@ def create_umpire_object(name, career_table, career_seasonal_table, crews_table,
 
 		data = career_seasonal_resp
 		data.update(crew_resp)
+		data.update(range_table)
 		data.update({
 			'firstName': first_name, 
 			'last_name': last_name,
 			'id': ump_id
 		})
 		columns_rename(data, {
-			'BCR_': 'icr',
+			'BCR_{0}'.format(year): 'icr',
 			'crew': 'crewNumber',
 			'crew_chief': 'isCrewChief',
 			'total_call': 'pitchesCalled',

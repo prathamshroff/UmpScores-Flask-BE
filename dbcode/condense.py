@@ -500,6 +500,5 @@ def refresh_all_aws_resources():
 	umpires_cloudsearch.flush()
 	print('Completed all tasks in {0}s'.format(time.time() - stamp))
 
-
 if __name__ == '__main__':
 	refresh_all_aws_resources()
