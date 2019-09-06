@@ -36,7 +36,7 @@ team_objects = {}
 for umpire in ALL_UMPIRE_NAMES:
 	team_objects[umpire] = []
 	for team in team_names:
-		team_objects[umpire] += create_team_object(name, team, team_stats_dataset, data_year_range)
+		team_objects[umpire] += create_team_object(umpire, team, team_stats_dataset, data_year_range)
 print('Cached Team Objects: t = {0}s'.format(time.time() - now))
 
 print('Finished caching in {0}s'.format(time.time() - now))
