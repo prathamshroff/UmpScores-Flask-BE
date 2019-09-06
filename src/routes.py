@@ -27,7 +27,7 @@ class UmpireInfo(Resource):
         data['team'] = []
         for team in team_names:
             data['team'] += create_team_object(name, team, team_stats_dataset, data_year_range)
-        data['pitchers'] = pitcher_objects[name]
+        # data['pitchers'] = pitcher_objects[name]
 
         data = json.dumps(data, use_decimal = True)
         resp = Response(data, status=200, mimetype='application/json')

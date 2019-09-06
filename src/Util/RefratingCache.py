@@ -11,17 +11,17 @@ data_year_range = range(2010, 2020)
 ALL_UMPIRE_KEYS = umpire_id_lookup.scan()
 ALL_UMPIRE_NAMES = [obj['name'] for obj in ALL_UMPIRE_KEYS]
 
-def get_pitcher_names(umpire_name):
-	names = set()
-	for year in data_year_range:
-		pitchers = umpire_pitchers.get(query_map = {'name': umpire_name, 'season': 2019}).keys()
-		subnames = [name.replace('total_call_', '').replace('.', ' ') for name in pitchers if name.startswith('total_call_')]
-		names = names.union(subnames)
-	return names
+# def get_pitcher_names(umpire_name):
+# 	names = set()
+# 	for year in data_year_range:
+# 		pitchers = umpire_pitchers.get(query_map = {'name': umpire_name, 'season': 2019}).keys()
+# 		subnames = [name.replace('total_call_', '').replace('.', ' ') for name in pitchers if name.startswith('total_call_')]
+# 		names = names.union(subnames)
+# 	return names
 
-pitcher_objects = {umpire: [create_pitcher_object(pitcher, pitcher_stats, data_year_range) for pitcher in \
-	get_pitcher_names(umpire)] for umpire in ALL_UMPIRE_NAMES}
-print('Cached Pitcher Objects: t = {0}s'.format(time.time() - now))
+# pitcher_objects = {umpire: [create_pitcher_object(pitcher, pitcher_stats, data_year_range) for pitcher in \
+# 	get_pitcher_names(umpire)] for umpire in ALL_UMPIRE_NAMES}
+# print('Cached Pitcher Objects: t = {0}s'.format(time.time() - now))
 
 RANKINGS_OBJECT = create_rankings_object(careers_season, team_stats_dataset, ALL_UMPIRE_NAMES, data_year_range)
 RANKINGS_OBJECT = json.dumps(RANKINGS_OBJECT, use_decimal=True)
