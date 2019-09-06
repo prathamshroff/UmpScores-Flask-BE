@@ -1,4 +1,31 @@
 from flask_restplus import fields
+PitcherObject = {
+    'name': fields.String,
+    'season': fields.Integer,
+    'total_call': fields.Float,
+    'BCR': fields.Float,
+    'BCR_SL': fields.Float,
+    'BCR_FT': fields.Float,
+    'BCR_CU': fields.Float,
+    'BCR_FF': fields.Float,
+    'BCR_SI': fields.Float,
+    'BCR_CH': fields.Float,
+    'BCR_FC': fields.Float,
+    'BCR_EP': fields.Float,
+    'BCR_KC': fields.Float,
+    'BCR_FS': fields.Float,
+    # 'BCR_PO': fields.Float,
+    'BCR_KN': fields.Float,
+    # 'BCR_SC': fields.Float,
+    'BCR_FO': fields.Float,
+    # 'BCR_UN': fields.Float,
+    # 'BCR_FA': fields.Float,
+    # 'BCR_IN': fields.Float,
+    'call_ball': fields.Float,
+    'call_strike': fields.Float,
+    'BCR': fields.Float,
+    'blindspot_pitch': fields.Float
+}
 SearchObject = {
     'ump_profile_pic': fields.String,
     'name': fields.String,

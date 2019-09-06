@@ -1,6 +1,50 @@
 # TODO /umpire is array (how do I handle season then??)
 # TODO uncomment /get-games
 from boto3.dynamodb.conditions import Key, Attr
+
+
+def create_pitcher_object(name, pitcher_stats, year_range):
+	name = ' '.join([word.capitalize() for word in name.split()])
+	filterExpression = Key('name').eq(name)
+
+	data = pitcher_stats.query(
+		KeyConditionExpression = filterExpression
+	)['Items']
+	resp = []
+	data = {int(pitcher['season']): pitcher for pitcher in data}
+	for season in data:
+		pitcher = data[season]
+		obj = {
+			'season': pitcher['season'], 
+			'name': pitcher['name'],
+			'pitchesCalled': pitcher['total_call'],
+			'icr': pitcher['BCR'],
+			'icrSL': pitcher['BCR_SL'],
+			'icrFT': pitcher['BCR_FT'],
+			'icrCU': pitcher['BCR_CU'],
+			'icrFF': pitcher['BCR_FF'],
+			'icrSI': pitcher['BCR_SI'],
+			'icrCH': pitcher['BCR_CH'],
+			'icrFC': pitcher['BCR_FC'],
+			'icrEP': pitcher['BCR_EP'],
+			'icrKC': pitcher['BCR_KC'],
+			'icrFS': pitcher['BCR_FS'],
+			# 'icrPO': pitcher['BCR_PO'],
+			'icrKN': pitcher['BCR_KN'],
+			# 'icrSC': pitcher['BCR_SC'],
+			'icrFO': pitcher['BCR_FO'],
+			# 'icrUN': pitcher['BCR_UN'],
+			# 'icrFA': pitcher['BCR_FA'],
+			# 'icrIN': pitcher['BCR_IN'],
+			'ballsCalled': pitcher['call_ball'],
+			'strikesCalled': pitcher['call_strike'],
+			'blindSpot': pitcher['blindspot_pitch']
+		}
+		if season != 2010 and season - 1 in data:
+			obj['seasonChangeIcr'] = data[season - 1]['BCR']
+		resp.append(obj)
+	return resp
+
 def columns_rename(d, columns_map):
 	for key in columns_map:
 		d[columns_map[key]] = d.pop(key)

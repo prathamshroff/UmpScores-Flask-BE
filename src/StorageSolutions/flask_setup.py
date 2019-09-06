@@ -20,10 +20,17 @@ get_all_umpire_id_pairs = api.model('Umpire ID Pairs', {'umpires': fields.List(f
 
 rankings_api_object = api.model('Ranking Umpire Item', RankingsObjects)
 umpire_model = api.model('Umpire', UmpireObject)
+
+# UmpireInfo['team'] = TeamObject
+# UmpireInfo['career'] = CareerObject
+
+
 career_model = api.model('Career', CareerObject)
 umpire_game_model = api.model('Umpire Game', UmpireGameObject)
 search_api_object = api.model('Search Items', SearchObject)
 team_model = api.model('Team', TeamObject)
+pitcher_model = api.model('Pitcher', PitcherObject)
+# get_umpire_info_model = api.model('Get Umpire Info', {'umpire': UmpireObject})
 # Parsers
 # ----------
 search_parser = api.parser()
@@ -50,3 +57,6 @@ team_parser.add_argument('name', type=str, help=
 team_parser.add_argument('team', type=str, help=
     '''team name completely capitalized
     ?name=BOS''')
+
+pitcher_parser = api.parser()
+pitcher_parser.add_argument('pitcher_name', type=str, help="pitcher fullname")

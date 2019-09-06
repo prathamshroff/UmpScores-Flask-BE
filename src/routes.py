@@ -1,22 +1,50 @@
 from StorageSolutions.flask_setup import *
 from StorageSolutions.tables import *
 from Util.EndpointFunctions import *
-
+from Util.RefratingCache import *
 from flask_restplus import Resource, Api, reqparse, fields
 from flask import Flask, request
 import simplejson as json
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
 from flask import Flask, jsonify, request, Response
+import time
 
-data_year_range = range(2010, 2020)
-ALL_UMPIRE_KEYS = umpire_id_lookup.scan()
-ALL_UMPIRE_NAMES = [obj['name'] for obj in ALL_UMPIRE_KEYS]
-RANKINGS_OBJECT = create_rankings_object(careers_season, team_stats_dataset, ALL_UMPIRE_NAMES, data_year_range)
-RANKINGS_OBJECT = json.dumps(RANKINGS_OBJECT, use_decimal=True)
-RANKINGS_OBJECT = Response(RANKINGS_OBJECT, status=200, mimetype='application/json')
-print('Finished caching heavy load data')
+@api.route('/get-umpire-info')
+class UmpireInfo(Resource):
+    @api.doc(parser = umpire_parser)
+    @api.response(200, 'OK', umpire_model)
+    def get(self):
+        """
+        Returns the complete umpire data object
+        """
+        now = time.time()
+        name = request.args.get('name')
+        name = ' '.join([word.capitalize() for word in name.split()])
 
+        data = create_umpire_object(name, careers, careers_season, crews, careers_range, data_year_range)
+        data['career'] = create_career_object(name, careers_season, crews, careers_range, careers_range_change, data_year_range)
+        data['team'] = []
+        for team in team_names:
+            data['team'] += create_team_object(name, team, team_stats_dataset, data_year_range)
+        data['pitchers'] = pitcher_objects[name]
+
+        data = json.dumps(data, use_decimal = True)
+        resp = Response(data, status=200, mimetype='application/json')
+        return resp
+
+
+@api.route('/pitchers')
+class Pitchers(Resource):
+    @api.doc(parser = pitcher_parser)
+    @api.response(200, 'OK', pitcher_model)
+    def get(self):
+        name = request.args.get('pitcher_name')
+        data = create_pitcher_object(name, pitcher_stats, data_year_range)
+        data = json.dumps(data, use_decimal = True)
+        resp = Response(data, status=200, mimetype='application/json')
+        return resp
+        
 
 @api.route('/teams')
 class Teams(Resource):

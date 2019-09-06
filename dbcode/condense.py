@@ -12,6 +12,10 @@ from decimal import Decimal
 import time
 #TODO LIST:
 # Don't add non existent s3 images to database
+
+# POTENTIAL VULNERABILITIES
+# Duplicate umpire/pitcher names could be problemsome
+# If a pitcher switches teams during the same season that would be an issue
 if os.path.exists('../.config.json'):
 	configs = eval(open('../.config.json').read())
 	iam = configs["iam-user"]
@@ -36,6 +40,48 @@ careers_range_change = Table(iam, 'refrating_career_range_change')
 ump_game_lookup = Table(iam, 'refrating-ump-game-lookup')
 s3_client = boto3.client('s3', aws_access_key_id = iam['key'],
 	aws_secret_access_key = iam['secret'])
+pitcher_stats = Table(iam, 'refrating-pitcher-stats')
+umpire_pitchers = Table(iam, 'refrating-umpire-pitchers')
+
+def upload_umpire_pitchers():
+	umpire_pitchers.clear('name', sort_key = 'season')
+	parent_folder = 'output-data/Pitcher-Stats'
+	for season_folder in os.listdir(parent_folder):
+		if season_folder == 'Archive':
+			continue
+		season_filepath = os.path.join(parent_folder, season_folder)
+		file = os.path.join(season_filepath, 'ump_pitcher.csv')
+		df = Table.fillna(pd.read_csv(file), [])
+		df = df.drop(columns = ['Unnamed: 0'])
+		df['season'] = [season_folder] * len(df)
+		df.rename(columns = {'ump': 'name'}, inplace = True)
+		output_filepath = os.path.join(season_filepath, 'ump_pitcher_refined.csv')
+		df.to_csv(output_filepath)
+		umpire_pitchers.upload(output_filepath)
+
+
+def upload_pitcher_stats():
+	def add_pitcher_name(row):
+		row['pitcher_uuid'] = '{0}_{1}_{2}'.format(row['name'], row['team'], row['season'])
+		return row
+	pitcher_stats.clear('name', sort_key = 'pitcher_uuid')
+	parent_folder = 'output-data/Pitcher-Stats'
+	for season_folder in os.listdir(parent_folder):
+		season_filepath = os.path.join(parent_folder, season_folder)
+		if season_folder != 'Archive':
+			df = pd.read_csv(os.path.join(season_filepath, 'pitcher_BCR.csv'))
+			for filename in os.listdir(season_filepath):
+				if filename not in ['pitcher_BCR.csv', 'ump_pitcher.csv', 'merged.csv']:
+					df = pd.merge(df, pd.read_csv(os.path.join(season_filepath, filename)),
+						left_on = ['name', 'team'], right_on = ['name', 'team'], suffixes = ('', '_y'))
+					df = drop_y(df)
+			df = Table.fillna(df, [])
+			df = df.drop(columns = ['Unnamed: 0'])
+			df['season'] = [season_folder] * len(df)
+			df = df.apply(add_pitcher_name, axis=1)
+			output_filename = os.path.join(season_filepath, 'merged.csv')
+			df.to_csv(output_filename)
+			pitcher_stats.upload(output_filename)
 
 
 def ump_game_lookup_refresh():
@@ -365,9 +411,6 @@ def dataPrep(filepaths):
 			elif path == 'output-data/Game-Stats':
 				on = ['game']
 
-			elif path == 'output-data/Pitcher-Stats':
-				on = ['']
-
 			merge = data[year][panda_files[0]]
 			for i in range(1, len(panda_files)):
 				merge = pd.merge(data[year][panda_files[i]], merge, left_on=on, 
@@ -382,6 +425,7 @@ def dataPrep(filepaths):
 			if path == 'output-data/Game-Stats':
 				date_format = lambda date: date.replace('/', '-')
 				merge['date'] = merge['date'].apply(lambda row: date_format(row))
+
 			merge = drop_y(merge)
 			merge.to_csv(os.path.join(os.path.join(path, year), 'merged.csv'))
 
@@ -482,22 +526,23 @@ def refresh_all_aws_resources():
 	tasks = [
 		'output-data/Team-Stats',
 		'output-data/Game-Stats'
-		# 'output-data/Pitcher-Stats'
 	]
 	stamp = time.time()
-	ump_game_lookup_refresh()
-	upload_career_change_range_file()
-	upload_career_range_file()
-	upload_crew_update()
-	upload_career_data()
-	create_career_seasonal_data()
-	dataPrep(tasks)
-	create_game_date()
-	umpire_id_lookup_reset()
-	media_refresh()
-	dataUpload(tasks)
-	umpires_cloudsearch.clear()
-	umpires_cloudsearch.flush()
+	upload_umpire_pitchers()
+	# upload_pitcher_stats()
+	# ump_game_lookup_refresh()
+	# upload_career_change_range_file()
+	# upload_career_range_file()
+	# upload_crew_update()
+	# upload_career_data()
+	# create_career_seasonal_data()
+	# dataPrep(tasks)
+	# create_game_date()
+	# umpire_id_lookup_reset()
+	# media_refresh()
+	# dataUpload(tasks)
+	# umpires_cloudsearch.clear()
+	# umpires_cloudsearch.flush()
 	print('Completed all tasks in {0}s'.format(time.time() - stamp))
 
 if __name__ == '__main__':
