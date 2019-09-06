@@ -10,28 +10,28 @@ from boto3.dynamodb.conditions import Key, Attr
 from flask import Flask, jsonify, request, Response
 import time
 
-@api.route('/get-umpire-info')
-class UmpireInfo(Resource):
-    @api.doc(parser = umpire_parser)
-    @api.response(200, 'OK', umpire_model)
-    def get(self):
-        """
-        Returns the complete umpire data object
-        """
-        now = time.time()
-        name = request.args.get('name')
-        name = ' '.join([word.capitalize() for word in name.split()])
+# @api.route('/get-umpire-info')
+# class UmpireInfo(Resource):
+#     @api.doc(parser = umpire_parser)
+#     @api.response(200, 'OK', umpire_model)
+#     def get(self):
+#         """
+#         Returns the complete umpire data object
+#         """
+#         now = time.time()
+#         name = request.args.get('name')
+#         name = ' '.join([word.capitalize() for word in name.split()])
 
-        data = create_umpire_object(name, careers, careers_season, crews, careers_range, data_year_range)
-        data['career'] = create_career_object(name, careers_season, crews, careers_range, careers_range_change, data_year_range)
-        data['team'] = []
-        for team in team_names:
-            data['team'] += create_team_object(name, team, team_stats_dataset, data_year_range)
-        # data['pitchers'] = pitcher_objects[name]
+#         data = create_umpire_object(name, careers, careers_season, crews, careers_range, data_year_range)
+#         data['career'] = create_career_object(name, careers_season, crews, careers_range, careers_range_change, data_year_range)
+#         data['team'] = []
+#         for team in team_names:
+#             data['team'] += create_team_object(name, team, team_stats_dataset, data_year_range)
+#         # data['pitchers'] = pitcher_objects[name]
 
-        data = json.dumps(data, use_decimal = True)
-        resp = Response(data, status=200, mimetype='application/json')
-        return resp
+#         data = json.dumps(data, use_decimal = True)
+#         resp = Response(data, status=200, mimetype='application/json')
+#         return resp
 
 
 @api.route('/pitchers')

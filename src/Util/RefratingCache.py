@@ -28,16 +28,16 @@ RANKINGS_OBJECT = json.dumps(RANKINGS_OBJECT, use_decimal=True)
 RANKINGS_OBJECT = Response(RANKINGS_OBJECT, status=200, mimetype='application/json')
 print('Cached Ranking Objects: t = {0}s'.format(time.time() - now))
 
-team_names = [name.replace('total_call_', '') for name in \
-    team_stats_dataset.get(query_map = {'name':'Jordan Baker', 'data_year' : 2019}).keys() if \
-    name.startswith('total_call_')]
-team_names = [name for name in team_names if '_' not in name]
-team_objects = {}
-for umpire in ALL_UMPIRE_NAMES:
-	team_objects[umpire] = []
-	for team in team_names:
-		team_objects[umpire] += create_team_object(umpire, team, team_stats_dataset, data_year_range)
-print('Cached Team Objects: t = {0}s'.format(time.time() - now))
+# team_names = [name.replace('total_call_', '') for name in \
+#     team_stats_dataset.get(query_map = {'name':'Jordan Baker', 'data_year' : 2019}).keys() if \
+#     name.startswith('total_call_')]
+# team_names = [name for name in team_names if '_' not in name]
+# team_objects = {}
+# for umpire in ALL_UMPIRE_NAMES:
+# 	team_objects[umpire] = []
+# 	for team in team_names:
+# 		team_objects[umpire] += create_team_object(umpire, team, team_stats_dataset, data_year_range)
+# print('Cached Team Objects: t = {0}s'.format(time.time() - now))
 
 print('Finished caching in {0}s'.format(time.time() - now))
 
