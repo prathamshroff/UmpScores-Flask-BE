@@ -143,7 +143,7 @@ class QuerySearch(Resource):
         return resp
 
 
-@api.route('/get-all-ump-ids')
+@api.route('/umpireList')
 class GetAllUmps(Resource):
     @api.response(200, 'OK', get_all_umpire_id_pairs)
     def get(self):

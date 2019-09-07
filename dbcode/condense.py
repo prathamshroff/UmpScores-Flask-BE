@@ -133,7 +133,7 @@ def upload_career_range_file():
 	Before running this, make sure you have done the following:
 	dbcode/output-data/Career exists and if not, download output-data from drive
 	"""
-	root = 'output-data/Career/season_bcr_2010-2019.csv'
+	root = 'output-data/Career/BCR By Season/season_bcr_2010-2019.csv'
 	df = pd.read_csv(root)
 	if 'ump' in df.columns:
 		df.rename(columns = {'ump': 'name'}, inplace = True)
@@ -155,7 +155,7 @@ def upload_crew_update():
 	dbcode/output-data/Career exists and if not, download output-data from drive
 	"""
 	root = 'output-data/Career/crew_update'
-	filenames = [os.path.join(root, file) for file in os.listdir(root)]
+	filenames = [os.path.join(root, file) for file in os.listdir(root) if file != 'ARCHIVE']
 	string_fields = ['status', 'crew']
 	crews.clear('name', sort_key = 'data_year')
 	for file in filenames:
@@ -209,7 +209,7 @@ def create_career_seasonal_data():
 	season_career_bcrs = ['season_bcr_{0}.csv'.format(year) for year in range(2010, 2020)]
 	careers_season.clear('name', sort_key = 'data_year')
 	for file in season_career_bcrs:
-		file = os.path.join('output-data/Career', file)
+		file = os.path.join('output-data/Career/BCR By Season/', file)
 		df = pd.read_csv(file)
 
 		if 'data_year' not in df.columns:

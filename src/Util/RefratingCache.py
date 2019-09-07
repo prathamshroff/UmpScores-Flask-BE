@@ -10,6 +10,11 @@ data_year_range = range(2010, 2020)
 
 ALL_UMPIRE_KEYS = umpire_id_lookup.scan()
 ALL_UMPIRE_NAMES = [obj['name'] for obj in ALL_UMPIRE_KEYS]
+for umpire in ALL_UMPIRE_KEYS:
+	name = umpire['name']
+	parts = name.split()
+	umpire['firstName'] = parts[0]
+	umpire['lastName'] = parts[-1]
 
 # def get_pitcher_names(umpire_name):
 # 	names = set()
