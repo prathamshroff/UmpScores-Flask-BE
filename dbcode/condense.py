@@ -42,12 +42,26 @@ s3_client = boto3.client('s3', aws_access_key_id = iam['key'],
 	aws_secret_access_key = iam['secret'])
 pitcher_stats = Table(iam, 'refrating-pitcher-stats')
 umpire_pitchers = Table(iam, 'refrating-umpire-pitchers')
+umpire_zones = Table(iam, 'refrating-pitcher-zone')
+
+
+def upload_zone_data():
+	root = 'output-data/Career/pitch+zone'
+	umpire_zones.clear('name', sort_key = 'season')
+	for file in os.listdir(root):
+		filename = os.path.join(root, file)
+		df = pd.read_csv(filename)
+		df['season'] = [file[-8:-4]] * len(df) # get year
+		df = Table.fillna(df, [])
+		df = df.drop(columns = ['Unnamed: 0'])
+		df.to_csv(filename)
+		umpire_zones.upload(filename)
 
 def upload_umpire_pitchers():
 	umpire_pitchers.clear('name', sort_key = 'season')
 	parent_folder = 'output-data/Pitcher-Stats'
 	for season_folder in os.listdir(parent_folder):
-		if season_folder == 'Archive':
+		if season_folder in ['Archive', 'walk-strikeout']:
 			continue
 		season_filepath = os.path.join(parent_folder, season_folder)
 		file = os.path.join(season_filepath, 'ump_pitcher.csv')
@@ -528,7 +542,8 @@ def refresh_all_aws_resources():
 		'output-data/Game-Stats'
 	]
 	stamp = time.time()
-	upload_umpire_pitchers()
+	upload_zone_data()
+	# upload_umpire_pitchers()
 	# upload_pitcher_stats()
 	# ump_game_lookup_refresh()
 	# upload_career_change_range_file()

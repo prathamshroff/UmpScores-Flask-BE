@@ -1,9 +1,38 @@
 # TODO /umpire is array (how do I handle season then??)
 # TODO uncomment /get-games
 from boto3.dynamodb.conditions import Key, Attr
+from StorageSolutions.tables import *
+def create_chart_object(name, year_range):
+	name = ' '.join([word.capitalize() for word in name.split()])
+	filterExpression = Key('name').eq(name)
+	data = umpire_zones.query(KeyConditionExpression = filterExpression)['Items']
+	resp = []
+	for entry in data:
+		year = {}
+		year['season'] = entry['season']
+		# year['heatMap'] = [entry[elem] for elem in ['BCR_z{0}'.format(i) for i in range(1, 15)]]
+		year['heatMapSL'] = [entry[elem] for elem in ['bad_call_SL_{0}'.format(i) for i in range(1, 15)] if elem in entry]
+		year['heatMapFT'] = [entry[elem] for elem in ['bad_call_FT_{0}'.format(i) for i in range(1, 15)] if elem in entry]
+		year['heatMapCU'] = [entry[elem] for elem in ['bad_call_CU_{0}'.format(i) for i in range(1, 15)] if elem in entry]
+		year['heatMapFF'] = [entry[elem] for elem in ['bad_call_FF_{0}'.format(i) for i in range(1, 15)] if elem in entry]
+		year['heatMapSI'] = [entry[elem] for elem in ['bad_call_SI_{0}'.format(i) for i in range(1, 15)] if elem in entry]
+		year['heatMapCH'] = [entry[elem] for elem in ['bad_call_CH_{0}'.format(i) for i in range(1, 15)] if elem in entry]
+		year['heatMapFC'] = [entry[elem] for elem in ['bad_call_FC_{0}'.format(i) for i in range(1, 15)] if elem in entry]
+		year['heatMapEP'] = [entry[elem] for elem in ['bad_call_EP_{0}'.format(i) for i in range(1, 15)] if elem in entry]
+		year['heatMapKC'] = [entry[elem] for elem in ['bad_call_KC_{0}'.format(i) for i in range(1, 15)] if elem in entry]
+		year['heatMapFS'] = [entry[elem] for elem in ['bad_call_FS_{0}'.format(i) for i in range(1, 15)] if elem in entry]
+		year['heatMapPO'] = [entry[elem] for elem in ['bad_call_PO_{0}'.format(i) for i in range(1, 15)] if elem in entry]
+		year['heatMapKN'] = [entry[elem] for elem in ['bad_call_KN_{0}'.format(i) for i in range(1, 15)] if elem in entry]
+		year['heatMapSC'] = [entry[elem] for elem in ['bad_call_SC_{0}'.format(i) for i in range(1, 15)] if elem in entry]
+		year['heatMapFO'] = [entry[elem] for elem in ['bad_call_FO_{0}'.format(i) for i in range(1, 15)] if elem in entry]
+		year['heatMapUN'] = [entry[elem] for elem in ['bad_call_UN_{0}'.format(i) for i in range(1, 15)] if elem in entry]
+		year['heatMapFA'] = [entry[elem] for elem in ['bad_call_FA_{0}'.format(i) for i in range(1, 15)] if elem in entry]
+		year['heatMapIN'] = [entry[elem] for elem in ['bad_call_IN_{0}'.format(i) for i in range(1, 15)] if elem in entry]
+		resp.append(year)
+	return resp
 
 
-def create_pitcher_object(name, pitcher_stats, year_range):
+def create_pitcher_object(name, year_range):
 	name = ' '.join([word.capitalize() for word in name.split()])
 	filterExpression = Key('name').eq(name)
 
@@ -49,11 +78,11 @@ def columns_rename(d, columns_map):
 	for key in columns_map:
 		d[columns_map[key]] = d.pop(key)
 
-def create_rankings_object(career_seasonal_table, team_stats_table, umpire_names, year_range):
+def create_rankings_object(umpire_names, year_range):
 	umpires = []
 	for year in year_range:
 		for name in umpire_names:
-			career_resp = career_seasonal_table.get(
+			career_resp = careers_season.get(
 				{
 					'name': name,
 					'data_year': year
@@ -61,7 +90,7 @@ def create_rankings_object(career_seasonal_table, team_stats_table, umpire_names
 				AttributesToGet = ['name', 'games', 'total_call', 'bad_call_ratio']
 			)
 
-			# team_resp = team_stats_table.get(
+			# team_resp = team_stats_dataset.get(
 			# 	{
 			# 		'name': name,
 			# 		'data_year': year
@@ -80,13 +109,12 @@ def create_rankings_object(career_seasonal_table, team_stats_table, umpire_names
 				umpires.append(career_resp)
 	return umpires
 
-def create_umpire_object(name, career_table, career_seasonal_table, crews_table, career_range_table,
-	year_range):
+def create_umpire_object(name, year_range):
 	first, last = name.lower().split()
 	name = ' '.join((first.capitalize(), last.capitalize()))
 
 
-	career_resp = career_table.get(
+	career_resp = careers.get(
 		{
 			'name': name
 		},
@@ -96,20 +124,20 @@ def create_umpire_object(name, career_table, career_seasonal_table, crews_table,
 	ump_id = career_resp['id']
 
 	year = year_range[-1]
-	range_table = career_range_table.get(
+	range_table = careers_range.get(
 		{
 			'name': name
 		},
 		AttributesToGet = ['BCR_{0}'.format(year)]
 	)
-	career_seasonal_resp = career_seasonal_table.get(
+	career_seasonal_resp = careers_season.get(
 		{
 			'name': name,
 			'data_year': year	
 		},
 		AttributesToGet = ['total_call', 'games', 'data_year']
 	)
-	crew_resp = crews_table.get(
+	crew_resp = crews.get(
 		{
 			'name': name,
 			'data_year': year
@@ -135,20 +163,19 @@ def create_umpire_object(name, career_table, career_seasonal_table, crews_table,
 	return data
 
 
-def create_career_object(name, career_seasonal_table, crews_table, career_range_table, career_change_range_table, 
-	data_range):
+def create_career_object(name, data_range):
 	first, last = name.lower().split()
 	name = ' '.join((first.capitalize(), last.capitalize()))
 	career = []
 	for year in data_range:
-		range_resp = career_range_table.get({'name': name}, AttributesToGet=['BCR_{0}'.format(year)])
-		season_resp = career_seasonal_table.get({'name': name, 'data_year': year},
+		range_resp = careers_range.get({'name': name}, AttributesToGet=['BCR_{0}'.format(year)])
+		season_resp = careers_season.get({'name': name, 'data_year': year},
 			AttributesToGet=['games', 'total_call', 'BCR_SL', 'BCR_FT', 'BCR_CU', 'BCR_FF', 'BCR_SI', 
 				'BCR_CH', 'BCR_FC', 'BCR_EP', 'BCR_KC', 'BCR_FS', 'BCR_PO', 'BCR_KN', 
 				'BCR_SC', 'BCR_FO', 'BCR_UN', 'BCR_FA', 'BCR_IN'])
-		crew_resp = crews_table.get({'name': name, 'data_year': year},
+		crew_resp = crews.get({'name': name, 'data_year': year},
 			AttributesToGet = ['status'])
-		# change_resp = career_change_range_table.get({'name': name}, AttributesToGet=[
+		# change_resp = careers_range_change.get({'name': name}, AttributesToGet=[
 		# 	'BCR_change_{0}-1_{0}'
 		# ])
 		if range_resp != {} and season_resp != {}:
@@ -181,7 +208,7 @@ def create_career_object(name, career_seasonal_table, crews_table, career_range_
 			career.append(data)
 	return career
 
-def create_umpire_game_object(name, games_table, ump_game_lookup):
+def create_umpire_game_object(name):
 	umpire_games = []
 	first, last = name.lower().split()
 	name = ' '.join((first.capitalize(), last.capitalize()))
@@ -192,7 +219,7 @@ def create_umpire_game_object(name, games_table, ump_game_lookup):
 
 	game_ids = [int(item['game']) for item in resp]
 	for game in game_ids:
-		resp = games_table.get({'game': game}, 
+		resp = games_dataset.get({'game': game}, 
 			AttributesToGet = ['hometeam','awayteam', 'date', 'bad_call_ratio', 'preference', 'BCR_SL', 
 				'BCR_FT', 'BCR_CU', 'BCR_FF', 'BCR_SI', 'BCR_CH', 'BCR_FC', 'BCR_EP', 
 				'BCR_KC', 'BCR_FS', 'BCR_KN', 'BCR_FO', 
@@ -231,17 +258,17 @@ def create_umpire_game_object(name, games_table, ump_game_lookup):
 	return umpire_games
 
 
-def create_team_object(name, team, team_stats_table, data_range):
+def create_team_object(name, team, data_range):
 	data = []
 	first, last = name.lower().split()
 	name = ' '.join((first.capitalize(), last.capitalize()))
 	for year in data_range:
-		resp = team_stats_table.get({'name': name, 'data_year': year})
+		resp = team_stats_dataset.get({'name': name, 'data_year': year})
 		if resp != {}:
 			keys = list(resp.keys())
 
 			# Spaghetti line of code
-			prev = team_stats_table.get({'name':name, 'data_year': year-1})
+			prev = team_stats_dataset.get({'name':name, 'data_year': year-1})
 
 			team_stats = {
 				'team': team,

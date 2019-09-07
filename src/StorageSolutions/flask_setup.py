@@ -15,6 +15,8 @@ app.config["RESTPLUS_MASK_SWAGGER"] = False
 # get_games_model = api.model('Get Games Model', {'games': fields.List(fields.Nested(game_model))})
 #DEPRECATED
 
+charts_model = api.model('Chart Object', ChartsObject)
+
 umpire_id_pair = api.model('Umpire ID Pair', UmpireIDPair)
 get_all_umpire_id_pairs = api.model('Umpire ID Pairs', {'umpires': fields.List(fields.Nested(umpire_id_pair))})
 

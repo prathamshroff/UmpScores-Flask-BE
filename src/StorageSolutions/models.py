@@ -1,4 +1,30 @@
 from flask_restplus import fields
+ChartsObject = {
+    # 'heatMap': fields.List(fields.Float),
+    'heatMapSL': fields.List(fields.Float),
+    'heatMapFT': fields.List(fields.Float),
+    'heatMapCU': fields.List(fields.Float),
+    'heatMapFF': fields.List(fields.Float),
+    'heatMapSI': fields.List(fields.Float),
+    'heatMapCH': fields.List(fields.Float),
+    'heatMapFC': fields.List(fields.Float),
+    'heatMapEP': fields.List(fields.Float),
+    'heatMapKC': fields.List(fields.Float),
+    'heatMapFS': fields.List(fields.Float),
+    'heatMapPO': fields.List(fields.Float),
+    'heatMapKN': fields.List(fields.Float),
+    'heatMapSC': fields.List(fields.Float),
+    'heatMapFO': fields.List(fields.Float),
+    'heatMapUN': fields.List(fields.Float),
+    'heatMapFA': fields.List(fields.Float),
+    'heatMapIN': fields.List(fields.Float),
+    'seasonalBcrByMonth': fields.List(fields.Float),
+    'bcrOverCareer': fields.List(fields.Float),
+    'allUmpsSeasonalBcrByMonth': fields.List(fields.Float),
+    'allUmpsBcrOverCareer': fields.List(fields.Float),
+    'season': fields.Integer
+}
+
 PitcherObject = {
     'name': fields.String,
     'season': fields.Integer,

@@ -32,6 +32,16 @@ import time
 #         data = json.dumps(data, use_decimal = True)
 #         resp = Response(data, status=200, mimetype='application/json')
 #         return resp
+@api.route('/charts')
+class Charts(Resource):
+    @api.doc(parser = umpire_parser)
+    @api.response(200, 'OK', charts_model)
+    def get(self):
+        name = request.args.get('name')
+        data = create_chart_object(name, data_year_range)
+        data = json.dumps(data, use_decimal = True)
+        resp = Response(data, status=200, mimetype = 'application/json')
+        return resp
 
 
 @api.route('/pitchers')
@@ -62,7 +72,7 @@ class Teams(Resource):
         """
         name = request.args.get('name')
         team = request.args.get('team')
-        data = create_team_object(name, team, team_stats_dataset, data_year_range)
+        data = create_team_object(name, team, data_year_range)
         data = json.dumps(data, use_decimal=True)
         resp = Response(data, status=200, mimetype='application/json')
         return resp
@@ -82,7 +92,7 @@ class Umpire(Resource):
         model
         """
         name = request.args.get('name')
-        data = create_umpire_object(name, careers, careers_season, crews, careers_range, data_year_range)
+        data = create_umpire_object(name, data_year_range)
         data = json.dumps(data, use_decimal=True)
         resp = Response(data, status=200, mimetype='application/json')
         return resp
@@ -113,7 +123,7 @@ class Career(Resource):
         an array of career objects
         """
         name = request.args.get('name')
-        data = create_career_object(name, careers_season, crews, careers_range, careers_range_change, data_year_range)
+        data = create_career_object(name, data_year_range)
         data = json.dumps(data, use_decimal=True)
         resp = Response(data, status=200, mimetype='application/json')
         return resp
@@ -174,7 +184,7 @@ class UmpireGames(Resource):
         return format
         """
         name = request.args.get('name')
-        data = create_umpire_game_object(name, games_dataset, ump_game_lookup)
+        data = create_umpire_game_object(name)
         data = json.dumps(data, use_decimal=True)
         resp = Response(data, status=200, mimetype='application/json')
         return resp
