@@ -6,29 +6,138 @@ def create_chart_object(name, year_range):
 	name = ' '.join([word.capitalize() for word in name.split()])
 	filterExpression = Key('name').eq(name)
 	data = umpire_zones.query(KeyConditionExpression = filterExpression)['Items']
-	resp = []
+
+	resp = {
+		'heatMap': [],
+	    'heatMapSL': [],
+	    'heatMapFT': [],
+	    'heatMapCU': [],
+	    'heatMapFF': [],
+	    'heatMapSI': [],
+	    'heatMapCH': [],
+	    'heatMapFC': [],
+	    'heatMapEP': [],
+	    'heatMapKC': [],
+	    'heatMapFS': [],
+	    'heatMapPO': [],
+	    'heatMapKN': [],
+	    'heatMapSC': [],
+	    'heatMapFO': [],
+	    'heatMapUN': [],
+	    'heatMapFA': [],
+	    'heatMapIN': []
+	}
 	for entry in data:
-		year = {}
-		year['season'] = entry['season']
-		# year['heatMap'] = [entry[elem] for elem in ['BCR_z{0}'.format(i) for i in range(1, 15)]]
-		year['heatMapSL'] = [entry[elem] for elem in ['bad_call_SL_{0}'.format(i) for i in range(1, 15)] if elem in entry]
-		year['heatMapFT'] = [entry[elem] for elem in ['bad_call_FT_{0}'.format(i) for i in range(1, 15)] if elem in entry]
-		year['heatMapCU'] = [entry[elem] for elem in ['bad_call_CU_{0}'.format(i) for i in range(1, 15)] if elem in entry]
-		year['heatMapFF'] = [entry[elem] for elem in ['bad_call_FF_{0}'.format(i) for i in range(1, 15)] if elem in entry]
-		year['heatMapSI'] = [entry[elem] for elem in ['bad_call_SI_{0}'.format(i) for i in range(1, 15)] if elem in entry]
-		year['heatMapCH'] = [entry[elem] for elem in ['bad_call_CH_{0}'.format(i) for i in range(1, 15)] if elem in entry]
-		year['heatMapFC'] = [entry[elem] for elem in ['bad_call_FC_{0}'.format(i) for i in range(1, 15)] if elem in entry]
-		year['heatMapEP'] = [entry[elem] for elem in ['bad_call_EP_{0}'.format(i) for i in range(1, 15)] if elem in entry]
-		year['heatMapKC'] = [entry[elem] for elem in ['bad_call_KC_{0}'.format(i) for i in range(1, 15)] if elem in entry]
-		year['heatMapFS'] = [entry[elem] for elem in ['bad_call_FS_{0}'.format(i) for i in range(1, 15)] if elem in entry]
-		year['heatMapPO'] = [entry[elem] for elem in ['bad_call_PO_{0}'.format(i) for i in range(1, 15)] if elem in entry]
-		year['heatMapKN'] = [entry[elem] for elem in ['bad_call_KN_{0}'.format(i) for i in range(1, 15)] if elem in entry]
-		year['heatMapSC'] = [entry[elem] for elem in ['bad_call_SC_{0}'.format(i) for i in range(1, 15)] if elem in entry]
-		year['heatMapFO'] = [entry[elem] for elem in ['bad_call_FO_{0}'.format(i) for i in range(1, 15)] if elem in entry]
-		year['heatMapUN'] = [entry[elem] for elem in ['bad_call_UN_{0}'.format(i) for i in range(1, 15)] if elem in entry]
-		year['heatMapFA'] = [entry[elem] for elem in ['bad_call_FA_{0}'.format(i) for i in range(1, 15)] if elem in entry]
-		year['heatMapIN'] = [entry[elem] for elem in ['bad_call_IN_{0}'.format(i) for i in range(1, 15)] if elem in entry]
-		resp.append(year)
+		year = entry['season']
+		careers_season_resp = careers_season.get({'name': name, 'data_year': year},
+			AttributesToGet = ['BCR_z{0}'.format(i) for i in range(1, 15)])
+
+		resp['heatMap'].append({
+			'data': [careers_season_resp['BCR_z{0}'.format(i)] for i in range(1,15) if i != 10],
+			'season': year
+		})
+		resp['heatMapSL'].append({
+			'data': [entry[elem] for elem in ['bad_call_SL_{0}'.format(i) for i in \
+				range(1, 15) if i != 10]], 
+			'season': year
+		})
+
+		resp['heatMapFT'].append({
+			'data': [entry[elem] for elem in ['bad_call_FT_{0}'.format(i) for i in \
+				range(1, 15) if i != 10]], 
+			'season': year
+		})
+
+		resp['heatMapCU'].append({
+			'data': [entry[elem] for elem in ['bad_call_CU_{0}'.format(i) for i in \
+				range(1, 15)if i != 10]], 
+			'season': year
+		})
+
+		resp['heatMapFF'].append({
+			'data': [entry[elem] for elem in ['bad_call_FF_{0}'.format(i) for i in \
+				range(1, 15) if i != 10]], 
+			'season': year
+		})
+
+		resp['heatMapSI'].append({
+			'data': [entry[elem] for elem in ['bad_call_SI_{0}'.format(i) for i in \
+				range(1, 15) if i != 10]], 
+			'season': year
+		})
+
+		resp['heatMapCH'].append({
+			'data': [entry[elem] for elem in ['bad_call_CH_{0}'.format(i) for i in \
+				range(1, 15) if i != 10]], 
+			'season': year
+		})
+
+		resp['heatMapFC'].append({
+			'data': [entry[elem] for elem in ['bad_call_FC_{0}'.format(i) for i in \
+				range(1, 15) if i != 10]], 
+			'season': year
+		})
+
+		resp['heatMapEP'].append({
+			'data': [entry[elem] for elem in ['bad_call_EP_{0}'.format(i) for i in \
+				range(1, 15) if i != 10]], 
+			'season': year
+		})
+
+		resp['heatMapKC'].append({
+			'data': [entry[elem] for elem in ['bad_call_KC_{0}'.format(i) for i in \
+				range(1, 15) if i != 10]], 
+			'season': year
+		})
+
+		resp['heatMapFS'].append({
+			'data': [entry[elem] for elem in ['bad_call_FS_{0}'.format(i) for i in \
+				range(1, 15) if i != 10]], 
+			'season': year
+		})
+
+		resp['heatMapPO'].append({
+			'data': [entry[elem] for elem in ['bad_call_PO_{0}'.format(i) for i in \
+				range(1, 15) if i != 10]], 
+			'season': year
+		})
+
+		resp['heatMapKN'].append({
+			'data': [entry[elem] for elem in ['bad_call_KN_{0}'.format(i) for i in \
+				range(1, 15) if i != 10]], 
+			'season': year
+		})
+
+		resp['heatMapSC'].append({
+			'data': [entry[elem] for elem in ['bad_call_SC_{0}'.format(i) for i in \
+				range(1, 15) if i != 10]], 
+			'season': year
+		})
+
+		resp['heatMapFO'].append({
+			'data': [entry[elem] for elem in ['bad_call_FO_{0}'.format(i) for i in \
+				range(1, 15) if i != 10]], 
+			'season': year
+		})
+
+		resp['heatMapUN'].append({
+			'data': [entry[elem] for elem in ['bad_call_UN_{0}'.format(i) for i in \
+				range(1, 15) if i != 10]], 
+			'season': year
+		})
+
+		resp['heatMapFA'].append({
+			'data': [entry[elem] for elem in ['bad_call_FA_{0}'.format(i) for i in \
+				range(1, 15) if i != 10]], 
+			'season': year
+		})
+
+		resp['heatMapIN'].append({
+			'data': [entry[elem] for elem in ['bad_call_IN_{0}'.format(i) for i in \
+				range(1, 15) if i != 10]], 
+			'season': year
+		})
+
 	return resp
 
 
