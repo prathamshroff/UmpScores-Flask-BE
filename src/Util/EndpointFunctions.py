@@ -3,7 +3,7 @@
 from boto3.dynamodb.conditions import Key, Attr
 from StorageSolutions.tables import *
 def create_chart_object(name, year_range):
-	name = ' '.join([word.capitalize() for word in name.split()])
+	name = ' '.join([word.capitalize() for word in name.lower().split()])
 	filterExpression = Key('name').eq(name)
 	data = umpire_zones.query(KeyConditionExpression = filterExpression)['Items']
 
@@ -142,7 +142,7 @@ def create_chart_object(name, year_range):
 
 
 def create_pitcher_object(name, year_range):
-	name = ' '.join([word.capitalize() for word in name.split()])
+	name = ' '.join([word.capitalize() for word in name.lower().split()])
 	filterExpression = Key('name').eq(name)
 
 	data = pitcher_stats.query(
@@ -219,9 +219,7 @@ def create_rankings_object(umpire_names, year_range):
 	return umpires
 
 def create_umpire_object(name, year_range):
-	first, last = name.lower().split()
-	name = ' '.join((first.capitalize(), last.capitalize()))
-
+	name = ' '.join([word.capitalize() for word in name.lower().split()])
 
 	career_resp = careers.get(
 		{
@@ -229,7 +227,8 @@ def create_umpire_object(name, year_range):
 		},
 		AttributesToGet = ['id', 'name']
 	)
-	first_name, last_name = career_resp['name'].split()
+	parts = career_resp['name'].split()
+	first_name, last_name = parts[0], parts[-1]
 	ump_id = career_resp['id']
 
 	year = year_range[-1]
@@ -273,8 +272,7 @@ def create_umpire_object(name, year_range):
 
 
 def create_career_object(name, data_range):
-	first, last = name.lower().split()
-	name = ' '.join((first.capitalize(), last.capitalize()))
+	name = ' '.join([word.capitalize() for word in name.lower().split()])
 	career = []
 	for year in data_range:
 		range_resp = careers_range.get({'name': name}, AttributesToGet=['BCR_{0}'.format(year)])
@@ -367,8 +365,7 @@ def create_umpire_game_object(name):
 
 def create_team_object(name, team, data_range):
 	data = []
-	first, last = name.lower().split()
-	name = ' '.join((first.capitalize(), last.capitalize()))
+	name = ' '.join([word.capitalize() for word in name.lower().split()])
 	for year in data_range:
 		resp = team_stats_dataset.get({'name': name, 'data_year': year})
 		if resp != {}:
