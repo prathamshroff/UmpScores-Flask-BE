@@ -35,7 +35,7 @@ import time
 @api.route('/charts')
 class Charts(Resource):
     @api.doc(parser = umpire_parser)
-    @api.response(200, 'OK', charts_model)
+    # @api.marshal_with(charts_model)
     def get(self):
         name = request.args.get('name')
         data = create_chart_object(name, data_year_range)

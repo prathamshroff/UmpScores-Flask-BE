@@ -319,8 +319,8 @@ def create_career_object(name, data_range):
 
 def create_umpire_game_object(name):
 	umpire_games = []
-	first, last = name.lower().split()
-	name = ' '.join((first.capitalize(), last.capitalize()))
+	name = ' '.join([word.capitalize() for word in name.lower().split()])
+
 	filterExpression = Key('name').eq(name)
 	resp = ump_game_lookup.query(
 		KeyConditionExpression = filterExpression
@@ -328,15 +328,15 @@ def create_umpire_game_object(name):
 
 	game_ids = [int(item['game']) for item in resp]
 	for game in game_ids:
-		resp = games_dataset.get({'game': game}, 
+		games_resp = games_dataset.get({'game': game}, 
 			AttributesToGet = ['hometeam','awayteam', 'date', 'bad_call_ratio', 'preference', 'BCR_SL', 
 				'BCR_FT', 'BCR_CU', 'BCR_FF', 'BCR_SI', 'BCR_CH', 'BCR_FC', 'BCR_EP', 
 				'BCR_KC', 'BCR_FS', 'BCR_KN', 'BCR_FO', 
 				'total_call', 'call_strike'
 			]
 		)
-		if resp != {}:
-			columns_rename(resp, {
+		if games_resp != {}:
+			columns_rename(games_resp, {
 				'BCR_SL': 'icrSL',
 				'BCR_FT': 'icrFT',
 				'BCR_CU': 'icrCU',
@@ -361,9 +361,7 @@ def create_umpire_game_object(name):
 				'total_call': 'ballsCalled',
 				'call_strike': 'strikesCalled'
 			})
-			umpire_games.append(resp)
-		else:
-			print(game)
+			umpire_games.append(games_resp)
 	return umpire_games
 
 
