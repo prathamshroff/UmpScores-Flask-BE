@@ -50,7 +50,7 @@ class Pitchers(Resource):
     @api.response(200, 'OK', pitcher_model)
     def get(self):
         name = request.args.get('pitcher_name')
-        data = create_pitcher_object(name, pitcher_stats, data_year_range)
+        data = create_pitcher_object(name, data_year_range)
         data = json.dumps(data, use_decimal = True)
         resp = Response(data, status=200, mimetype='application/json')
         return resp
