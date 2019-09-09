@@ -2,7 +2,11 @@
 # TODO uncomment /get-games
 from boto3.dynamodb.conditions import Key, Attr
 from StorageSolutions.tables import *
-from Util.RefratingCache import TEAM_NAMES
+TEAM_NAMES = [name.replace('total_call_', '') for name in \
+    team_stats_dataset.get(query_map = {'name':'Jordan Baker', 'data_year' : 2019}).keys() if \
+    name.startswith('total_call_')]
+TEAM_NAMES = [name for name in TEAM_NAMES if '_' not in name]
+
 def create_chart_object(name, year_range):
 	name = ' '.join([word.capitalize() for word in name.lower().split()])
 	filterExpression = Key('name').eq(name)
@@ -201,8 +205,9 @@ def columns_rename(d, columns_map):
 
 def create_rankings_object(umpire_names, year_range):
 	umpires = []
-	for year in year_range:
-		for name in umpire_names:
+	for name in umpire_names:
+		subarr = []
+		for year in year_range:
 			career_resp = careers_season.get(
 				{
 					'name': name,
@@ -227,7 +232,8 @@ def create_rankings_object(umpire_names, year_range):
 				})
 				career_resp.update({'season': year})
 				# career_resp['number'] = team_resp['number']
-				umpires.append(career_resp)
+				subarr.append(career_resp)
+		umpires.append(subarr)
 	return umpires
 
 def create_umpire_object(name, year_range):
