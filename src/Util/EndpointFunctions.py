@@ -207,6 +207,7 @@ def create_rankings_object(umpire_names, year_range):
 	umpires = []
 	for name in umpire_names:
 		subarr = []
+		parts = name.split()
 		for year in year_range:
 			career_resp = careers_season.get(
 				{
@@ -231,6 +232,7 @@ def create_rankings_object(umpire_names, year_range):
 					'games': 'gamesUmped'
 				})
 				career_resp.update({'season': year})
+				career_resp.update({'firstName': parts[0], 'lastName': parts[-1]})
 				# career_resp['number'] = team_resp['number']
 				subarr.append(career_resp)
 		umpires.append(subarr)
