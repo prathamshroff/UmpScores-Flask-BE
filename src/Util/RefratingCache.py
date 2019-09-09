@@ -33,10 +33,10 @@ for umpire in ALL_UMPIRE_KEYS:
 # RANKINGS_OBJECT = Response(RANKINGS_OBJECT, status=200, mimetype='application/json')
 # print('Cached Ranking Objects: t = {0}s'.format(time.time() - now))
 
-# team_names = [name.replace('total_call_', '') for name in \
-#     team_stats_dataset.get(query_map = {'name':'Jordan Baker', 'data_year' : 2019}).keys() if \
-#     name.startswith('total_call_')]
-# team_names = [name for name in team_names if '_' not in name]
+TEAM_NAMES = [name.replace('total_call_', '') for name in \
+    team_stats_dataset.get(query_map = {'name':'Jordan Baker', 'data_year' : 2019}).keys() if \
+    name.startswith('total_call_')]
+TEAM_NAMES = [name for name in TEAM_NAMES if '_' not in name]
 # team_objects = {}
 # for umpire in ALL_UMPIRE_NAMES:
 # 	team_objects[umpire] = []

@@ -2,6 +2,7 @@
 # TODO uncomment /get-games
 from boto3.dynamodb.conditions import Key, Attr
 from StorageSolutions.tables import *
+from Util.RefratingCache import TEAM_NAMES
 def create_chart_object(name, year_range):
 	name = ' '.join([word.capitalize() for word in name.lower().split()])
 	filterExpression = Key('name').eq(name)
@@ -374,9 +375,11 @@ def create_umpire_game_object(name):
 	return umpire_games
 
 
-def create_team_object(name, team, data_range):
+def create_team_object(name, data_range):
 	data = []
 	name = ' '.join([word.capitalize() for word in name.lower().split()])
+	# TEAM_NAMES
+	print(TEAM_NAMES)
 	for year in data_range:
 		resp = team_stats_dataset.get({'name': name, 'data_year': year})
 		if resp != {}:
@@ -384,20 +387,20 @@ def create_team_object(name, team, data_range):
 
 			# Spaghetti line of code
 			prev = team_stats_dataset.get({'name':name, 'data_year': year-1})
-
-			team_stats = {
-				'team': team,
-				'season': year,
-				'pitchesCalled': resp['total_call_{0}'.format(team)],
-				'ballsCalled': resp['call_ball_{0}'.format(team)],
-				'strikesCalled': resp['call_strike_{0}'.format(team)],
-				'bcr': resp['BCR_{0}'.format(team)],
-				'seasonChangeBcr': prev['BCR_{0}'.format(team)] if prev != {} else -1
-			}
-			columns_rename(team_stats, {
-				'bcr': 'icr',
-				'seasonChangeBcr': 'seasonChangeIcr'
-			})
-			data.append(team_stats)
+			for team in TEAM_NAMES:
+				team_stats = {
+					'team': team,
+					'season': year,
+					'pitchesCalled': resp['total_call_{0}'.format(team)],
+					'ballsCalled': resp['call_ball_{0}'.format(team)],
+					'strikesCalled': resp['call_strike_{0}'.format(team)],
+					'bcr': resp['BCR_{0}'.format(team)],
+					'seasonChangeBcr': prev['BCR_{0}'.format(team)] if prev != {} else -1
+				}
+				columns_rename(team_stats, {
+					'bcr': 'icr',
+					'seasonChangeBcr': 'seasonChangeIcr'
+				})
+				data.append(team_stats)
 	return data
 

@@ -84,21 +84,19 @@ class GetPitchers(Resource):
 
 @api.route('/teams')
 class Teams(Resource):
-    @api.doc(parser = team_parser)
-    @api.response(200, 'OK', team_model)
+    @api.doc(parser = umpire_parser)
+    # @api.response(200, 'OK', team_model)
     def get(self):
         """
-        Will return a dict where keys represent years, and values are the team object
+        Will return an array of dicts where a dict represents team stats
+        for that object
 
         Description
         ----------
-        Takes in some full umpire name and generates a team object
-        keyed by years where the values will be of the format of the below team
-        model
+        Takes in some full umpire name and generates an array of team objects
         """
         name = request.args.get('name')
-        team = request.args.get('team')
-        data = create_team_object(name, team, data_year_range)
+        data = create_team_object(name, data_year_range)
         data = json.dumps(data, use_decimal=True)
         resp = Response(data, status=200, mimetype='application/json')
         return resp
