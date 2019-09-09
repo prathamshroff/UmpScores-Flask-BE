@@ -5,7 +5,7 @@ from StorageSolutions.tables import *
 def create_chart_object(name, year_range):
 	name = ' '.join([word.capitalize() for word in name.lower().split()])
 	filterExpression = Key('name').eq(name)
-	data = umpire_zones.query(KeyConditionExpression = filterExpression)['Items']
+	data = umpire_zones.query(KeyConditionExpression = filterExpression)
 
 	resp = {
 		'heatMap': [],
@@ -140,18 +140,31 @@ def create_chart_object(name, year_range):
 
 	return resp
 
-
-def create_pitcher_object(name, year_range):
+def get_pitcher_names(name):
 	name = ' '.join([word.capitalize() for word in name.lower().split()])
-	filterExpression = Key('name').eq(name)
+	names = set()
+	resp = umpire_pitchers.query(KeyConditionExpression = Key('name').eq(name))
+	for page in resp:
+		pitchers = page.keys()
+		subnames = [name.replace('total_call_', '').replace('.', ' ') for name in pitchers if \
+			name.startswith('total_call_')]
+		names = names.union(subnames)
+	return list(names)
 
+def create_pitcher_object(umpire_name, pitcher_name):
+	pitcher_name = ' '.join([word.capitalize() for word in pitcher_name.lower().split()])
+	umpire_name = ' '.join([word.capitalize() for word in umpire_name.lower().split()])
+
+	print(pitcher_name, umpire_name)
 	data = pitcher_stats.query(
-		KeyConditionExpression = filterExpression
-	)['Items']
+		KeyConditionExpression = Key('name').eq(pitcher_name)
+	)
 	resp = []
-	data = {int(pitcher['season']): pitcher for pitcher in data}
-	for season in data:
-		pitcher = data[season]
+	for pitcher in data:
+		obj = {}
+		# if pitcher['season'] != 2010 and pitcher['season'] - 1 in data:
+		# 	obj['seasonChangeIcr'] = data[season - 1]['BCR']
+
 		obj = {
 			'season': pitcher['season'], 
 			'name': pitcher['name'],
@@ -178,8 +191,6 @@ def create_pitcher_object(name, year_range):
 			'strikesCalled': pitcher['call_strike'],
 			'blindSpot': pitcher['blindspot_pitch']
 		}
-		if season != 2010 and season - 1 in data:
-			obj['seasonChangeIcr'] = data[season - 1]['BCR']
 		resp.append(obj)
 	return resp
 
@@ -322,7 +333,7 @@ def create_umpire_game_object(name):
 	filterExpression = Key('name').eq(name)
 	resp = ump_game_lookup.query(
 		KeyConditionExpression = filterExpression
-	)['Items']
+	)
 
 	game_ids = [int(item['game']) for item in resp]
 	for game in game_ids:

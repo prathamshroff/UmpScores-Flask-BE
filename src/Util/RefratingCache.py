@@ -28,10 +28,10 @@ for umpire in ALL_UMPIRE_KEYS:
 # 	get_pitcher_names(umpire)] for umpire in ALL_UMPIRE_NAMES}
 # print('Cached Pitcher Objects: t = {0}s'.format(time.time() - now))
 
-RANKINGS_OBJECT = create_rankings_object(ALL_UMPIRE_NAMES, data_year_range)
-RANKINGS_OBJECT = json.dumps(RANKINGS_OBJECT, use_decimal=True)
-RANKINGS_OBJECT = Response(RANKINGS_OBJECT, status=200, mimetype='application/json')
-print('Cached Ranking Objects: t = {0}s'.format(time.time() - now))
+# RANKINGS_OBJECT = create_rankings_object(ALL_UMPIRE_NAMES, data_year_range)
+# RANKINGS_OBJECT = json.dumps(RANKINGS_OBJECT, use_decimal=True)
+# RANKINGS_OBJECT = Response(RANKINGS_OBJECT, status=200, mimetype='application/json')
+# print('Cached Ranking Objects: t = {0}s'.format(time.time() - now))
 
 # team_names = [name.replace('total_call_', '') for name in \
 #     team_stats_dataset.get(query_map = {'name':'Jordan Baker', 'data_year' : 2019}).keys() if \

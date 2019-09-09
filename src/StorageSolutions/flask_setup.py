@@ -61,4 +61,9 @@ team_parser.add_argument('team', type=str, help=
     ?name=BOS''')
 
 pitcher_parser = api.parser()
-pitcher_parser.add_argument('pitcher_name', type=str, help="pitcher fullname")
+pitcher_parser.add_argument('u', type=str, help=
+    '''umpire fullname
+    ?u=jordan baker''')
+pitcher_parser.add_argument('p', type=str, help=
+    '''pitcher fullname
+    ?p=andrew miller''')

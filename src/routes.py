@@ -43,14 +43,40 @@ class Charts(Resource):
         resp = Response(data, status=200, mimetype = 'application/json')
         return resp
 
+@api.route('/pitcher')
+class Pitcher(Resource):
+    """
+    Get statistics for every season a player has worked with a given umpire
 
-@api.route('/pitchers')
-class Pitchers(Resource):
+    Description
+    ----------
+    Give an umpire name and a pitcher name and retrieve a array of dicts where
+    each dict represents one seasonal statistic for that umpire pitcher pair.
+    To be used in conjunction with /get-pitchers endpoint
+    """
     @api.doc(parser = pitcher_parser)
-    @api.response(200, 'OK', pitcher_model)
     def get(self):
-        name = request.args.get('pitcher_name')
-        data = create_pitcher_object(name, data_year_range)
+        umpire_name = request.args.get('u')
+        pitcher_name = request.args.get('p')
+        data = create_pitcher_object(umpire_name, pitcher_name)
+        data = json.dumps(data, use_decimal = True)
+        resp = Response(data, status=200, mimetype='application/json')
+        return resp
+
+@api.route('/get-pitchers')
+class GetPitchers(Resource):
+    """
+    Will return a list of pitcher names
+
+    Description
+    ----------
+    Give an umpire name and get a list of pitchers that umpire has
+    worked with. Used in conjunction with /pitcher endpoint
+    """
+    @api.doc(parser = umpire_parser)
+    def get(self):
+        name = request.args.get('name')
+        data = get_pitcher_names(name)
         data = json.dumps(data, use_decimal = True)
         resp = Response(data, status=200, mimetype='application/json')
         return resp
@@ -98,14 +124,14 @@ class Umpire(Resource):
         return resp
 
 
-@api.route('/rankings')
-class Rankings(Resource):
-    @api.response(200, 'OK', rankings_api_object)
-    def get(self):
-        """
-        Returns a list of all umpire objects from every year in the rankings format
-        """ 
-        return RANKINGS_OBJECT
+# @api.route('/rankings')
+# class Rankings(Resource):
+#     @api.response(200, 'OK', rankings_api_object)
+#     def get(self):
+#         """
+#         Returns a list of all umpire objects from every year in the rankings format
+#         """ 
+#         return RANKINGS_OBJECT
 
 
 

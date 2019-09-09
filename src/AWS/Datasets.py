@@ -138,7 +138,11 @@ class Table():
         return data
 
     def query(self, **kwargs):
-        return self.dynamodb.query(**kwargs)
+        resp = self.dynamodb.query(**kwargs)
+        if 'Items' in resp:
+            return resp['Items']
+        else:
+            return []
         
     def upload(self, refined_filepath, backoff_init = 50, exp_backoff = False): 
         """
