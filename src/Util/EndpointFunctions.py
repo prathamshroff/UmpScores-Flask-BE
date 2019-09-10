@@ -230,33 +230,21 @@ def create_rankings_object(umpire_names, year_range):
 	for name in umpire_names:
 		subarr = []
 		parts = name.split()
-		for year in year_range:
-			career_resp = careers_season.get(
-				{
-					'name': name,
-					'data_year': year
-				},
-				AttributesToGet = ['name', 'games', 'total_call', 'bad_call_ratio']
-			)
-
-			# team_resp = team_stats_dataset.get(
-			# 	{
-			# 		'name': name,
-			# 		'data_year': year
-			# 	},
-			# 	AttributesToGet = ['number']
-			# )
-
+		# for year in year_range:
+		career_resp = careers_season.query(
+			KeyConditionExpression = Key('name').eq(name)
+		)
+		for resp in career_resp:
+			resp = {key: resp[key] for key in ['name', 'data_year', 'total_call', 'bad_call_ratio', 'games']}
 			if career_resp != {}:
-				columns_rename(career_resp, {
+				columns_rename(resp, {
 					'bad_call_ratio': 'icr',
 					'total_call': 'pitchesCalled',
-					'games': 'gamesUmped'
+					'games': 'gamesUmped',
+					'data_year': 'season'
 				})
-				career_resp.update({'season': year})
-				career_resp.update({'firstName': parts[0], 'lastName': parts[-1]})
-				# career_resp['number'] = team_resp['number']
-				subarr.append(career_resp)
+				resp.update({'firstName': parts[0], 'lastName': parts[-1]})
+				subarr.append(resp)
 		umpires.append(subarr)
 	return umpires
 
