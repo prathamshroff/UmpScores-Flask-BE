@@ -64,103 +64,103 @@ def create_chart_object(name, year_range):
 			'season': year
 		})
 		resp['heatMapSL'].append({
-			'data': [entry[elem] for elem in ['bad_call_SL_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_SL_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapFT'].append({
-			'data': [entry[elem] for elem in ['bad_call_FT_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_FT_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapCU'].append({
-			'data': [entry[elem] for elem in ['bad_call_CU_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_CU_{0}'.format(i) for i in \
 				range(1, 15)if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapFF'].append({
-			'data': [entry[elem] for elem in ['bad_call_FF_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_FF_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapSI'].append({
-			'data': [entry[elem] for elem in ['bad_call_SI_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_SI_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapCH'].append({
-			'data': [entry[elem] for elem in ['bad_call_CH_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_CH_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapFC'].append({
-			'data': [entry[elem] for elem in ['bad_call_FC_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_FC_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapEP'].append({
-			'data': [entry[elem] for elem in ['bad_call_EP_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_EP_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapKC'].append({
-			'data': [entry[elem] for elem in ['bad_call_KC_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_KC_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapFS'].append({
-			'data': [entry[elem] for elem in ['bad_call_FS_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_FS_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapPO'].append({
-			'data': [entry[elem] for elem in ['bad_call_PO_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_PO_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapKN'].append({
-			'data': [entry[elem] for elem in ['bad_call_KN_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_KN_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapSC'].append({
-			'data': [entry[elem] for elem in ['bad_call_SC_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_SC_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapFO'].append({
-			'data': [entry[elem] for elem in ['bad_call_FO_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_FO_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapUN'].append({
-			'data': [entry[elem] for elem in ['bad_call_UN_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_UN_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapFA'].append({
-			'data': [entry[elem] for elem in ['bad_call_FA_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_FA_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapIN'].append({
-			'data': [entry[elem] for elem in ['bad_call_IN_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_IN_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
