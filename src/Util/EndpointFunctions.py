@@ -355,14 +355,15 @@ def create_umpire_game_object(name):
 	)
 
 	game_ids = [int(item['game']) for item in resp]
-	for game in game_ids:
-		games_resp = games_dataset.get({'game': game}, 
-			AttributesToGet = ['hometeam','awayteam', 'date', 'bad_call_ratio', 'preference', 'BCR_SL', 
-				'BCR_FT', 'BCR_CU', 'BCR_FF', 'BCR_SI', 'BCR_CH', 'BCR_FC', 'BCR_EP', 
-				'BCR_KC', 'BCR_FS', 'BCR_KN', 'BCR_FO', 
-				'total_call', 'call_strike'
-			]
-		)
+	req = [{'game': game} for game in game_ids]
+	data = games_dataset.batch_get(req)
+	keys = ['hometeam','awayteam', 'date', 'bad_call_ratio', 'preference', 'BCR_SL', 
+		'BCR_FT', 'BCR_CU', 'BCR_FF', 'BCR_SI', 'BCR_CH', 'BCR_FC', 'BCR_EP', 
+		'BCR_KC', 'BCR_FS', 'BCR_KN', 'BCR_FO', 
+		'total_call', 'call_strike'
+	]
+	for games_resp in data:
+		games_resp = {key: games_resp[key] for key in keys}
 		if games_resp != {}:
 			columns_rename(games_resp, {
 				'BCR_SL': 'icrSL',

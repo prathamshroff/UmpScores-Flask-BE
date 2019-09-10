@@ -222,6 +222,13 @@ class Table():
 
         print('Dynamodb table for {0} refreshed'.format(self.__table_name))
 
+    def batch_get(self, keys):
+        return self.dynamodb.batch_get_item(RequestItems = {
+            self.__table_name: {
+                'Keys': keys
+            }
+        })
+
     def clear(self, primary_key, sort_key = None, backoff_init = 50, exp_backoff = False):
         """
         Completely deletes every item within this dynamodb table
