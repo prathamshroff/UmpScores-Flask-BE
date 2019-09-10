@@ -145,21 +145,86 @@ def create_chart_object(name, year_range):
 
 	return resp
 
+def get_event_lines(event_id):
+	resp = {}
+	# "http://xml.donbest.com/v2/odds/5/event_id" + event_id +"/?token=K_E_Oc-S6!F!Kypt"
+	xmlData = requests.get("http://xml.donbest.com/v2/odds/5/" + event_id +"/?token=K_E_Oc-S6!F!Kypt")
+	root = ET.fromstring(xmlData.text)
+	for line in root.iter("line"):
+		if (line.get("period") == "FG" and line.get("type") == "current"):
+			awayLine = line.find("money").get("away_money")
+			homeLine = line.find("money").get("home_money")
+			resp["awayLine"] = awayLine
+			resp["homeLine"] = homeLine
+			# awayLine & homeLine
+	# USE PERIOD = FG, WHICH MEANS FULL GAME
+	if (len(resp) > 0):
+		resp["status"] = 200
+	else:
+		resp["status"] = 404
+	return resp
+
+def get_team_abbreviation(team):
+	abbreviation_dict = {
+		"Arizona Diamondbacks":"ARI",
+		"Atlanta Braves": "ATL",
+		"Baltimore Orioles": "BAL",
+		"Boston Red Sox": "BOS",
+		"Chicago Cubs": "CHC",
+		# chicago white sox also use CHW but we use CWS
+		"Chicago White Sox": "CWS",
+		"Cincinnati Reds": "CIN",
+		"Cleveland Indians": "CLE",
+		"Colorado Rockies": "COL",
+		"Detroit Tigers": "DET",
+		"Miami Marlins": "FLA",
+		"Houston Astros": "HOU",
+		"Kansas City Royals": "KAN",
+		# also called Los Angeles Angels of Anaheim, might need to do something with that
+		"Los Angeles Angels": "LAA",
+		"Los Angeles Dodgers": "LAD",
+		"Milwaukee Brewers": "MIL",
+		"Minnesota Twins": "MIN",
+		"New York Mets": "NYM",
+		"New York Yankees": "NYY",
+		"Oakland Athletics": "OAK",
+		"Philadelphia Phillies": "PHI",
+		"Pittsburgh Pirates": "PIT",
+		"San Diego Padres": "SD",
+		"San Francisco Giants": "SF",
+		"Seattle Mariners": "SEA",
+		"St. Louis Cardinals": "STL",
+		"Tampa Bay Rays": "TB",
+		"Texas Rangers": "TEX",
+		"Toronto Blue Jays": "TOR",
+		"Washington Nationals": "WAS"
+	}
+	if (len(team) > 3):
+		try:
+			abbreviated = abbreviation_dict[team]
+		except Exception as e:
+			return e
+	return abbreviated
+
 def get_game_values(event):
 	resp = {}
-	event_id = event.get("id")
+	event_lines = get_event_lines(event.get("id"))
+	if (event_lines["status"] == 200):
+		resp["awayLine"] = event_lines["awayLine"]
+		resp["homeLine"] = event_lines["homeLine"]
 	# now we can query the money lines in a new function
 	for participant in event.iter("participant"):
 		# get side + team
 		side = participant.get("side").lower()
-		team = participant.find("team").get("name")
+		team = get_team_abbreviation(participant.find("team").get("name"))
 		resp[side + "Team"] = team
 		# need to run the "value" part of this through a dictionary to get the right team abbreviations
 		# get pitcher name + arm
-		pitcher = participant.find("pitcher").get("full_name")
+		pitcher = participant.find("pitcher").text.title()
 		resp[side + "PitcherName"] = pitcher
-	print(resp)
-	return ["sweet"]
+		pitcherArm = participant.find("pitcher").get("hand")[0]
+		resp[side + "PitcherArm"] = pitcherArm
+	return resp
 '''
 <event id="970233" season="REGULAR" date="2019-09-09T23:05:00+0" name="Atlanta Braves vs Philadelphia Phillies">
 	<event_type>team_event</event_type>
@@ -190,6 +255,8 @@ def get_game_values(event):
 		'''
 
 def get_all_games():
+	resp = {}
+	games = []
 	xmlData = requests.get("http://xml.donbest.com/v2/schedule/?token=K_E_Oc-S6!F!Kypt")
 	# content_dict = xmltodict.parse(xmlData.text)
 	root = ET.fromstring(xmlData.text)
@@ -207,7 +274,8 @@ def get_all_games():
 						# found today's events
 						# should pass to another function so this one isn't so massive
 						event_info = get_game_values(event)
-	resp = ["success"]
+						games.append(event_info)
+	resp["games"] = games
 	return resp
 
 def create_pitcher_object(name, year_range):
