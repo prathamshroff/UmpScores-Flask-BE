@@ -11,7 +11,7 @@ def create_chart_object(name, year_range):
 	name = ' '.join([word.capitalize() for word in name.lower().split()])
 	filterExpression = Key('name').eq(name)
 	data = umpire_zones.query(KeyConditionExpression = filterExpression)
-
+	months = ['January', 'February']
 	resp = {
 		'heatMap': [],
 	    'heatMapSL': [],
@@ -30,12 +30,34 @@ def create_chart_object(name, year_range):
 	    'heatMapFO': [],
 	    'heatMapUN': [],
 	    'heatMapFA': [],
-	    'heatMapIN': []
+	    'heatMapIN': [],
+	    'allUmpsBcrOverCareer': []
 	}
+	range_resp = careers_range.get({'name':name})
+	resp['bcrOverCareer'] = [{'x': year, 'y': range_resp['BCR_{0}'.format(year)]} for year in \
+		year_range if 'BCR_{0}'.format(year) in range_resp]
+
+	resp['seasonalBcrByMonth'] = []
+	month_resp = profile_month_table.query(KeyConditionExpression = Key('name').eq(name))
+	for year_data in month_resp:
+		season = year_data['season']
+
+
+		months = [month.replace('bcr_{0}_'.format(season), '') for \
+			month in year_data if month.startswith('bcr_{0}_'.format(season))]
+
+		resp['seasonalBcrByMonth'].append({
+			'season': season, 
+			'data': [{'x': month, 'y': year_data['bcr_{0}_{1}'.format(season, month)]} for month in months]
+		})
+
+		resp['allUmpsBcrOverCareer'].append({'x': season, 'y': year_data['bcr_{0}'.format(season)]})
+
 	for entry in data:
 		year = entry['season']
 		careers_season_resp = careers_season.get({'name': name, 'data_year': year},
 			AttributesToGet = ['BCR_z{0}'.format(i) for i in range(1, 15)])
+
 
 		resp['heatMap'].append({
 			'data': [careers_season_resp['BCR_z{0}'.format(i)] for i in range(1,15) if i != 10],
