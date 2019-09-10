@@ -2,6 +2,11 @@
 # TODO uncomment /get-games
 from boto3.dynamodb.conditions import Key, Attr
 from StorageSolutions.tables import *
+# importing libraries for /games endpoint
+import requests
+import xml.etree.ElementTree as ET
+import datetime
+
 def create_chart_object(name, year_range):
 	name = ' '.join([word.capitalize() for word in name.lower().split()])
 	filterExpression = Key('name').eq(name)
@@ -140,6 +145,70 @@ def create_chart_object(name, year_range):
 
 	return resp
 
+def get_game_values(event):
+	resp = {}
+	event_id = event.get("id")
+	# now we can query the money lines in a new function
+	for participant in event.iter("participant"):
+		# get side + team
+		side = participant.get("side").lower()
+		team = participant.find("team").get("name")
+		resp[side + "Team"] = team
+		# need to run the "value" part of this through a dictionary to get the right team abbreviations
+		# get pitcher name + arm
+		pitcher = participant.find("pitcher").get("full_name")
+		resp[side + "PitcherName"] = pitcher
+	print(resp)
+	return ["sweet"]
+'''
+<event id="970233" season="REGULAR" date="2019-09-09T23:05:00+0" name="Atlanta Braves vs Philadelphia Phillies">
+	<event_type>team_event</event_type>
+	<event_state>PENDING</event_state>
+	<event_state_id>0</event_state_id>
+	<time_changed>false</time_changed>
+	<neutral>false</neutral>
+	<game_number>1</game_number>
+	<location name="Citizens B Park" id="8" link="/v2/location/8"/>
+	<participant rot="951" side="AWAY">
+		<team id="1288" name="Atlanta Braves" link="/v2/team/1288"/>
+		<pitcherChanged>false</pitcherChanged>
+		<pitcher hand="RIGHT" id="341549" full_name="Mike Foltynewicz">M FOLTYNEWICZ</pitcher>
+	</participant>
+	<participant rot="952" side="HOME">
+		<team id="1290" name="Philadelphia Phillies" link="/v2/team/1290"/>
+		<pitcherChanged>false</pitcherChanged>
+		<pitcher hand="RIGHT" id="343344" full_name="Aaron Nola">A NOLA</pitcher>
+	</participant>
+	<live>true</live>
+	<lines>
+		<current link="/v2/odds/5/970233"/>
+		<opening link="/v2/open/5/970233"/>
+	</lines>
+	<score link="/v2/score/970233"/>
+	<pitcher_changed>false</pitcher_changed>
+</event>
+		'''
+
+def get_all_games():
+	xmlData = requests.get("http://xml.donbest.com/v2/schedule/?token=K_E_Oc-S6!F!Kypt")
+	# content_dict = xmltodict.parse(xmlData.text)
+	root = ET.fromstring(xmlData.text)
+	for league in root.iter("league"):
+		if (league.get("name") == "Major League Baseball"):
+			for event in league.iter("event"):
+				event_type = event.findall("event_type")[0].text
+				if (event_type == "team_event"):
+					# print("EVENT DATE: ", event.get("date"))
+					dateObject = event.get("date").split("T")
+					date = datetime.datetime.strptime(dateObject[0],"%Y-%m-%d").date()
+					today = datetime.date.today()
+					# need to compare date to today
+					if (today == date):
+						# found today's events
+						# should pass to another function so this one isn't so massive
+						event_info = get_game_values(event)
+	resp = ["success"]
+	return resp
 
 def create_pitcher_object(name, year_range):
 	name = ' '.join([word.capitalize() for word in name.lower().split()])
