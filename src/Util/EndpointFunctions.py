@@ -363,9 +363,7 @@ def get_all_games():
 						count += 1
 						# pass event object for further parsing
 						event_info = get_game_values(ump_table, event)
-						print(event_info)
 						games.append(event_info)
-	print(count)
 	resp["games"] = games
 	return resp
 
