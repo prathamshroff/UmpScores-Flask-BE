@@ -219,16 +219,26 @@ def get_umpires_for_games():
 	headerArray = []
 	for header in headerObject:
 		headerArray.append(header.text)
-	
+	ump_games = {}
+	current_key = "trash"
 	for item in cells:
-		print("CELL ITEM: ", item.text.strip())
 		#regex pattern: [A-Z][A-Z][A-Z].at.[A-Z][A-Z][A-Z]
-		print(re.match("[A-Z][A-Z][A-Z].at.[A-Z][A-Z][A-Z]", item.text.strip()))
-		# make a dictionary with the team names as keys, storing the last used key until a new one is found and then replacing it
+		# key is a match, change new key
+		if (re.match("[A-Z][A-Z][A-Z].at.[A-Z][A-Z][A-Z]", item.text.strip())):
+			current_key = item.text.strip()
+			
+		# no new key, check if key exists
+		else:
+			if (current_key in ump_games):
+				ump_games[current_key].append(item.text.strip())
+			else:
+				ump_games[current_key] = [item.text.strip()]
+	# empty out the trash key
+	ump_games["trash"] = ""
+	# make a dictionary with the team names as keys, storing the last used key until a new one is found and then replacing it
+	return ump_games
 
-	return ["success"]
-
-def get_game_values(event):
+def get_game_values(ump_table, event):
 	resp = {}
 	event_lines = get_event_lines(event.get("id"))
 	if (event_lines["status"] == 200):
@@ -247,6 +257,29 @@ def get_game_values(event):
 		pitcherArm = participant.find("pitcher").get("hand")[0]
 		resp[side + "PitcherArm"] = pitcherArm
 	# get_umpire_for_game(resp["awayTeam"], resp["homeTeam"])
+	location = event.find("location").get("name")
+	resp["location"] = location
+	found = 0
+	for key in ump_table.keys():
+		if (resp["awayTeam"] in key and resp["homeTeam"] in key):
+			# grab the umpire value in ump_table
+			resp["umpireName"] = ump_table[key][1]
+			found = 1
+
+	swaps = {"CWS":"CHW", "CHW":"CWS", "TB":"TAM", "TAM":"TB", "FLA":"MIA", "MIA":"FLA"}
+	# means there might be mismatched team abbreviations
+	if (found == 0):
+		if (resp["awayTeam"] in swaps):
+			for key in ump_table.keys():
+				if (swaps[resp["awayTeam"]] in key and resp["homeTeam"] in key):
+					# grab the umpire value in ump_table
+					resp["umpireName"] = ump_table[key][1]
+		if(resp["homeTeam"] in swaps):
+			# MODIFY HOME TEAM
+			for key in ump_table.keys():
+				if (resp["awayTeam"] in key and swaps[resp["homeTeam"]] in key):
+					# grab the umpire value in ump_table
+					resp["umpireName"] = ump_table[key][1]
 	return resp
 '''
 <event id="970233" season="REGULAR" date="2019-09-09T23:05:00+0" name="Atlanta Braves vs Philadelphia Phillies">
@@ -280,8 +313,9 @@ def get_game_values(event):
 def get_all_games():
 	resp = {}
 	games = []
+	# storing this to pass to get_game_values so I can get the right data back
+	ump_table = get_umpires_for_games()
 	xmlData = requests.get("http://xml.donbest.com/v2/schedule/?token=K_E_Oc-S6!F!Kypt")
-	# content_dict = xmltodict.parse(xmlData.text)
 	root = ET.fromstring(xmlData.text)
 	count = 0
 	for league in root.iter("league"):
@@ -289,27 +323,24 @@ def get_all_games():
 			for event in league.iter("event"):
 				event_type = event.findall("event_type")[0].text
 				if (event_type == "team_event"):
-					# print("EVENT DATE: ", event.get("date"))
 					test = event.get("date")
 					testDate = parser.parse(test)
 					corrected = testDate - timedelta(hours=4, minutes=0)
 					dateReal = corrected.strftime("%Y-%m-%d")
 					dateRealObject = datetime.strptime(dateReal, "%Y-%m-%d").date()
-					# need to subtract four from date object
+					# subtract four from date object to correct for UTC time
 					dateObject = event.get("date").split("T")
 					date = datetime.strptime(dateObject[0],"%Y-%m-%d").date()
 					today = date.today()
-					# need to compare date to today
-					# need to have dateReal as a date object
-					# print(type(dateFuck), type(today))
+					# compare date to today
 					if (today == dateRealObject):
 						count += 1
-						# found today's events
-						# should pass to another function so this one isn't so massive
-						event_info = get_game_values(event)
+						# pass event object for further parsing
+						event_info = get_game_values(ump_table, event)
+						print(event_info)
 						games.append(event_info)
+	print(count)
 	resp["games"] = games
-	ump_table = get_umpires_for_games()
 	return resp
 
 def create_pitcher_object(name, year_range):
