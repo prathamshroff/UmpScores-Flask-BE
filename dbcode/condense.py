@@ -43,7 +43,23 @@ s3_client = boto3.client('s3', aws_access_key_id = iam['key'],
 pitcher_stats = Table(iam, 'refrating-pitcher-stats')
 umpire_pitchers = Table(iam, 'refrating-umpire-pitchers')
 umpire_zones = Table(iam, 'refrating-pitcher-zone')
+profile_month_table = Table(iam, 'refrating-profile-month')
 
+
+def upload_profile_best_worst_months():
+	root = 'output-data/Profile/best-worst month'
+	files = [os.path.join(root, file) for file in os.listdir(root)]
+	profile_month_table.clear('name', sort_key = 'season')
+	for file in files:
+		df = pd.read_csv(file)
+		if 'ump' in df.columns:
+			df.rename(columns = {'ump': 'name'}, inplace = True)
+		if 'season' not in df.columns:
+			df['season'] = len(df) * [file.split('.')[0].split('_')[-1]]
+		if 'Unnamed: 0' in df.columns:
+			df = df.drop(columns = ['Unnamed: 0'])
+		df.to_csv(file)
+		profile_month_table.upload(file)
 
 def upload_zone_data():
 	root = 'output-data/Career/pitch+zone'
@@ -542,6 +558,7 @@ def refresh_all_aws_resources():
 		'output-data/Game-Stats'
 	]
 	stamp = time.time()
+	upload_profile_best_worst_months()
 	upload_zone_data()
 	# upload_umpire_pitchers()
 	# upload_pitcher_stats()

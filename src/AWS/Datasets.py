@@ -138,7 +138,11 @@ class Table():
         return data
 
     def query(self, **kwargs):
-        return self.dynamodb.query(**kwargs)
+        resp = self.dynamodb.query(**kwargs)
+        if 'Items' in resp:
+            return resp['Items']
+        else:
+            return []
         
     def upload(self, refined_filepath, backoff_init = 50, exp_backoff = False): 
         """
@@ -217,6 +221,49 @@ class Table():
 
 
         print('Dynamodb table for {0} refreshed'.format(self.__table_name))
+
+    @staticmethod
+    def unfoil(arr):
+        """
+        Removes 'S' and 'N' fields from AWS responses
+        """
+        for hashmap in arr:
+            for key in hashmap:
+                data_type = list(hashmap[key].keys())[0]
+                hashmap[key] = hashmap[key][data_type]
+        return arr
+
+    def batch_get(self, keys, batch_size = 100):
+        """
+        Gathers multiple key value pairs from this table. Upon throughput throttling,
+        retries request. 
+        """
+        if keys == []:
+            return []
+
+        data = []
+        workers = []
+        i = 0
+
+        while i < len(keys):
+            new_i = i + batch_size
+            workers.append(keys[i:new_i])
+            i = new_i
+
+        remaining_keys = []
+
+        for batch in workers:
+            page = self.client.batch_get_item(RequestItems = {
+                self.__table_name: {
+                    'Keys': batch
+                }
+            })
+            if 'Responses' in page:
+                data += Table.unfoil(page['Responses'][self.__table_name])
+            if page['UnprocessedKeys'] != {}:
+                print('Found UnprocessedKeys in {0}'.format(self.__table_name))
+                remaining_keys += Table.unfoil(page['UnprocessedKeys'][self.__table_name]['Keys'])
+        return data + self.batch_get(remaining_keys, batch_size = batch_size)
 
     def clear(self, primary_key, sort_key = None, backoff_init = 50, exp_backoff = False):
         """
