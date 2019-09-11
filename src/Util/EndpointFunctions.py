@@ -9,12 +9,16 @@ from datetime import datetime, timedelta
 from dateutil import parser
 from bs4 import BeautifulSoup
 import re
+TEAM_NAMES = [name.replace('total_call_', '') for name in \
+    team_stats_dataset.get(query_map = {'name':'Jordan Baker', 'data_year' : 2019}).keys() if \
+    name.startswith('total_call_')]
+TEAM_NAMES = [name for name in TEAM_NAMES if '_' not in name]
 
 def create_chart_object(name, year_range):
 	name = ' '.join([word.capitalize() for word in name.lower().split()])
 	filterExpression = Key('name').eq(name)
-	data = umpire_zones.query(KeyConditionExpression = filterExpression)['Items']
-
+	data = umpire_zones.query(KeyConditionExpression = filterExpression)
+	months = ['January', 'February']
 	resp = {
 		'heatMap': [],
 	    'heatMapSL': [],
@@ -33,115 +37,137 @@ def create_chart_object(name, year_range):
 	    'heatMapFO': [],
 	    'heatMapUN': [],
 	    'heatMapFA': [],
-	    'heatMapIN': []
+	    'heatMapIN': [],
+	    'allUmpsBcrOverCareer': []
 	}
+	range_resp = careers_range.get({'name':name})
+	resp['bcrOverCareer'] = [{'x': year, 'y': range_resp['BCR_{0}'.format(year)]} for year in \
+		year_range if 'BCR_{0}'.format(year) in range_resp]
+
+	resp['seasonalBcrByMonth'] = []
+	month_resp = profile_month_table.query(KeyConditionExpression = Key('name').eq(name))
+	for year_data in month_resp:
+		season = year_data['season']
+
+
+		months = [month.replace('bcr_{0}_'.format(season), '') for \
+			month in year_data if month.startswith('bcr_{0}_'.format(season))]
+
+		resp['seasonalBcrByMonth'].append({
+			'season': season, 
+			'data': [{'x': month, 'y': year_data['bcr_{0}_{1}'.format(season, month)]} for month in months]
+		})
+
+		resp['allUmpsBcrOverCareer'].append({'x': season, 'y': year_data['bcr_{0}'.format(season)]})
+
 	for entry in data:
 		year = entry['season']
 		careers_season_resp = careers_season.get({'name': name, 'data_year': year},
 			AttributesToGet = ['BCR_z{0}'.format(i) for i in range(1, 15)])
+
 
 		resp['heatMap'].append({
 			'data': [careers_season_resp['BCR_z{0}'.format(i)] for i in range(1,15) if i != 10],
 			'season': year
 		})
 		resp['heatMapSL'].append({
-			'data': [entry[elem] for elem in ['bad_call_SL_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_SL_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapFT'].append({
-			'data': [entry[elem] for elem in ['bad_call_FT_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_FT_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapCU'].append({
-			'data': [entry[elem] for elem in ['bad_call_CU_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_CU_{0}'.format(i) for i in \
 				range(1, 15)if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapFF'].append({
-			'data': [entry[elem] for elem in ['bad_call_FF_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_FF_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapSI'].append({
-			'data': [entry[elem] for elem in ['bad_call_SI_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_SI_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapCH'].append({
-			'data': [entry[elem] for elem in ['bad_call_CH_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_CH_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapFC'].append({
-			'data': [entry[elem] for elem in ['bad_call_FC_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_FC_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapEP'].append({
-			'data': [entry[elem] for elem in ['bad_call_EP_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_EP_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapKC'].append({
-			'data': [entry[elem] for elem in ['bad_call_KC_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_KC_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapFS'].append({
-			'data': [entry[elem] for elem in ['bad_call_FS_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_FS_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapPO'].append({
-			'data': [entry[elem] for elem in ['bad_call_PO_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_PO_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapKN'].append({
-			'data': [entry[elem] for elem in ['bad_call_KN_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_KN_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapSC'].append({
-			'data': [entry[elem] for elem in ['bad_call_SC_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_SC_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapFO'].append({
-			'data': [entry[elem] for elem in ['bad_call_FO_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_FO_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapUN'].append({
-			'data': [entry[elem] for elem in ['bad_call_UN_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_UN_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapFA'].append({
-			'data': [entry[elem] for elem in ['bad_call_FA_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_FA_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapIN'].append({
-			'data': [entry[elem] for elem in ['bad_call_IN_{0}'.format(i) for i in \
+			'data': [entry[elem] for elem in ['BCR_IN_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
@@ -312,17 +338,33 @@ def get_all_games():
 	ump_table = get_umpires_for_games()
 	return resp
 
-def create_pitcher_object(name, year_range):
-	name = ' '.join([word.capitalize() for word in name.lower().split()])
-	filterExpression = Key('name').eq(name)
 
+def get_pitcher_names(name):
+	name = ' '.join([word.capitalize() for word in name.lower().split()])
+	names = set()
+	resp = umpire_pitchers.query(KeyConditionExpression = Key('name').eq(name))
+	for page in resp:
+		pitchers = page.keys()
+		subnames = [name.replace('total_call_', '').replace('.', ' ') for name in pitchers if \
+			name.startswith('total_call_')]
+		names = names.union(subnames)
+	return list(names)
+
+
+def create_pitcher_object(umpire_name, pitcher_name):
+	pitcher_name = ' '.join([word.capitalize() for word in pitcher_name.lower().split()])
+	umpire_name = ' '.join([word.capitalize() for word in umpire_name.lower().split()])
+
+	print(pitcher_name, umpire_name)
 	data = pitcher_stats.query(
-		KeyConditionExpression = filterExpression
-	)['Items']
+		KeyConditionExpression = Key('name').eq(pitcher_name)
+	)
 	resp = []
-	data = {int(pitcher['season']): pitcher for pitcher in data}
-	for season in data:
-		pitcher = data[season]
+	for pitcher in data:
+		obj = {}
+		# if pitcher['season'] != 2010 and pitcher['season'] - 1 in data:
+		# 	obj['seasonChangeIcr'] = data[season - 1]['BCR']
+
 		obj = {
 			'season': pitcher['season'], 
 			'name': pitcher['name'],
@@ -349,8 +391,6 @@ def create_pitcher_object(name, year_range):
 			'strikesCalled': pitcher['call_strike'],
 			'blindSpot': pitcher['blindspot_pitch']
 		}
-		if season != 2010 and season - 1 in data:
-			obj['seasonChangeIcr'] = data[season - 1]['BCR']
 		resp.append(obj)
 	return resp
 
@@ -360,33 +400,25 @@ def columns_rename(d, columns_map):
 
 def create_rankings_object(umpire_names, year_range):
 	umpires = []
-	for year in year_range:
-		for name in umpire_names:
-			career_resp = careers_season.get(
-				{
-					'name': name,
-					'data_year': year
-				},
-				AttributesToGet = ['name', 'games', 'total_call', 'bad_call_ratio']
-			)
-
-			# team_resp = team_stats_dataset.get(
-			# 	{
-			# 		'name': name,
-			# 		'data_year': year
-			# 	},
-			# 	AttributesToGet = ['number']
-			# )
-
+	for name in umpire_names:
+		subarr = []
+		parts = name.split()
+		# for year in year_range:
+		career_resp = careers_season.query(
+			KeyConditionExpression = Key('name').eq(name)
+		)
+		for resp in career_resp:
+			resp = {key: resp[key] for key in ['name', 'data_year', 'total_call', 'bad_call_ratio', 'games']}
 			if career_resp != {}:
-				columns_rename(career_resp, {
+				columns_rename(resp, {
 					'bad_call_ratio': 'icr',
 					'total_call': 'pitchesCalled',
-					'games': 'gamesUmped'
+					'games': 'gamesUmped',
+					'data_year': 'season'
 				})
-				career_resp.update({'season': year})
-				# career_resp['number'] = team_resp['number']
-				umpires.append(career_resp)
+				resp.update({'firstName': parts[0], 'lastName': parts[-1]})
+				subarr.append(resp)
+		umpires.append(subarr)
 	return umpires
 
 def create_umpire_object(name, year_range):
@@ -421,7 +453,7 @@ def create_umpire_object(name, year_range):
 			'name': name,
 			'data_year': year
 		},
-		AttributesToGet = ['crew', 'status', 'crew_chief']
+		AttributesToGet = ['crew number', 'status', 'crew_chief']
 	)
 	if career_seasonal_resp != {} and crew_resp != {} and range_table != {}:
 		data = career_seasonal_resp
@@ -434,7 +466,7 @@ def create_umpire_object(name, year_range):
 		})
 		columns_rename(data, {
 			'BCR_{0}'.format(year): 'icr',
-			'crew': 'crewNumber',
+			'crew number': 'crewNumber',
 			'crew_chief': 'isCrewChief',
 			'total_call': 'pitchesCalled',
 			'games': 'gamesUmped'
@@ -493,17 +525,18 @@ def create_umpire_game_object(name):
 	filterExpression = Key('name').eq(name)
 	resp = ump_game_lookup.query(
 		KeyConditionExpression = filterExpression
-	)['Items']
+	)
 
-	game_ids = [int(item['game']) for item in resp]
-	for game in game_ids:
-		games_resp = games_dataset.get({'game': game}, 
-			AttributesToGet = ['hometeam','awayteam', 'date', 'bad_call_ratio', 'preference', 'BCR_SL', 
-				'BCR_FT', 'BCR_CU', 'BCR_FF', 'BCR_SI', 'BCR_CH', 'BCR_FC', 'BCR_EP', 
-				'BCR_KC', 'BCR_FS', 'BCR_KN', 'BCR_FO', 
-				'total_call', 'call_strike'
-			]
-		)
+	game_ids = [str(item['game']) for item in resp]
+	req = [{'game': {'N': game}} for game in game_ids]
+	data = games_dataset.batch_get(req)
+	keys = ['hometeam','awayteam', 'date', 'bad_call_ratio', 'preference', 'BCR_SL', 
+		'BCR_FT', 'BCR_CU', 'BCR_FF', 'BCR_SI', 'BCR_CH', 'BCR_FC', 'BCR_EP', 
+		'BCR_KC', 'BCR_FS', 'BCR_KN', 'BCR_FO', 
+		'total_call', 'call_strike'
+	]
+	for games_resp in data:
+		games_resp = {key: games_resp[key] for key in keys}
 		if games_resp != {}:
 			columns_rename(games_resp, {
 				'BCR_SL': 'icrSL',
@@ -534,30 +567,34 @@ def create_umpire_game_object(name):
 	return umpire_games
 
 
-def create_team_object(name, team, data_range):
+def create_team_object(name, data_range):
 	data = []
 	name = ' '.join([word.capitalize() for word in name.lower().split()])
-	for year in data_range:
-		resp = team_stats_dataset.get({'name': name, 'data_year': year})
+	# TEAM_NAMES
+	print(TEAM_NAMES)
+	keys = [{'name': {'S': name}, 'data_year': {'N': str(year)}} for year in data_range]
+	response = team_stats_dataset.batch_get(keys)
+	for resp in response:
+		year = int(resp['data_year'])
 		if resp != {}:
 			keys = list(resp.keys())
 
 			# Spaghetti line of code
 			prev = team_stats_dataset.get({'name':name, 'data_year': year-1})
-
-			team_stats = {
-				'team': team,
-				'season': year,
-				'pitchesCalled': resp['total_call_{0}'.format(team)],
-				'ballsCalled': resp['call_ball_{0}'.format(team)],
-				'strikesCalled': resp['call_strike_{0}'.format(team)],
-				'bcr': resp['BCR_{0}'.format(team)],
-				'seasonChangeBcr': prev['BCR_{0}'.format(team)] if prev != {} else -1
-			}
-			columns_rename(team_stats, {
-				'bcr': 'icr',
-				'seasonChangeBcr': 'seasonChangeIcr'
-			})
-			data.append(team_stats)
+			for team in TEAM_NAMES:
+				team_stats = {
+					'team': team,
+					'season': year,
+					'pitchesCalled': resp['total_call_{0}'.format(team)],
+					'ballsCalled': resp['call_ball_{0}'.format(team)],
+					'strikesCalled': resp['call_strike_{0}'.format(team)],
+					'bcr': resp['BCR_{0}'.format(team)],
+					'seasonChangeBcr': prev['BCR_{0}'.format(team)] if prev != {} else -1
+				}
+				columns_rename(team_stats, {
+					'bcr': 'icr',
+					'seasonChangeBcr': 'seasonChangeIcr'
+				})
+				data.append(team_stats)
 	return data
 
