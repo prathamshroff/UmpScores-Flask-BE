@@ -155,7 +155,7 @@ class QuerySearch(Resource):
 @api.route('/games')
 class GetTodaysGames(Resource):
     def get(self):
-        games = get_all_games()
+        games = json.dumps(get_all_games())
         resp = Response(games, status=200, mimetype='application/json')
         return resp
 
