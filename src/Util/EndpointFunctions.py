@@ -5,7 +5,10 @@ from StorageSolutions.tables import *
 # importing libraries for /games endpoint
 import requests
 import xml.etree.ElementTree as ET
-import datetime
+from datetime import datetime, timedelta
+from dateutil import parser
+from bs4 import BeautifulSoup
+import re
 
 def create_chart_object(name, year_range):
 	name = ' '.join([word.capitalize() for word in name.lower().split()])
@@ -206,6 +209,25 @@ def get_team_abbreviation(team):
 			return e
 	return abbreviated
 
+def get_umpires_for_games():
+	page = requests.get("https://www.statfox.com/mlb/umpiremain.asp")
+	soup = BeautifulSoup(page.text)
+	tables = soup.findAll("table")
+	# print(tables[2])
+	cells = tables[2].findAll("td")
+	headerObject = tables[2].findAll("th", { "class" : "header1" })
+	headerArray = []
+	for header in headerObject:
+		headerArray.append(header.text)
+	
+	for item in cells:
+		print("CELL ITEM: ", item.text.strip())
+		#regex pattern: [A-Z][A-Z][A-Z].at.[A-Z][A-Z][A-Z]
+		print(re.match("[A-Z][A-Z][A-Z].at.[A-Z][A-Z][A-Z]", item.text.strip()))
+		# make a dictionary with the team names as keys, storing the last used key until a new one is found and then replacing it
+
+	return ["success"]
+
 def get_game_values(event):
 	resp = {}
 	event_lines = get_event_lines(event.get("id"))
@@ -224,6 +246,7 @@ def get_game_values(event):
 		resp[side + "PitcherName"] = pitcher
 		pitcherArm = participant.find("pitcher").get("hand")[0]
 		resp[side + "PitcherArm"] = pitcherArm
+	# get_umpire_for_game(resp["awayTeam"], resp["homeTeam"])
 	return resp
 '''
 <event id="970233" season="REGULAR" date="2019-09-09T23:05:00+0" name="Atlanta Braves vs Philadelphia Phillies">
@@ -260,22 +283,33 @@ def get_all_games():
 	xmlData = requests.get("http://xml.donbest.com/v2/schedule/?token=K_E_Oc-S6!F!Kypt")
 	# content_dict = xmltodict.parse(xmlData.text)
 	root = ET.fromstring(xmlData.text)
+	count = 0
 	for league in root.iter("league"):
 		if (league.get("name") == "Major League Baseball"):
 			for event in league.iter("event"):
 				event_type = event.findall("event_type")[0].text
 				if (event_type == "team_event"):
 					# print("EVENT DATE: ", event.get("date"))
+					test = event.get("date")
+					testDate = parser.parse(test)
+					corrected = testDate - timedelta(hours=4, minutes=0)
+					dateReal = corrected.strftime("%Y-%m-%d")
+					dateRealObject = datetime.strptime(dateReal, "%Y-%m-%d").date()
+					# need to subtract four from date object
 					dateObject = event.get("date").split("T")
-					date = datetime.datetime.strptime(dateObject[0],"%Y-%m-%d").date()
-					today = datetime.date.today()
+					date = datetime.strptime(dateObject[0],"%Y-%m-%d").date()
+					today = date.today()
 					# need to compare date to today
-					if (today == date):
+					# need to have dateReal as a date object
+					# print(type(dateFuck), type(today))
+					if (today == dateRealObject):
+						count += 1
 						# found today's events
 						# should pass to another function so this one isn't so massive
 						event_info = get_game_values(event)
 						games.append(event_info)
 	resp["games"] = games
+	ump_table = get_umpires_for_games()
 	return resp
 
 def create_pitcher_object(name, year_range):
