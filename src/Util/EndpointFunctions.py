@@ -2,6 +2,13 @@
 # TODO uncomment /get-games
 from boto3.dynamodb.conditions import Key, Attr
 from StorageSolutions.tables import *
+# importing libraries for /games endpoint
+import requests
+import xml.etree.ElementTree as ET
+from datetime import datetime, timedelta
+from dateutil import parser
+from bs4 import BeautifulSoup
+import re
 TEAM_NAMES = [name.replace('total_call_', '') for name in \
     team_stats_dataset.get(query_map = {'name':'Jordan Baker', 'data_year' : 2019}).keys() if \
     name.startswith('total_call_')]
@@ -167,6 +174,171 @@ def create_chart_object(name, year_range):
 
 	return resp
 
+def get_event_lines(event_id):
+	resp = {}
+	# "http://xml.donbest.com/v2/odds/5/event_id" + event_id +"/?token=K_E_Oc-S6!F!Kypt"
+	xmlData = requests.get("http://xml.donbest.com/v2/odds/5/" + event_id +"/?token=K_E_Oc-S6!F!Kypt")
+	root = ET.fromstring(xmlData.text)
+	for line in root.iter("line"):
+		if (line.get("period") == "FG" and line.get("type") == "current"):
+			awayLine = line.find("money").get("away_money")
+			homeLine = line.find("money").get("home_money")
+			resp["awayLine"] = awayLine
+			resp["homeLine"] = homeLine
+			# awayLine & homeLine
+	# USE PERIOD = FG, WHICH MEANS FULL GAME
+	if (len(resp) > 0):
+		resp["status"] = 200
+	else:
+		resp["status"] = 404
+	return resp
+
+def get_team_abbreviation(team):
+	abbreviation_dict = {
+		"Arizona Diamondbacks":"ARI",
+		"Atlanta Braves": "ATL",
+		"Baltimore Orioles": "BAL",
+		"Boston Red Sox": "BOS",
+		"Chicago Cubs": "CHC",
+		# chicago white sox also use CHW but we use CWS
+		"Chicago White Sox": "CWS",
+		"Cincinnati Reds": "CIN",
+		"Cleveland Indians": "CLE",
+		"Colorado Rockies": "COL",
+		"Detroit Tigers": "DET",
+		"Miami Marlins": "FLA",
+		"Houston Astros": "HOU",
+		"Kansas City Royals": "KAN",
+		# also called Los Angeles Angels of Anaheim, might need to do something with that
+		"Los Angeles Angels": "LAA",
+		"Los Angeles Dodgers": "LAD",
+		"Milwaukee Brewers": "MIL",
+		"Minnesota Twins": "MIN",
+		"New York Mets": "NYM",
+		"New York Yankees": "NYY",
+		"Oakland Athletics": "OAK",
+		"Philadelphia Phillies": "PHI",
+		"Pittsburgh Pirates": "PIT",
+		"San Diego Padres": "SD",
+		"San Francisco Giants": "SF",
+		"Seattle Mariners": "SEA",
+		"St. Louis Cardinals": "STL",
+		"Tampa Bay Rays": "TB",
+		"Texas Rangers": "TEX",
+		"Toronto Blue Jays": "TOR",
+		"Washington Nationals": "WAS"
+	}
+	if (len(team) > 3):
+		try:
+			abbreviated = abbreviation_dict[team]
+		except Exception as e:
+			return e
+	return abbreviated
+
+def get_umpires_for_games():
+	page = requests.get("https://www.statfox.com/mlb/umpiremain.asp")
+	soup = BeautifulSoup(page.text)
+	tables = soup.findAll("table")
+	# print(tables[2])
+	cells = tables[2].findAll("td")
+	headerObject = tables[2].findAll("th", { "class" : "header1" })
+	headerArray = []
+	for header in headerObject:
+		headerArray.append(header.text)
+	
+	for item in cells:
+		print("CELL ITEM: ", item.text.strip())
+		#regex pattern: [A-Z][A-Z][A-Z].at.[A-Z][A-Z][A-Z]
+		print(re.match("[A-Z][A-Z][A-Z].at.[A-Z][A-Z][A-Z]", item.text.strip()))
+		# make a dictionary with the team names as keys, storing the last used key until a new one is found and then replacing it
+
+	return ["success"]
+
+def get_game_values(event):
+	resp = {}
+	event_lines = get_event_lines(event.get("id"))
+	if (event_lines["status"] == 200):
+		resp["awayLine"] = event_lines["awayLine"]
+		resp["homeLine"] = event_lines["homeLine"]
+	# now we can query the money lines in a new function
+	for participant in event.iter("participant"):
+		# get side + team
+		side = participant.get("side").lower()
+		team = get_team_abbreviation(participant.find("team").get("name"))
+		resp[side + "Team"] = team
+		# need to run the "value" part of this through a dictionary to get the right team abbreviations
+		# get pitcher name + arm
+		pitcher = participant.find("pitcher").text.title()
+		resp[side + "PitcherName"] = pitcher
+		pitcherArm = participant.find("pitcher").get("hand")[0]
+		resp[side + "PitcherArm"] = pitcherArm
+	# get_umpire_for_game(resp["awayTeam"], resp["homeTeam"])
+	return resp
+'''
+<event id="970233" season="REGULAR" date="2019-09-09T23:05:00+0" name="Atlanta Braves vs Philadelphia Phillies">
+	<event_type>team_event</event_type>
+	<event_state>PENDING</event_state>
+	<event_state_id>0</event_state_id>
+	<time_changed>false</time_changed>
+	<neutral>false</neutral>
+	<game_number>1</game_number>
+	<location name="Citizens B Park" id="8" link="/v2/location/8"/>
+	<participant rot="951" side="AWAY">
+		<team id="1288" name="Atlanta Braves" link="/v2/team/1288"/>
+		<pitcherChanged>false</pitcherChanged>
+		<pitcher hand="RIGHT" id="341549" full_name="Mike Foltynewicz">M FOLTYNEWICZ</pitcher>
+	</participant>
+	<participant rot="952" side="HOME">
+		<team id="1290" name="Philadelphia Phillies" link="/v2/team/1290"/>
+		<pitcherChanged>false</pitcherChanged>
+		<pitcher hand="RIGHT" id="343344" full_name="Aaron Nola">A NOLA</pitcher>
+	</participant>
+	<live>true</live>
+	<lines>
+		<current link="/v2/odds/5/970233"/>
+		<opening link="/v2/open/5/970233"/>
+	</lines>
+	<score link="/v2/score/970233"/>
+	<pitcher_changed>false</pitcher_changed>
+</event>
+		'''
+
+def get_all_games():
+	resp = {}
+	games = []
+	xmlData = requests.get("http://xml.donbest.com/v2/schedule/?token=K_E_Oc-S6!F!Kypt")
+	# content_dict = xmltodict.parse(xmlData.text)
+	root = ET.fromstring(xmlData.text)
+	count = 0
+	for league in root.iter("league"):
+		if (league.get("name") == "Major League Baseball"):
+			for event in league.iter("event"):
+				event_type = event.findall("event_type")[0].text
+				if (event_type == "team_event"):
+					# print("EVENT DATE: ", event.get("date"))
+					test = event.get("date")
+					testDate = parser.parse(test)
+					corrected = testDate - timedelta(hours=4, minutes=0)
+					dateReal = corrected.strftime("%Y-%m-%d")
+					dateRealObject = datetime.strptime(dateReal, "%Y-%m-%d").date()
+					# need to subtract four from date object
+					dateObject = event.get("date").split("T")
+					date = datetime.strptime(dateObject[0],"%Y-%m-%d").date()
+					today = date.today()
+					# need to compare date to today
+					# need to have dateReal as a date object
+					# print(type(dateFuck), type(today))
+					if (today == dateRealObject):
+						count += 1
+						# found today's events
+						# should pass to another function so this one isn't so massive
+						event_info = get_game_values(event)
+						games.append(event_info)
+	resp["games"] = games
+	ump_table = get_umpires_for_games()
+	return resp
+
+
 def get_pitcher_names(name):
 	name = ' '.join([word.capitalize() for word in name.lower().split()])
 	names = set()
@@ -177,6 +349,7 @@ def get_pitcher_names(name):
 			name.startswith('total_call_')]
 		names = names.union(subnames)
 	return list(names)
+
 
 def create_pitcher_object(umpire_name, pitcher_name):
 	pitcher_name = ' '.join([word.capitalize() for word in pitcher_name.lower().split()])
@@ -280,7 +453,7 @@ def create_umpire_object(name, year_range):
 			'name': name,
 			'data_year': year
 		},
-		AttributesToGet = ['crew', 'status', 'crew_chief']
+		AttributesToGet = ['crew number', 'status', 'crew_chief']
 	)
 	if career_seasonal_resp != {} and crew_resp != {} and range_table != {}:
 		data = career_seasonal_resp
@@ -293,7 +466,7 @@ def create_umpire_object(name, year_range):
 		})
 		columns_rename(data, {
 			'BCR_{0}'.format(year): 'icr',
-			'crew': 'crewNumber',
+			'crew number': 'crewNumber',
 			'crew_chief': 'isCrewChief',
 			'total_call': 'pitchesCalled',
 			'games': 'gamesUmped'
@@ -354,8 +527,8 @@ def create_umpire_game_object(name):
 		KeyConditionExpression = filterExpression
 	)
 
-	game_ids = [int(item['game']) for item in resp]
-	req = [{'game': game} for game in game_ids]
+	game_ids = [str(item['game']) for item in resp]
+	req = [{'game': {'N': game}} for game in game_ids]
 	data = games_dataset.batch_get(req)
 	keys = ['hometeam','awayteam', 'date', 'bad_call_ratio', 'preference', 'BCR_SL', 
 		'BCR_FT', 'BCR_CU', 'BCR_FF', 'BCR_SI', 'BCR_CH', 'BCR_FC', 'BCR_EP', 
@@ -399,8 +572,10 @@ def create_team_object(name, data_range):
 	name = ' '.join([word.capitalize() for word in name.lower().split()])
 	# TEAM_NAMES
 	print(TEAM_NAMES)
-	for year in data_range:
-		resp = team_stats_dataset.get({'name': name, 'data_year': year})
+	keys = [{'name': {'S': name}, 'data_year': {'N': str(year)}} for year in data_range]
+	response = team_stats_dataset.batch_get(keys)
+	for resp in response:
+		year = int(resp['data_year'])
 		if resp != {}:
 			keys = list(resp.keys())
 

@@ -7,7 +7,6 @@ import time
 now = time.time()
 
 data_year_range = range(2010, 2020)
-
 ALL_UMPIRE_KEYS = umpire_id_lookup.scan()
 ALL_UMPIRE_NAMES = [obj['name'] for obj in ALL_UMPIRE_KEYS]
 for umpire in ALL_UMPIRE_KEYS:
@@ -33,10 +32,10 @@ RANKINGS_OBJECT = json.dumps(RANKINGS_OBJECT, use_decimal=True)
 RANKINGS_OBJECT = Response(RANKINGS_OBJECT, status=200, mimetype='application/json')
 print('Cached Ranking Objects: t = {0}s'.format(time.time() - now))
 
-# TEAM_NAMES = [name.replace('total_call_', '') for name in \
-#     team_stats_dataset.get(query_map = {'name':'Jordan Baker', 'data_year' : 2019}).keys() if \
-#     name.startswith('total_call_')]
-# TEAM_NAMES = [name for name in TEAM_NAMES if '_' not in name]
+TEAM_NAMES = [name.replace('total_call_', '') for name in \
+    team_stats_dataset.get(query_map = {'name':'Jordan Baker', 'data_year' : 2019}).keys() if \
+    name.startswith('total_call_')]
+TEAM_NAMES = [name for name in TEAM_NAMES if '_' not in name]
 # team_objects = {}
 # for umpire in ALL_UMPIRE_NAMES:
 # 	team_objects[umpire] = []
