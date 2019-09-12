@@ -46,15 +46,23 @@ umpire_zones = Table(iam, 'refrating-pitcher-zone')
 profile_month_table = Table(iam, 'refrating-profile-month')
 average_game_length_table = Table(iam, 'umpscores-career-average-game-length')
 
-
+# good example for single file uploads
 def upload_average_game_length_table():
+	# provide file path
 	root = 'output-data/Career/average_game_length.csv'
+	# read the csv
 	df = pd.read_csv(root)
+	# rename columns if necessary
 	df.rename(columns = {'ump': 'name'}, inplace=True)
+	# replace all "NA" with -1
 	df = Table.fillna(df, [])
+	# avoid new columns being added
 	df = df.drop(columns=['Unnamed: 0'])
+	# convert df into csv tile
 	df.to_csv(root)
+	# need to specify the primary key for the clear function
 	average_game_length_table.clear('name')
+	# finally upload the dataset
 	average_game_length_table.upload(root)
 
 def upload_profile_best_worst_months():
