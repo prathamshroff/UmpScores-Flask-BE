@@ -301,8 +301,8 @@ def get_game_values(ALL_UMPIRE_NAMES, ump_table, event):
 		location = event.find("location").get("name")
 		resp["location"] = location
 		dateString = event.get("date")
-		dateCorrected = parser.parse(dateString) - timedelta(hours=4, minutes=0)
-		dateCorrectedString = dateCorrected.strftime("%Y-%m-%dT%H:%M:%S%z")
+		dateCorrected = parser.parse(dateString)
+		dateCorrectedString = dateCorrected.strftime("%Y-%m-%dT%H:%M:%S")
 		resp["date"] = dateCorrectedString
 		found = 0
 		for key in ump_table.keys():
