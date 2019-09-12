@@ -44,7 +44,18 @@ pitcher_stats = Table(iam, 'refrating-pitcher-stats')
 umpire_pitchers = Table(iam, 'refrating-umpire-pitchers')
 umpire_zones = Table(iam, 'refrating-pitcher-zone')
 profile_month_table = Table(iam, 'refrating-profile-month')
+average_game_length_table = Table(iam, 'umpscores-career-average-game-length')
 
+
+def upload_average_game_length_table():
+	root = 'output-data/Career/average_game_length.csv'
+	df = pd.read_csv(root)
+	df.rename(columns = {'ump': 'name'}, inplace=True)
+	df = Table.fillna(df, [])
+	df = df.drop(columns=['Unnamed: 0'])
+	df.to_csv(root)
+	average_game_length_table.clear('name')
+	average_game_length_table.upload(root)
 
 def upload_profile_best_worst_months():
 	root = 'output-data/Profile/best-worst month'
@@ -58,6 +69,7 @@ def upload_profile_best_worst_months():
 			df['season'] = len(df) * [file.split('.')[0].split('_')[-1]]
 		if 'Unnamed: 0' in df.columns:
 			df = df.drop(columns = ['Unnamed: 0'])
+		df = Table.fillna(df, [])
 		df.to_csv(file)
 		profile_month_table.upload(file)
 
@@ -238,13 +250,14 @@ def create_career_seasonal_data():
 	"""
 	season_career_bcrs = ['season_bcr_{0}.csv'.format(year) for year in range(2010, 2020)]
 	careers_season.clear('name', sort_key = 'data_year')
+
 	for file in season_career_bcrs:
 		file = os.path.join('output-data/Career/BCR By Season/', file)
 		df = pd.read_csv(file)
 
 		if 'data_year' not in df.columns:
-			df['data_year'] = [file.split('_')[2].split('.')[0]] * df['name'].count()
-			df = df.drop(columns = ['Unnamed: 0'])
+			df['data_year'] = [file.split('_')[2].split('.')[0]] * len(df)
+			df.drop(columns = ['Unnamed: 0'], inplace=True)
 			df.to_csv(file)
 		careers_season.upload(file)
 	print('Uploaded career_seasonal_bcr data')
@@ -558,8 +571,9 @@ def refresh_all_aws_resources():
 		'output-data/Game-Stats'
 	]
 	stamp = time.time()
-	upload_profile_best_worst_months()
-	upload_zone_data()
+	upload_average_game_length_table()
+	# upload_profile_best_worst_months()
+	# upload_zone_data()
 	# upload_umpire_pitchers()
 	# upload_pitcher_stats()
 	# ump_game_lookup_refresh()

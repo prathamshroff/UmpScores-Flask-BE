@@ -506,10 +506,17 @@ def create_umpire_object(name, year_range):
 		},
 		AttributesToGet = ['crew number', 'status', 'crew_chief']
 	)
+
+	average_game_length_table_resp = average_game_length_table.get({
+			'name': name,
+		},
+		AttributesToGet = ['average_game_length_2019']
+	)
 	if career_seasonal_resp != {} and crew_resp != {} and range_table != {}:
 		data = career_seasonal_resp
 		data.update(crew_resp)
 		data.update(range_table)
+		data.update(average_game_length_table_resp)
 		data.update({
 			'firstName': first_name, 
 			'last_name': last_name,
@@ -520,7 +527,8 @@ def create_umpire_object(name, year_range):
 			'crew number': 'crewNumber',
 			'crew_chief': 'isCrewChief',
 			'total_call': 'pitchesCalled',
-			'games': 'gamesUmped'
+			'games': 'gamesUmped',
+			'average_game_length_2019': 'paceOfPlay'
 		})
 	return data
 
@@ -528,12 +536,18 @@ def create_umpire_object(name, year_range):
 def create_career_object(name, data_range):
 	name = ' '.join([word.capitalize() for word in name.lower().split()])
 	career = []
+	average_game_length_table_resp = average_game_length_table.get({'name':name}, 
+		AttributesToGet=['average_game_length_{0}'.format(year) for year in data_range])
 	for year in data_range:
 		range_resp = careers_range.get({'name': name}, AttributesToGet=['BCR_{0}'.format(year)])
+
 		season_resp = careers_season.get({'name': name, 'data_year': year},
 			AttributesToGet=['games', 'total_call', 'BCR_SL', 'BCR_FT', 'BCR_CU', 'BCR_FF', 'BCR_SI', 
 				'BCR_CH', 'BCR_FC', 'BCR_EP', 'BCR_KC', 'BCR_FS', 'BCR_PO', 'BCR_KN', 
 				'BCR_SC', 'BCR_FO', 'BCR_UN', 'BCR_FA', 'BCR_IN'])
+
+
+
 		crew_resp = crews.get({'name': name, 'data_year': year},
 			AttributesToGet = ['status'])
 		# change_resp = careers_range_change.get({'name': name}, AttributesToGet=[
@@ -541,6 +555,11 @@ def create_career_object(name, data_range):
 		# ])
 		if range_resp != {} and season_resp != {}:
 			data = range_resp
+			data.update(
+				{
+					'paceOfPlay': average_game_length_table_resp['average_game_length_{0}'.format(year)]
+				}
+			)
 			data.update(season_resp)
 			data.update(crew_resp)
 			columns_rename(data, {

@@ -164,6 +164,7 @@ UmpireObject = {
     'crewNumber': fields.String,
     'status': fields.String,
     'isCrewChief': fields.Integer,
+    'paceOfPlay': fields.Float,
     # 'consistency':
     # 'age':
     # 'yearsActive':
