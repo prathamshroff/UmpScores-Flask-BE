@@ -239,7 +239,6 @@ def get_umpires_for_games():
 	page = requests.get("https://www.statfox.com/mlb/umpiremain.asp")
 	soup = BeautifulSoup(page.text)
 	tables = soup.findAll("table")
-	# print(tables[2])
 	cells = tables[2].findAll("td")
 	headerObject = tables[2].findAll("th", { "class" : "header1" })
 	headerArray = []
@@ -384,7 +383,6 @@ def create_pitcher_object(umpire_name, pitcher_name):
 	pitcher_name = ' '.join([word.capitalize() for word in pitcher_name.lower().split()])
 	umpire_name = ' '.join([word.capitalize() for word in umpire_name.lower().split()])
 
-	print(pitcher_name, umpire_name)
 	data = pitcher_stats.query(
 		KeyConditionExpression = Key('name').eq(pitcher_name)
 	)
@@ -600,9 +598,9 @@ def create_team_object(name, data_range):
 	data = []
 	name = ' '.join([word.capitalize() for word in name.lower().split()])
 	# TEAM_NAMES
-	print(TEAM_NAMES)
 	keys = [{'name': {'S': name}, 'data_year': {'N': str(year)}} for year in data_range]
 	response = team_stats_dataset.batch_get(keys)
+	# careers_season_resp = careers_season.batch_get(keys)
 	for resp in response:
 		year = int(resp['data_year'])
 		if resp != {}:

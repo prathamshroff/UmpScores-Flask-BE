@@ -122,14 +122,14 @@ class Umpire(Resource):
         return resp
 
 
-# @api.route('/rankings')
-# class Rankings(Resource):
-#     @api.response(200, 'OK', rankings_api_object)
-#     def get(self):
-#         """
-#         Returns a list of all umpire objects from every year in the rankings format
-#         """ 
-#         return RANKINGS_OBJECT
+@api.route('/rankings')
+class Rankings(Resource):
+    @api.response(200, 'OK', rankings_api_object)
+    def get(self):
+        """
+        Returns a list of all umpire objects from every year in the rankings format
+        """ 
+        return RANKINGS_OBJECT
 
 
 
