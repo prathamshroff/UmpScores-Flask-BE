@@ -266,7 +266,19 @@ def get_umpires_for_games():
 	# make a dictionary with the team names as keys, storing the last used key until a new one is found and then replacing it
 	return ump_games
 
-def get_game_values(ump_table, event):
+def format_umpire_name(ALL_UMPIRE_NAMES, name):
+	umpire_name = ""
+	if (name != "Umpire information is NOT AVAILABLE for this game"):
+		last_name = name[1:].title().strip()
+		for item in ALL_UMPIRE_NAMES:
+			# print("ITEM : ", item)
+			if (last_name in item):
+				umpire_name = item
+	else:
+		umpire_name = "NA"
+	return umpire_name
+
+def get_game_values(ALL_UMPIRE_NAMES, ump_table, event):
 	resp = {}
 	event_lines = get_event_lines(event.get("id"))
 	try:
@@ -292,7 +304,7 @@ def get_game_values(ump_table, event):
 		for key in ump_table.keys():
 			if (resp["awayTeam"] in key and resp["homeTeam"] in key):
 				# grab the umpire value in ump_table
-				resp["umpireName"] = ump_table[key][1]
+				resp["umpireName"] = format_umpire_name(ALL_UMPIRE_NAMES, ump_table[key][1])
 				found = 1
 		swaps = {"CWS":"CHW", "CHW":"CWS", "TB":"TAM", "TAM":"TB", "FLA":"MIA", "MIA":"FLA"}
 		# means there might be mismatched team abbreviations
@@ -301,13 +313,13 @@ def get_game_values(ump_table, event):
 				for key in ump_table.keys():
 					if (swaps[resp["awayTeam"]] in key and resp["homeTeam"] in key):
 						# grab the umpire value in ump_table
-						resp["umpireName"] = ump_table[key][1]
+						resp["umpireName"] = format_umpire_name(ALL_UMPIRE_NAMES, ump_table[key][1])
 			if(resp["homeTeam"] in swaps):
 				# MODIFY HOME TEAM
 				for key in ump_table.keys():
 					if (resp["awayTeam"] in key and swaps[resp["homeTeam"]] in key):
 						# grab the umpire value in ump_table
-						resp["umpireName"] = ump_table[key][1]
+						resp["umpireName"] = format_umpire_name(ALL_UMPIRE_NAMES, ump_table[key][1])
 	except Exception as e:
 		print("EXCEPTION: ", e)
 	return resp
@@ -340,7 +352,7 @@ def get_game_values(ump_table, event):
 </event>
 		'''
 
-def get_all_games():
+def get_all_games(ALL_UMPIRE_NAMES):
 	resp = {}
 	games = []
 	# storing this to pass to get_game_values so I can get the right data back
@@ -367,7 +379,7 @@ def get_all_games():
 						if (today == dateRealObject):
 							count += 1
 							# pass event object for further parsing
-							event_info = get_game_values(ump_table, event)
+							event_info = get_game_values(ALL_UMPIRE_NAMES, ump_table, event)
 							games.append(event_info)
 	except Exception as e:
 		print("EXCEPTION: ", e)

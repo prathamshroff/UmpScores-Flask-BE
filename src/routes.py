@@ -178,14 +178,14 @@ class QuerySearch(Resource):
 
 @api.route('/games')
 class GetTodaysGames(Resource):
+    @api.response(200, 'OK', get_all_umpire_id_pairs)
     def get(self):
-        games = json.dumps(get_all_games())
+        games = json.dumps(get_all_games(ALL_UMPIRE_NAMES))
         resp = Response(games, status=200, mimetype='application/json')
         return resp
 
 @api.route('/umpireList')
 class GetAllUmps(Resource):
-    @api.response(200, 'OK', get_all_umpire_id_pairs)
     def get(self):
         """
         Returns the names with our unique identifiers for every umpire within our dataset
