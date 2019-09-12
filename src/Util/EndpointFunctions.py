@@ -179,18 +179,21 @@ def get_event_lines(event_id):
 	# "http://xml.donbest.com/v2/odds/5/event_id" + event_id +"/?token=K_E_Oc-S6!F!Kypt"
 	xmlData = requests.get("http://xml.donbest.com/v2/odds/5/" + event_id +"/?token=K_E_Oc-S6!F!Kypt")
 	root = ET.fromstring(xmlData.text)
-	for line in root.iter("line"):
-		if (line.get("period") == "FG" and line.get("type") == "current"):
-			awayLine = line.find("money").get("away_money")
-			homeLine = line.find("money").get("home_money")
-			resp["awayLine"] = awayLine
-			resp["homeLine"] = homeLine
-			# awayLine & homeLine
-	# USE PERIOD = FG, WHICH MEANS FULL GAME
-	if (len(resp) > 0):
-		resp["status"] = 200
-	else:
-		resp["status"] = 404
+	try:
+		for line in root.iter("line"):
+			if (line.get("period") == "FG" and line.get("type") == "current"):
+				awayLine = line.find("money").get("away_money")
+				homeLine = line.find("money").get("home_money")
+				resp["awayLine"] = awayLine
+				resp["homeLine"] = homeLine
+				# awayLine & homeLine
+		# USE PERIOD = FG, WHICH MEANS FULL GAME
+		if (len(resp) > 0):
+			resp["status"] = 200
+		else:
+			resp["status"] = 404
+	except Exception as e:
+		print("EXCEPTION: ", e)
 	return resp
 
 def get_team_abbreviation(team):
@@ -251,7 +254,6 @@ def get_umpires_for_games():
 		# key is a match, change new key
 		if (re.match("[A-Z][A-Z][A-Z].at.[A-Z][A-Z][A-Z]", item.text.strip())):
 			current_key = item.text.strip()
-			
 		# no new key, check if key exists
 		else:
 			if (current_key in ump_games):
@@ -263,48 +265,66 @@ def get_umpires_for_games():
 	# make a dictionary with the team names as keys, storing the last used key until a new one is found and then replacing it
 	return ump_games
 
-def get_game_values(ump_table, event):
+def format_umpire_name(ALL_UMPIRE_NAMES, name):
+	umpire_name = ""
+	if (name != "Umpire information is NOT AVAILABLE for this game"):
+		last_name = name[1:].title().strip()
+		for item in ALL_UMPIRE_NAMES:
+			# print("ITEM : ", item)
+			if (last_name in item):
+				umpire_name = item
+	else:
+		umpire_name = "NA"
+	return umpire_name
+
+def get_game_values(ALL_UMPIRE_NAMES, ump_table, event):
 	resp = {}
 	event_lines = get_event_lines(event.get("id"))
-	if (event_lines["status"] == 200):
-		resp["awayLine"] = event_lines["awayLine"]
-		resp["homeLine"] = event_lines["homeLine"]
-	# now we can query the money lines in a new function
-	for participant in event.iter("participant"):
-		# get side + team
-		side = participant.get("side").lower()
-		team = get_team_abbreviation(participant.find("team").get("name"))
-		resp[side + "Team"] = team
-		# need to run the "value" part of this through a dictionary to get the right team abbreviations
-		# get pitcher name + arm
-		pitcher = participant.find("pitcher").text.title()
-		resp[side + "PitcherName"] = pitcher
-		pitcherArm = participant.find("pitcher").get("hand")[0]
-		resp[side + "PitcherArm"] = pitcherArm
-	# get_umpire_for_game(resp["awayTeam"], resp["homeTeam"])
-	location = event.find("location").get("name")
-	resp["location"] = location
-	found = 0
-	for key in ump_table.keys():
-		if (resp["awayTeam"] in key and resp["homeTeam"] in key):
-			# grab the umpire value in ump_table
-			resp["umpireName"] = ump_table[key][1]
-			found = 1
-
-	swaps = {"CWS":"CHW", "CHW":"CWS", "TB":"TAM", "TAM":"TB", "FLA":"MIA", "MIA":"FLA"}
-	# means there might be mismatched team abbreviations
-	if (found == 0):
-		if (resp["awayTeam"] in swaps):
-			for key in ump_table.keys():
-				if (swaps[resp["awayTeam"]] in key and resp["homeTeam"] in key):
-					# grab the umpire value in ump_table
-					resp["umpireName"] = ump_table[key][1]
-		if(resp["homeTeam"] in swaps):
-			# MODIFY HOME TEAM
-			for key in ump_table.keys():
-				if (resp["awayTeam"] in key and swaps[resp["homeTeam"]] in key):
-					# grab the umpire value in ump_table
-					resp["umpireName"] = ump_table[key][1]
+	try:
+		if (event_lines["status"] == 200):
+			resp["awayLine"] = event_lines["awayLine"]
+			resp["homeLine"] = event_lines["homeLine"]
+		# now we can query the money lines in a new function
+		for participant in event.iter("participant"):
+			# get side + team
+			side = participant.get("side").lower()
+			team = get_team_abbreviation(participant.find("team").get("name"))
+			resp[side + "Team"] = team
+			# need to run the "value" part of this through a dictionary to get the right team abbreviations
+			# get pitcher name + arm
+			pitcher = participant.find("pitcher").text.title()
+			resp[side + "PitcherName"] = pitcher
+			pitcherArm = participant.find("pitcher").get("hand")[0]
+			resp[side + "PitcherArm"] = pitcherArm
+		# get_umpire_for_game(resp["awayTeam"], resp["homeTeam"])
+		location = event.find("location").get("name")
+		resp["location"] = location
+		dateString = event.get("date")
+		dateCorrected = parser.parse(dateString)
+		dateCorrectedString = dateCorrected.strftime("%Y-%m-%dT%H:%M:%S")
+		resp["date"] = dateCorrectedString
+		found = 0
+		for key in ump_table.keys():
+			if (resp["awayTeam"] in key and resp["homeTeam"] in key):
+				# grab the umpire value in ump_table
+				resp["umpireName"] = format_umpire_name(ALL_UMPIRE_NAMES, ump_table[key][1])
+				found = 1
+		swaps = {"CWS":"CHW", "CHW":"CWS", "TB":"TAM", "TAM":"TB", "FLA":"MIA", "MIA":"FLA"}
+		# means there might be mismatched team abbreviations
+		if (found == 0):
+			if (resp["awayTeam"] in swaps):
+				for key in ump_table.keys():
+					if (swaps[resp["awayTeam"]] in key and resp["homeTeam"] in key):
+						# grab the umpire value in ump_table
+						resp["umpireName"] = format_umpire_name(ALL_UMPIRE_NAMES, ump_table[key][1])
+			if(resp["homeTeam"] in swaps):
+				# MODIFY HOME TEAM
+				for key in ump_table.keys():
+					if (resp["awayTeam"] in key and swaps[resp["homeTeam"]] in key):
+						# grab the umpire value in ump_table
+						resp["umpireName"] = format_umpire_name(ALL_UMPIRE_NAMES, ump_table[key][1])
+	except Exception as e:
+		print("EXCEPTION: ", e)
 	return resp
 '''
 <event id="970233" season="REGULAR" date="2019-09-09T23:05:00+0" name="Atlanta Braves vs Philadelphia Phillies">
@@ -335,7 +355,7 @@ def get_game_values(ump_table, event):
 </event>
 		'''
 
-def get_all_games():
+def get_all_games(ALL_UMPIRE_NAMES):
 	resp = {}
 	games = []
 	# storing this to pass to get_game_values so I can get the right data back
@@ -343,26 +363,30 @@ def get_all_games():
 	xmlData = requests.get("http://xml.donbest.com/v2/schedule/?token=K_E_Oc-S6!F!Kypt")
 	root = ET.fromstring(xmlData.text)
 	count = 0
-	for league in root.iter("league"):
-		if (league.get("name") == "Major League Baseball"):
-			for event in league.iter("event"):
-				event_type = event.findall("event_type")[0].text
-				if (event_type == "team_event"):
-					test = event.get("date")
-					testDate = parser.parse(test)
-					corrected = testDate - timedelta(hours=4, minutes=0)
-					dateReal = corrected.strftime("%Y-%m-%d")
-					dateRealObject = datetime.strptime(dateReal, "%Y-%m-%d").date()
-					# subtract four from date object to correct for UTC time
-					dateObject = event.get("date").split("T")
-					date = datetime.strptime(dateObject[0],"%Y-%m-%d").date()
-					today = date.today()
-					# compare date to today
-					if (today == dateRealObject):
-						count += 1
-						# pass event object for further parsing
-						event_info = get_game_values(ump_table, event)
-						games.append(event_info)
+	try:
+		for league in root.iter("league"):
+			if (league.get("name") == "Major League Baseball"):
+				for event in league.iter("event"):
+					event_type = event.findall("event_type")[0].text
+					if (event_type == "team_event"):
+						test = event.get("date")
+						testDate = parser.parse(test)
+						corrected = testDate - timedelta(hours=4, minutes=0)
+						dateReal = corrected.strftime("%Y-%m-%d")
+						dateRealObject = datetime.strptime(dateReal, "%Y-%m-%d").date()
+							# subtract four from date object to correct for UTC time
+						dateObject = event.get("date").split("T")
+						date = datetime.strptime(dateObject[0],"%Y-%m-%d").date()
+						today = date.today()
+						# compare date to today
+						if (today == dateRealObject):
+							count += 1
+							# 2018-11-15T12:54:55.604Z
+							# pass event object for further parsing
+							event_info = get_game_values(ALL_UMPIRE_NAMES, ump_table, event)
+							games.append(event_info)
+	except Exception as e:
+		print("EXCEPTION: ", e)
 	resp["games"] = games
 	return resp
 
