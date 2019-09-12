@@ -300,6 +300,10 @@ def get_game_values(ALL_UMPIRE_NAMES, ump_table, event):
 		# get_umpire_for_game(resp["awayTeam"], resp["homeTeam"])
 		location = event.find("location").get("name")
 		resp["location"] = location
+		dateString = event.get("date")
+		dateCorrected = parser.parse(dateString) - timedelta(hours=4, minutes=0)
+		dateCorrectedString = dateCorrected.strftime("%Y-%m-%dT%H:%M:%S%z")
+		resp["date"] = dateCorrectedString
 		found = 0
 		for key in ump_table.keys():
 			if (resp["awayTeam"] in key and resp["homeTeam"] in key):
@@ -378,6 +382,7 @@ def get_all_games(ALL_UMPIRE_NAMES):
 						# compare date to today
 						if (today == dateRealObject):
 							count += 1
+							# 2018-11-15T12:54:55.604Z
 							# pass event object for further parsing
 							event_info = get_game_values(ALL_UMPIRE_NAMES, ump_table, event)
 							games.append(event_info)
