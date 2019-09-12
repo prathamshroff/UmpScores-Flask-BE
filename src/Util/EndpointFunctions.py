@@ -9,10 +9,10 @@ from datetime import datetime, timedelta
 from dateutil import parser
 from bs4 import BeautifulSoup
 import re
-TEAM_NAMES = [name.replace('total_call_', '') for name in \
-    team_stats_dataset.get(query_map = {'name':'Jordan Baker', 'data_year' : 2019}).keys() if \
-    name.startswith('total_call_')]
-TEAM_NAMES = [name for name in TEAM_NAMES if '_' not in name]
+import simplejson as json
+from flask import Flask, jsonify, request, Response
+import time
+cache = {0: {}, 1: {}, 'use': 0}
 
 def create_chart_object(name, year_range):
 	name = ' '.join([word.capitalize() for word in name.lower().split()])
@@ -667,4 +667,3 @@ def create_team_object(name, data_range):
 				})
 				data.append(team_stats)
 	return data
-

@@ -35,6 +35,12 @@ pitcher_model = api.model('Pitcher', PitcherObject)
 # get_umpire_info_model = api.model('Get Umpire Info', {'umpire': UmpireObject})
 # Parsers
 # ----------
+cache_parser = api.parser()
+cache_parser.add_argument('secret', type=str, help=
+    '''privliged recache call
+
+    :)''')
+
 search_parser = api.parser()
 search_parser.add_argument('q', type=str, help=
     '''query string which will find relevant Umpire, and Game data
