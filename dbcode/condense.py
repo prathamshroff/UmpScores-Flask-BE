@@ -45,6 +45,12 @@ umpire_pitchers = Table(iam, 'refrating-umpire-pitchers')
 umpire_zones = Table(iam, 'refrating-pitcher-zone')
 profile_month_table = Table(iam, 'refrating-profile-month')
 average_game_length_table = Table(iam, 'umpscores-career-average-game-length')
+bcr_std_table = Table(iam, 'umpscores-bcr-std')
+crew_update_table = Table(iam, 'umpscores-crew-update')
+ejections_table = Table(iam, 'umpscores-ejections')
+bcr_start_time_table = Table(iam, 'umpscores-bcr-start-time')
+bcr_weather_table = Table(iam, 'umpscores-bcr-weather')
+bcr_best_year_table = Table(iam, 'umpscores-best-year')
 
 # good example for single file uploads
 def upload_average_game_length_table():
@@ -65,6 +71,77 @@ def upload_average_game_length_table():
 	# finally upload the dataset
 	average_game_length_table.upload(root)
 
+def upload_best_year_table():
+	root = 'output-data/Profile/best_year.csv'
+	df = pd.read_csv(root)
+	df.rename(columns = {'ump': 'name'}, inplace=True)
+	df = Table.fillna(df, [])
+	df = df.drop(columns=['Unnamed: 0'])
+	df.to_csv(root)
+	bcr_best_year_table.clear('name')
+	bcr_best_year_table.upload(root)
+
+def upload_bcr_weather_table():
+	root = 'output-data/Profile/bcr_weather.csv'
+	df = pd.read_csv(root)
+	df.rename(columns = {'ump': 'name'}, inplace=True)
+	df = Table.fillna(df, [])
+	df = df.drop(columns=['Unnamed: 0'])
+	df.to_csv(root)
+	bcr_weather_table.clear('name')
+	bcr_weather_table.upload(root)
+
+def upload_bcr_start_time_table():
+	root = 'output-data/Profile/bcr_start_time.csv'
+	df = pd.read_csv(root)
+	df.rename(columns = {'ump': 'name'}, inplace=True)
+	df = Table.fillna(df, [])
+	df = df.drop(columns=['Unnamed: 0'])
+	df.to_csv(root)
+	bcr_start_time_table.clear('name')
+	bcr_start_time_table.upload(root)
+
+def upload_bcr_std_table():
+	root = 'output-data/Career/bcr_std.csv'
+	df = pd.read_csv(root)
+	df.rename(columns = {'ump': 'name'}, inplace=True)
+	df = Table.fillna(df, [])
+	df = df.drop(columns=['Unnamed: 0'])
+	df.to_csv(root)
+	bcr_std_table.clear('name')
+	bcr_std_table.upload(root)
+
+def upload_ejections_table():
+	root = 'output-data/Career/ejections.csv'
+	df = pd.read_csv(root)
+	# df.rename(columns = {'ump': 'name'}, inplace=True)
+	df = Table.fillna(df, [])
+	# df = df.drop(columns=['Unnamed: 0'])
+	df.to_csv(root)
+	ejections_table.clear('name')
+	ejections_table.upload(root)
+	
+
+# NEEDS TO BE WORKED ON, WILL UPLOAD THE SINGLE FILES FOR NOW
+def upload_crew_update_data():
+	#need to modify this to add years for each column
+	root = 'output-data/Career/crew_update'
+	files = [os.path.join(root, file) for file in os.listdir(root)]
+	crew_update_table.clear('name')
+	for file in files:
+		print("FILENAME: ", file)
+		year = file.split("_")[3]
+		#don't need to drop name
+		df = pd.read_csv(file)
+		# adding year to the beginning of each column
+		df.add_prefix(year)
+		df = Table.fillna(df, [])
+		df = df.drop(columns=['Unnamed: 0'])
+		df.to_csv(file)
+		crew_update_table.upload(file)
+
+
+# good example for when we want to download all of the files in a directory
 def upload_profile_best_worst_months():
 	root = 'output-data/Profile/best-worst month'
 	files = [os.path.join(root, file) for file in os.listdir(root)]
@@ -579,7 +656,13 @@ def refresh_all_aws_resources():
 		'output-data/Game-Stats'
 	]
 	stamp = time.time()
-	upload_average_game_length_table()
+	upload_best_year_table()
+	# upload_bcr_weather_table()
+	# upload_bcr_start_time_table()
+	# upload_ejections_table()
+	# upload_crew_update_data() NEEDS TO BE WORKED ON
+	# upload_bcr_std_table()
+	# upload_average_game_length_table()
 	# upload_profile_best_worst_months()
 	# upload_zone_data()
 	# upload_umpire_pitchers()

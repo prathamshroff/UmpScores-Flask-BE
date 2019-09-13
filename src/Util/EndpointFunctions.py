@@ -12,7 +12,9 @@ import re
 import simplejson as json
 from flask import Flask, jsonify, request, Response
 import time
+
 cache = {0: {}, 1: {}, 'use': 0}
+# importing things from cache
 
 def create_chart_object(name, year_range):
 	name = ' '.join([word.capitalize() for word in name.lower().split()])
@@ -469,7 +471,9 @@ def create_rankings_object(umpire_names, year_range):
 				})
 				resp.update({'firstName': parts[0], 'lastName': parts[-1]})
 				subarr.append(resp)
+				print(resp)
 		umpires.append(subarr)
+	print("THIS IS WHERE WE ARE GETTING RANKINGS DATA")
 	return umpires
 
 def create_umpire_object(name, year_range):
@@ -542,7 +546,7 @@ def create_career_object(name, data_range):
 		range_resp = careers_range.get({'name': name}, AttributesToGet=['BCR_{0}'.format(year)])
 
 		season_resp = careers_season.get({'name': name, 'data_year': year},
-			AttributesToGet=['games', 'total_call', 'BCR_SL', 'BCR_FT', 'BCR_CU', 'BCR_FF', 'BCR_SI', 
+			AttributesToGet=['data_year', 'games', 'total_call', 'BCR_SL', 'BCR_FT', 'BCR_CU', 'BCR_FF', 'BCR_SI', 
 				'BCR_CH', 'BCR_FC', 'BCR_EP', 'BCR_KC', 'BCR_FS', 'BCR_PO', 'BCR_KN', 
 				'BCR_SC', 'BCR_FO', 'BCR_UN', 'BCR_FA', 'BCR_IN'])
 
