@@ -471,11 +471,12 @@ def create_rankings_object(umpire_names, year_range):
 				})
 				resp.update({'firstName': parts[0], 'lastName': parts[-1]})
 				subarr.append(resp)
-		ejections_resp = ejections_table.query(
-			KeyConditionExpression = Key('name').eq(name)
+		ejections_resp = ejections_table.get(
+			{
+				'name':name
+			},
+			AttributesToGet = ['ej_2014']
 		)
-		for object in ejections_resp:
-			print(object)
 		umpires.append(subarr)
 	return umpires
 
