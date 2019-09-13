@@ -470,8 +470,8 @@ def create_rankings_object(umpire_names, year_range):
 					'data_year': 'season'
 				})
 				resp.update({'firstName': parts[0], 'lastName': parts[-1]})
+				subarr.append(resp)
 		umpires.append(subarr)
-	print("THIS IS WHERE WE ARE GETTING RANKINGS DATA")
 	return umpires
 
 def create_umpire_object(name, year_range):
