@@ -4,6 +4,7 @@ import boto3
 from decimal import Decimal
 import botocore
 import time
+
 class Table():
     """
     The Dataset class is our wrapper around boto3's dynamodb object. We will
@@ -63,7 +64,26 @@ class Table():
 
         df = df.fillna(value=values)
         return df
-        
+
+    @staticmethod
+    def drop_y(df):
+        """
+        Removes duplicate columns which emerged from merging pd.DataFrames
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            some table which has recently been merged with another pd.DataFrame
+
+        Returns
+        ----------
+        pd.DataFrame
+            returns a DataFrame which removed all potential duplicate columns
+        """
+        to_drop = [x for x in df if x.endswith('_y')]
+        df.drop(to_drop, axis=1, inplace=True)
+        return df
+
     def get(self, query_map, **kwargs):
         """
         Get method takes some query map and some filter options
@@ -343,6 +363,8 @@ class Table():
                         print(e)
                 except Exception as e:
                     print('Uncaught super exception: {0}'.format(e))
-
-
         print('Dynamodb table for {0} emtpied'.format(self.__table_name))
+
+    def __str__(self):
+        return '{0}'.format(self.__table_name)
+
