@@ -32,11 +32,7 @@ RANKINGS_OBJECT = json.dumps(RANKINGS_OBJECT, use_decimal=True)
 RANKINGS_OBJECT = Response(RANKINGS_OBJECT, status=200, mimetype='application/json')
 print('Cached Ranking Objects: t = {0}s'.format(time.time() - now))
 
-TEAM_NAMES = [name.replace('total_call_', '') for name in \
-    team_stats_dataset.get(query_map = {'name':'Jordan Baker', 'data_year' : 2019}).keys() if \
-    name.startswith('total_call_')]
-TEAM_NAMES = [name for name in TEAM_NAMES if '_' not in name]
-print('Cached Team Names in: t = {0}s'.format(time.time() - now))
+
 
 cache[cache['use']]['games'] = get_all_games(ALL_UMPIRE_NAMES)
 print('Cached Games in: t = {0}s'.format(time.time() - now))

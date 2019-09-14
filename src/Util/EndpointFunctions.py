@@ -2,6 +2,7 @@
 # TODO uncomment /get-games
 from boto3.dynamodb.conditions import Key, Attr
 from StorageSolutions.tables import *
+# from Util.RefratingCache import TEAM_NAMES
 # importing libraries for /games endpoint
 import requests
 import xml.etree.ElementTree as ET
@@ -15,7 +16,10 @@ import time
 
 cache = {0: {}, 1: {}, 'use': 0}
 # importing things from cache
-
+TEAM_NAMES = [name.replace('total_call_', '') for name in \
+    team_stats_dataset.get(query_map = {'name':'Jordan Baker', 'data_year' : 2019}).keys() if \
+    name.startswith('total_call_')]
+TEAM_NAMES = [name for name in TEAM_NAMES if '_' not in name]
 def create_chart_object(name, year_range):
 	name = ' '.join([word.capitalize() for word in name.lower().split()])
 	filterExpression = Key('name').eq(name)
