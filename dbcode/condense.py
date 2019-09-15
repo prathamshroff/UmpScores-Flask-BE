@@ -404,8 +404,8 @@ def refresh_all_aws_resources():
 		'output-data/Game-Stats'
 	]
 	stamp = time.time()
-	Pitcher.pitcher_upload_simple_folders(pool)
-	# Career.career_upload_simple_folders(pool)
+	# Pitcher.pitcher_upload_simple_folders(pool)
+	Career.career_upload_simple_folders(pool)
 	# Profile.profile_upload_simple_folders(pool)
 	# single_files_scheduler()
 

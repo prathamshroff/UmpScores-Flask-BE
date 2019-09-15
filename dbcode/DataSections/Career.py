@@ -7,11 +7,11 @@ from threading import Thread
 def career_upload_simple_folders(pool):
 	kwargs = [
 		{
-			'table': crews, 
+			'table': crew_update_table, 
 			'root': 'output-data/Career/crew_update',
 			'primary_key': 'name',
 			'get_season': lambda file: file.split('_')[3].split('.')[0], 
-			'sort_key':'data_year',
+			'sort_key':'season',
 			'exclude_files': ['merged.csv', 'ARCHIVE']
 		},
 		{

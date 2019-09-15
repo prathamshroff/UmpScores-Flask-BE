@@ -20,6 +20,9 @@ TEAM_NAMES = [name.replace('total_call_', '') for name in \
     team_stats_dataset.get(query_map = {'name':'Jordan Baker', 'data_year' : 2019}).keys() if \
     name.startswith('total_call_')]
 TEAM_NAMES = [name for name in TEAM_NAMES if '_' not in name]
+# def create_umpire_list():
+# 	print(ALL_UMPIRE_KEYS
+
 def create_chart_object(name, year_range):
 	name = ' '.join([word.capitalize() for word in name.lower().split()])
 	filterExpression = Key('name').eq(name)
@@ -464,7 +467,12 @@ def create_rankings_object(umpire_names, year_range):
 		career_resp = careers_season.query(
 			KeyConditionExpression = Key('name').eq(name)
 		)
-		age = umpires_2019_table.get({'name':name}, AttributesToGet=['age'])['age']
+		resp_2019 = umpires_2019_table.get({'name':name}, AttributesToGet=['age'])
+		if 'age' in resp_2019:
+			age = resp_2019['age']
+		else:
+			age = -1
+
 		for resp in career_resp:
 			resp = {key: resp[key] for key in ['name', 'data_year', 'total_call', 'bad_call_ratio', 
 				'games', 'bad_call_per_game', 'bad_call_per_inning']}
@@ -528,10 +536,10 @@ def create_umpire_object(name, year_range):
 		},
 		AttributesToGet = ['total_call', 'games', 'data_year']
 	)
-	crew_resp = crews.get(
+	crew_resp = crew_update_table.get(
 		{
 			'name': name,
-			'data_year': year
+			'season': year
 		},
 		AttributesToGet = ['crew number', 'status', 'crew_chief']
 	)
@@ -577,7 +585,7 @@ def create_career_object(name, data_range):
 
 
 
-		crew_resp = crews.get({'name': name, 'data_year': year},
+		crew_resp = crew_update_table.get({'name': name, 'season': year},
 			AttributesToGet = ['status'])
 		# change_resp = careers_range_change.get({'name': name}, AttributesToGet=[
 		# 	'BCR_change_{0}-1_{0}'

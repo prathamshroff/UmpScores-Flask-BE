@@ -8,6 +8,10 @@ now = time.time()
 
 data_year_range = range(2010, 2020)
 ALL_UMPIRE_KEYS = umpire_id_lookup.scan()
+for umpire in ALL_UMPIRE_KEYS:
+	umpire['isCrewChief'] = crew_update_table.get({'name':umpire['name'], 'season':'2019'},
+		AttributesToGet=['crew chief'])['crew chief']
+
 ALL_UMPIRE_NAMES = [obj['name'] for obj in ALL_UMPIRE_KEYS]
 for umpire in ALL_UMPIRE_KEYS:
 	name = umpire['name']
