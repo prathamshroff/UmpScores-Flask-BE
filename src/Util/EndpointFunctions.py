@@ -461,60 +461,58 @@ def columns_rename(d, columns_map):
 		else:
 			d[columns_map[key]] = -1
 
-def create_rankings_object(umpire_names, year_range):
-	umpires = []
-	for name in umpire_names:
-		subarr = []
-		parts = name.split()
-		# for year in year_range:
-		career_resp = careers_season.query(
-			KeyConditionExpression = Key('name').eq(name)
-		)
-		resp_2019 = umpires_2019_table.get({'name':name}, AttributesToGet=['age'])
-		if 'age' in resp_2019:
-			age = resp_2019['age']
-		else:
-			age = -1
+def create_rankings_object(name, year_range):
+	subarr = []
+	parts = name.split()
+	# for year in year_range:
+	career_resp = careers_season.query(
+		KeyConditionExpression = Key('name').eq(name)
+	)
+	resp_2019 = umpires_2019_table.get({'name':name}, AttributesToGet=['age'])
+	if 'age' in resp_2019:
+		age = resp_2019['age']
+	else:
+		age = -1
 
-		for resp in career_resp:
-			resp = {key: resp[key] for key in ['name', 'data_year', 'total_call', 'bad_call_ratio', 
-				'games', 'bad_call_per_game', 'bad_call_per_inning']}
-			if career_resp != {}:
-				team_preference_resp = profile_team_preference_table.get(
-					{'name':name,'season':resp['data_year']},
-					AttributesToGet = ['mostAccurateTeam', 'leastAccurateTeam']
-				)
-				ejections_resp = ejections_table.get(
-					{
-						'name':name
-					},
-					AttributesToGet = ['ej_{0}'.format(resp['data_year'])]
-				)
-				crew_update_get_resp = crew_update_table.get({'name': resp['name'], 'season': resp['data_year']},
-					AttributesToGet=['status', 'crew number'])
-				resp.update(team_preference_resp)
-				resp.update(ejections_resp)
-				resp.update(crew_update_get_resp)
-				columns_rename(resp, {
-					'bad_call_ratio': 'icr',
-					'total_call': 'pitchesCalled',
-					'games': 'gamesUmped',
-					'data_year': 'season',
-					'bad_call_per_game': 'bcpg',
-					'bad_call_per_inning': 'bcpi',
-					'leastAccurateTeam': 'mostBadCalls',
-					'mostAccurateTeam': 'leastBadCalls',
-					'ej_{0}'.format(resp['data_year']): 'ejections',
-					'crew number': 'crew'
-				})
-				resp.update({'firstName': parts[0], 'lastName': parts[-1]})
-				if resp['season'] in [2019, '2019']:
-					resp['age'] = age
-				subarr.append(resp)
-		umpires.append(subarr)
-	return umpires
+	for resp in career_resp:
+		resp = {key: resp[key] for key in ['name', 'data_year', 'total_call', 'bad_call_ratio', 
+			'games', 'bad_call_per_game', 'bad_call_per_inning']}
+		if career_resp != {}:
+			team_preference_resp = profile_team_preference_table.get(
+				{'name':name,'season':resp['data_year']},
+				AttributesToGet = ['mostAccurateTeam', 'leastAccurateTeam']
+			)
+			ejections_resp = ejections_table.get(
+				{
+					'name':name
+				},
+				AttributesToGet = ['ej_{0}'.format(resp['data_year'])]
+			)
+			crew_update_get_resp = crew_update_table.get({'name': resp['name'], 'season': resp['data_year']},
+				AttributesToGet=['status', 'crew number'])
+			resp.update(team_preference_resp)
+			resp.update(ejections_resp)
+			resp.update(crew_update_get_resp)
+			columns_rename(resp, {
+				'bad_call_ratio': 'icr',
+				'total_call': 'pitchesCalled',
+				'games': 'gamesUmped',
+				'data_year': 'season',
+				'bad_call_per_game': 'bcpg',
+				'bad_call_per_inning': 'bcpi',
+				'leastAccurateTeam': 'mostBadCalls',
+				'mostAccurateTeam': 'leastBadCalls',
+				'ej_{0}'.format(resp['data_year']): 'ejections',
+				'crew number': 'crew'
+			})
+			resp.update({'firstName': parts[0], 'lastName': parts[-1]})
+			if resp['season'] in [2019, '2019']:
+				resp['age'] = age
+			subarr.append(resp)
+	return subarr
 
-def create_umpire_object(name, year_range):
+#TODO CACHE UMPIRES
+def create_umpire_object(name, year):
 	name = ' '.join([word.capitalize() for word in name.lower().split()])
 	career_resp = careers_season.get({'name':name, 'data_year':2019},
 		AttributesToGet=['bad_call_per_inning', 'bad_call_per_game'])
@@ -524,12 +522,17 @@ def create_umpire_object(name, year_range):
 		},
 		AttributesToGet = ['id', 'name']
 	)
+
+	# THIS COMMENTED CODE MAY BE A BUG??
+	# if 'name' not in career_resp:
+	# 	print(name)
+	if 'name' not in career_resp:
+		return {}
 	parts = career_resp['name'].split()
 	first_name, last_name = parts[0], parts[-1]
 	ump_id = career_resp['id']
 	resp_2019 = umpires_2019_table.get({'name':name}, AttributesToGet=['age'])
 
-	year = year_range[-1]
 	range_table = careers_range.get(
 		{
 			'name': name
@@ -550,6 +553,7 @@ def create_umpire_object(name, year_range):
 		},
 		AttributesToGet = ['crew number', 'status', 'crew_chief']
 	)
+	bcr_best_year_resp = bcr_best_year_table.get({'name':name}, AttributesToGet=['best_year'])
 	ejections_resp = ejections_table.get({'name':name},AttributesToGet=['ej_{0}'.format(year)])
 	average_game_length_table_resp = average_game_length_table.get({
 			'name': name,
@@ -562,47 +566,56 @@ def create_umpire_object(name, year_range):
 	)
 	profile_best_worst_month_resp = profile_best_worst_month_table.get({'name': name,'season':year},
 		AttributesToGet=['best_month', 'worst_month'])
-
+	bcr_weather_resp = bcr_weather_table.get({'name':name}, AttributesToGet=['best_weather'])
 	profile_best_worst_park_resp = profile_best_worst_park_table.get({'name': name, 'season': year},
 		AttributesToGet=['best_park', 'worst_park'])
-	print(team_preference_resp)
-	if career_seasonal_resp != {} and crew_resp != {} and range_table != {}:
-		data = career_seasonal_resp
-		data.update(crew_resp)
-		data.update(range_table)
-		data.update(average_game_length_table_resp)
-		data.update(team_preference_resp)
-		data.update(ejections_resp)
-		data.update(profile_best_worst_month_resp)
-		data.update(profile_best_worst_park_resp)
-		data.update(career_resp)
-		data.update({
-			'firstName': first_name, 
-			'last_name': last_name,
-			'id': ump_id
-		})
-		if 'age' in resp_2019:
-			data['age'] = resp_2019['age']
-		else:
-			data['age'] = -1
-		columns_rename(data, {
-			'BCR_{0}'.format(year): 'icr',
-			'crew number': 'crewNumber',
-			'crew_chief': 'isCrewChief',
-			'total_call': 'pitchesCalled',
-			'games': 'gamesUmped',
-			'average_game_length_2019': 'paceOfPlay',
-			'crew number': 'crew',
-			'bad_call_per_game': 'bcpg',
-			'bad_call_per_inning': 'bcpi',
-			'leastAccurateTeam': 'mostBadCalls',
-			'mostAccurateTeam': 'leastBadCalls',
-			'ej_{0}'.format(year): 'ejections',
-			'best_month': 'bestMonth',
-			'worst_month': 'worstMonth',
-			'worst_park': 'worstPark',
-			'best_park': 'bestPark'
-		})
+	bcr_start_time_resp = bcr_start_time_table.get({'name': name}, AttributesToGet=['best_start_time'])
+	
+	bcr_std_resp = bcr_std_table.get({'name':name}, AttributesToGet=['bcr_std_2019'])
+	data = career_seasonal_resp
+	data.update(crew_resp)
+	data.update(range_table)
+	data.update(average_game_length_table_resp)
+	data.update(team_preference_resp)
+	data.update(ejections_resp)
+	data.update(profile_best_worst_month_resp)
+	data.update(profile_best_worst_park_resp)
+	data.update(career_resp)
+	data.update(bcr_weather_resp)
+	data.update(bcr_std_resp)
+	data.update(bcr_best_year_resp)
+	data.update(bcr_start_time_resp)
+	data.update({
+		'firstName': first_name, 
+		'last_name': last_name,
+		'id': ump_id
+	})
+	if 'age' in resp_2019:
+		data['age'] = resp_2019['age']
+	else:
+		data['age'] = -1
+	columns_rename(data, {
+		'BCR_{0}'.format(year): 'icr',
+		'crew number': 'crewNumber',
+		'crew_chief': 'isCrewChief',
+		'total_call': 'pitchesCalled',
+		'games': 'gamesUmped',
+		'best_weather': 'weatherPreference',
+		'average_game_length_2019': 'paceOfPlay',
+		'best_year': 'bestSeason',
+		'crew number': 'crew',
+		'best_start_time': 'timePreference',
+		'bad_call_per_game': 'bcpg',
+		'bad_call_per_inning': 'bcpi',
+		'leastAccurateTeam': 'mostBadCalls',
+		'mostAccurateTeam': 'leastBadCalls',
+		'ej_{0}'.format(year): 'ejections',
+		'best_month': 'bestMonth',
+		'bcr_std_2019': 'consistency',
+		'worst_month': 'worstMonth',
+		'worst_park': 'worstPark',
+		'best_park': 'bestPark'
+	})
 	return data
 
 

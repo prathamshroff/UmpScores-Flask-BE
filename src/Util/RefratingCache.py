@@ -1,13 +1,17 @@
 from StorageSolutions.tables import *
 import simplejson as json
-from Util.EndpointFunctions import create_rankings_object, get_all_games, cache
+from Util.EndpointFunctions import create_rankings_object, create_umpire_object, get_all_games, cache
 from flask import Flask, jsonify, request, Response
+from multiprocessing.pool import ThreadPool as Pool
+from threading import Thread
 import time
 
 now = time.time()
 
+refPool = Pool()
 data_year_range = range(2010, 2020)
 ALL_UMPIRE_KEYS = umpire_id_lookup.scan()
+
 for umpire in ALL_UMPIRE_KEYS:
 	get = crew_update_table.get({'name':umpire['name'], 'season':2019},
 		AttributesToGet=['crew chief', 'ump number'])
@@ -21,6 +25,10 @@ for umpire in ALL_UMPIRE_KEYS:
 	umpire['firstName'] = parts[0]
 	umpire['lastName'] = parts[-1]
 
+
+cache['umpires'] = refPool.starmap(create_umpire_object, [(name, data_year_range[-1]) for name in ALL_UMPIRE_NAMES])
+cache['umpires'] = {obj['name']: obj for obj in cache['umpires'] if 'name' in obj}
+print('Generated Umpires Objects: t = {0}s'.format(time.time() - now))
 # def get_pitcher_names(umpire_name):
 # 	names = set()
 # 	for year in data_year_range:
@@ -33,9 +41,9 @@ for umpire in ALL_UMPIRE_KEYS:
 # 	get_pitcher_names(umpire)] for umpire in ALL_UMPIRE_NAMES}
 # print('Cached Pitcher Objects: t = {0}s'.format(time.time() - now))
 
-RANKINGS_OBJECT = create_rankings_object(ALL_UMPIRE_NAMES, data_year_range)
-RANKINGS_OBJECT = json.dumps(RANKINGS_OBJECT, use_decimal=True)
-RANKINGS_OBJECT = Response(RANKINGS_OBJECT, status=200, mimetype='application/json')
+cache['rankings'] = refPool.starmap(create_rankings_object, [(name, data_year_range) for name in ALL_UMPIRE_NAMES])
+cache['rankings'] = json.dumps(cache['rankings'], use_decimal=True)
+cache['rankings'] = Response(cache['rankings'], status=200, mimetype='application/json')
 print('Cached Ranking Objects: t = {0}s'.format(time.time() - now))
 
 

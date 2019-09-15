@@ -119,7 +119,8 @@ class Umpire(Resource):
         model
         """
         name = request.args.get('name')
-        data = create_umpire_object(name, data_year_range)
+        name = ' '.join([word.lower().capitalize() for word in name.split()])
+        data = cache['umpires'][name]
         data = json.dumps(data, use_decimal=True)
         resp = Response(data, status=200, mimetype='application/json')
         return resp
@@ -132,7 +133,7 @@ class Rankings(Resource):
         """
         Returns a list of all umpire objects from every year in the rankings format
         """ 
-        return RANKINGS_OBJECT
+        return cache['rankings']
 
 
 
@@ -196,7 +197,14 @@ class Recache(Resource):
             cache_lock.acquire()
             if password == configs['privilege_secret']:
                 cache['games'] = get_all_games(ALL_UMPIRE_NAMES)
+                cache['umpires'] = refPool.starmap(create_umpire_object, [(name, data_year_range[-1]) for name in ALL_UMPIRE_NAMES])
+                cache['umpires'] = {obj['name']: obj for obj in cache['umpires'] if 'name' in obj}                
+
+                cache['rankings'] = refPool.starmap(create_rankings_object, [(name, data_year_range) for name in ALL_UMPIRE_NAMES])
+                cache['rankings'] = json.dumps(cache['rankings'], use_decimal=True)
+                cache['rankings'] = Response(cache['rankings'], status=200, mimetype='application/json')
                 return Response([], status=200)
+                
             else:
                 return Response([], status=400)
         finally:
