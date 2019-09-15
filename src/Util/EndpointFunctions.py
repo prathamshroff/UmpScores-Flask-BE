@@ -464,23 +464,40 @@ def create_rankings_object(umpire_names, year_range):
 		career_resp = careers_season.query(
 			KeyConditionExpression = Key('name').eq(name)
 		)
+		age = umpires_2019_table.get({'name':name}, AttributesToGet=['age'])['age']
 		for resp in career_resp:
-			resp = {key: resp[key] for key in ['name', 'data_year', 'total_call', 'bad_call_ratio', 'games']}
+			resp = {key: resp[key] for key in ['name', 'data_year', 'total_call', 'bad_call_ratio', 
+				'games', 'bad_call_per_game', 'bad_call_per_inning']}
 			if career_resp != {}:
+				team_preference_resp = profile_team_preference_table.get(
+					{'name':name,'season':resp['data_year']},
+					AttributesToGet = ['mostAccurateTeam', 'leastAccurateTeam']
+				)
+				ejections_resp = ejections_table.get(
+					{
+						'name':name
+					},
+					AttributesToGet = ['ej_{0}'.format(resp['data_year'])]
+
+				)
+				resp.update(team_preference_resp)
+				resp.update(ejections_resp)
+
 				columns_rename(resp, {
 					'bad_call_ratio': 'icr',
 					'total_call': 'pitchesCalled',
 					'games': 'gamesUmped',
-					'data_year': 'season'
+					'data_year': 'season',
+					'bad_call_per_game': 'bcpg',
+					'bad_call_per_inning': 'bcpi',
+					'leastAccurateTeam': 'mostBadCalls',
+					'mostAccurateTeam': 'leastBadCalls',
+					'ej_{0}'.format(resp['data_year']): 'ejections'
 				})
 				resp.update({'firstName': parts[0], 'lastName': parts[-1]})
+				if resp['season'] in [2019, '2019']:
+					resp['age'] = age
 				subarr.append(resp)
-		ejections_resp = ejections_table.get(
-			{
-				'name':name
-			},
-			AttributesToGet = ['ej_2014']
-		)
 		umpires.append(subarr)
 	return umpires
 
