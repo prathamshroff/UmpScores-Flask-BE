@@ -27,7 +27,6 @@ def profile_upload_simple_folders(pool):
 			'sort_key':'season'
 		}
 	]
-
 	pool.starmap(pickle, [(simple_merge_folder, arg) for arg in kwargs])
 
 	

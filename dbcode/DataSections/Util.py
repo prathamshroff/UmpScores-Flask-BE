@@ -25,29 +25,23 @@ def single_file_upload(table, filepath, primary_key, output_filepath=None,
 
 def simple_merge_folder(table, root, primary_key, get_season, columns_to_rename={'ump':'name'},
 	sort_key=None, exclude_files = ['merged.csv']):
-	files = [os.path.join(root, file) for file in os.listdir(root) if file != 'merged.csv']
+	files = [os.path.join(root, file) for file in os.listdir(root) if file not in exclude_files]
 	merge = pd.read_csv(files[0])
-	merge['season'] = len(merge) * [get_season(files[0])]
-	left_on = [primary_key]
-	right_on = [primary_key]
-	if sort_key != None:
-		left_on.append(sort_key)
-		right_on.append(sort_key)
-
+	print(files)
+	merge[sort_key] = len(merge) * [get_season(files[0])]
 	merge.rename(columns=columns_to_rename, inplace=True)	
 
 	for i in range(len(files))[1:]:
 		if files[i] not in exclude_files:
 			df = pd.read_csv(files[i])
 			df.rename(columns=columns_to_rename, inplace=True)
-			df['season'] = len(df) * [get_season(files[i])]
-			merge = pd.merge(merge, df, left_on=left_on, right_on=(right_on), suffixes = ('', '_y'))
+			df[sort_key] = len(df) * [get_season(files[i])]
+			merge = pd.concat((merge, df))
 			merge = Table.drop_y(merge)
 	output = os.path.join(root, 'merged.csv')
 
 	if 'Unnamed: 0' in merge.columns:
 		merge.drop(columns=['Unnamed: 0'], inplace=True)
-
 	merge = Table.fillna(merge, [])
 	merge.to_csv(output)
 	table.clear(primary_key, sort_key=sort_key)

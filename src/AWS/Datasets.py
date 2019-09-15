@@ -63,6 +63,7 @@ class Table():
         values.update({key: -1 for key in number_fields})
 
         df = df.fillna(value=values)
+        df = df.replace([float('inf'), -float('inf')], '-1', regex=True)
         return df
 
     @staticmethod
@@ -227,7 +228,7 @@ class Table():
                             print('Exponential Backoff Failed. Load too heavy!')
                             exit(1)
                         else:
-                            print('Increasing backoff to {0}'.format(backoff))
+                            print('Increasing backoff to {0}ms'.format(backoff))
                     elif errcode == 'ValidationException':
                         print(e)
                         print(item)

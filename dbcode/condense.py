@@ -14,6 +14,8 @@ import time
 from multiprocessing.pool import ThreadPool as Pool
 from threading import Thread
 import DataSections.Profile as Profile
+import DataSections.Career as Career
+import DataSections.Pitcher as Pitcher
 from DataSections.Util import simple_merge_folder, single_file_upload
 #TODO LIST:
 # Don't add non existent s3 images to database
@@ -42,59 +44,12 @@ def single_files_scheduler():
 		[ejections_table, 'output-data/Career/ejections.csv', 'name'],
 		[careers_range_change, 'output-data/Career/Change_in_BCR_2010-2019.csv', 'name'],
 		[careers, 'output-data/Career/career.csv', 'name'],
+		[careers_range, 'output-data/Career/BCR By Season/BCR_among_all_umps.csv', 'name']
 		
 	]
 	pool.starmap(single_file_upload, args)
 	t1.join()
 	print('Finished uploading singular files')
-
-# NEEDS TO BE WORKED ON, WILL UPLOAD THE SINGLE FILES FOR NOW
-def upload_crew_update_data():
-	#need to modify this to add years for each column
-	root = 'output-data/Career/crew_update'
-	files = [os.path.join(root, file) for file in os.listdir(root)]
-	crew_update_table.clear('name')
-	for file in files:
-		print("FILENAME: ", file)
-		year = file.split("_")[3]
-		#don't need to drop name
-		df = pd.read_csv(file)
-		# adding year to the beginning of each column
-		df.add_prefix(year)
-		df = Table.fillna(df, [])
-		df = df.drop(columns=['Unnamed: 0'])
-		df.to_csv(file)
-		crew_update_table.upload(file)
-
-
-# good example for when we want to download all of the files in a directory
-def upload_profile_best_worst_months():
-	root = 'output-data/Profile/best-worst month'
-	files = [os.path.join(root, file) for file in os.listdir(root)]
-	profile_month_table.clear('name', sort_key = 'season')
-	for file in files:
-		df = pd.read_csv(file)
-		if 'ump' in df.columns:
-			df.rename(columns = {'ump': 'name'}, inplace = True)
-		if 'season' not in df.columns:
-			df['season'] = len(df) * [file.split('.')[0].split('_')[-1]]
-		if 'Unnamed: 0' in df.columns:
-			df = df.drop(columns = ['Unnamed: 0'])
-		df = Table.fillna(df, [])
-		df.to_csv(file)
-		profile_month_table.upload(file)
-
-def upload_zone_data():
-	root = 'output-data/Career/pitch+zone'
-	umpire_zones.clear('name', sort_key = 'season')
-	for file in os.listdir(root):
-		filename = os.path.join(root, file)
-		df = pd.read_csv(filename)
-		df['season'] = [file[-8:-4]] * len(df) # get year
-		df = Table.fillna(df, [])
-		df = df.drop(columns = ['Unnamed: 0'])
-		df.to_csv(filename)
-		umpire_zones.upload(filename)
 
 def upload_umpire_pitchers():
 	umpire_pitchers.clear('name', sort_key = 'season')
@@ -156,80 +111,6 @@ def ump_game_lookup_refresh():
 	
 	ump_game_lookup.clear('name', sort_key = 'game')
 	ump_game_lookup.upload('refrating_ump_game_lookup.csv')
-
-def upload_career_range_file():
-	"""
-	Empties and reuploads season_bcr_2010-2019.csv to refrating-career-range table
-
-	Requirements
-	----------
-	Before running this, make sure you have done the following:
-	dbcode/output-data/Career exists and if not, download output-data from drive
-	"""
-	root = 'output-data/Career/BCR By Season/season_bcr_2010-2019.csv'
-	df = pd.read_csv(root)
-	if 'ump' in df.columns:
-		df.rename(columns = {'ump': 'name'}, inplace = True)
-	if 'Unnamed: 0' in df.columns:
-		df = df.drop(columns = ['Unnamed: 0'])
-	df.to_csv(root)
-	careers_range.clear('name')
-	careers_range.upload(root)
-
-
-def upload_crew_update():
-	"""
-	Iterates through output-data/Career/crew_update files, appends data_year onto those files
-	and uploads the files to refrating-crews dynamodb table.
-
-	Requirements
-	----------
-	Before running this, make sure you have done the following:
-	dbcode/output-data/Career exists and if not, download output-data from drive
-	"""
-	root = 'output-data/Career/crew_update'
-	filenames = [os.path.join(root, file) for file in os.listdir(root) if file != 'ARCHIVE']
-	string_fields = ['status', 'crew']
-	crews.clear('name', sort_key = 'data_year')
-	for file in filenames:
-		df = pd.read_csv(file)
-		df = Table.fillna(df, string_fields)
-		if 'data_year' not in df.columns:
-			df['data_year'] = [int(file.split('.')[0][-4:])] * df['name'].count()
-		if 'Unnamed: 0' in df.columns:
-			df = df.drop(columns = ['Unnamed: 0'])
-		if 'crew_dhief' in df.columns:
-			df.rename(columns = {'crew_dhief': 'crew_chief'}, inplace = True)
-		if 'crew_field' in df.columns:
-			df.rename(columns = {'crew_field': 'crew_chief'}, inplace = True)
-		df.to_csv(file)
-		crews.upload(file)
-	print('Uploaded crew data')
-
-
-def create_career_seasonal_data():
-	"""
-	Iterates through Career/season_bcr_year.csv files, appends data_year onto those files
-	and uploads the files to refrating-careers-season dynamodb table.
-
-	Requirements
-	----------
-	Before running this, make sure you have done the following:
-	dbcode/output-data/Career exists and if not, download output-data from drive
-	"""
-	season_career_bcrs = ['season_bcr_{0}.csv'.format(year) for year in range(2010, 2020)]
-	careers_season.clear('name', sort_key = 'data_year')
-
-	for file in season_career_bcrs:
-		file = os.path.join('output-data/Career/BCR By Season/', file)
-		df = pd.read_csv(file)
-
-		if 'data_year' not in df.columns:
-			df['data_year'] = [file.split('_')[2].split('.')[0]] * len(df)
-			df.drop(columns = ['Unnamed: 0'], inplace=True)
-			df.to_csv(file)
-		careers_season.upload(file)
-	print('Uploaded career_seasonal_bcr data')
 
 
 def create_game_date():
@@ -523,19 +404,14 @@ def refresh_all_aws_resources():
 		'output-data/Game-Stats'
 	]
 	stamp = time.time()
-	Profile.profile_upload_simple_folders(pool)
+	Pitcher.pitcher_upload_simple_folders(pool)
+	# Career.career_upload_simple_folders(pool)
+	# Profile.profile_upload_simple_folders(pool)
 	# single_files_scheduler()
-	# upload_crew_update_data() NEEDS TO BE WORKED ON
-	# upload_profile_best_worst_months()
-	# upload_zone_data()
+
 	# upload_umpire_pitchers()
 	# upload_pitcher_stats()
 	# ump_game_lookup_refresh()
-	# upload_career_change_range_file()
-	# upload_career_range_file()
-	# upload_crew_update()
-	# upload_career_data()
-	# create_career_seasonal_data()
 	# dataPrep(tasks)
 	# create_game_date()
 	# umpire_id_lookup_reset()
