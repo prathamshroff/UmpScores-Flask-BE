@@ -456,7 +456,10 @@ def create_pitcher_object(umpire_name, pitcher_name):
 
 def columns_rename(d, columns_map):
 	for key in columns_map:
-		d[columns_map[key]] = d.pop(key)
+		if columns_map[key] in d:
+			d[columns_map[key]] = d.pop(key)
+		else:
+			d[columns_map[key]] = -1
 
 def create_rankings_object(umpire_names, year_range):
 	umpires = []
@@ -486,11 +489,12 @@ def create_rankings_object(umpire_names, year_range):
 						'name':name
 					},
 					AttributesToGet = ['ej_{0}'.format(resp['data_year'])]
-
 				)
+				crew_update_get_resp = crew_update_table.get({'name': resp['name'], 'season': resp['data_year']},
+					AttributesToGet=['status', 'crew number'])
 				resp.update(team_preference_resp)
 				resp.update(ejections_resp)
-
+				resp.update(crew_update_get_resp)
 				columns_rename(resp, {
 					'bad_call_ratio': 'icr',
 					'total_call': 'pitchesCalled',
@@ -500,7 +504,8 @@ def create_rankings_object(umpire_names, year_range):
 					'bad_call_per_inning': 'bcpi',
 					'leastAccurateTeam': 'mostBadCalls',
 					'mostAccurateTeam': 'leastBadCalls',
-					'ej_{0}'.format(resp['data_year']): 'ejections'
+					'ej_{0}'.format(resp['data_year']): 'ejections',
+					'crew number': 'crew'
 				})
 				resp.update({'firstName': parts[0], 'lastName': parts[-1]})
 				if resp['season'] in [2019, '2019']:
@@ -511,7 +516,8 @@ def create_rankings_object(umpire_names, year_range):
 
 def create_umpire_object(name, year_range):
 	name = ' '.join([word.capitalize() for word in name.lower().split()])
-
+	career_resp = careers_season.get({'name':name, 'data_year':2019},
+		AttributesToGet=['bad_call_per_inning', 'bad_call_per_game'])
 	career_resp = careers.get(
 		{
 			'name': name
@@ -521,6 +527,7 @@ def create_umpire_object(name, year_range):
 	parts = career_resp['name'].split()
 	first_name, last_name = parts[0], parts[-1]
 	ump_id = career_resp['id']
+	resp_2019 = umpires_2019_table.get({'name':name}, AttributesToGet=['age'])
 
 	year = year_range[-1]
 	range_table = careers_range.get(
@@ -543,29 +550,58 @@ def create_umpire_object(name, year_range):
 		},
 		AttributesToGet = ['crew number', 'status', 'crew_chief']
 	)
-
+	ejections_resp = ejections_table.get({'name':name},AttributesToGet=['ej_{0}'.format(year)])
 	average_game_length_table_resp = average_game_length_table.get({
 			'name': name,
 		},
 		AttributesToGet = ['average_game_length_2019']
 	)
+	team_preference_resp = profile_team_preference_table.get(
+		{'name':name,'season':year},
+		AttributesToGet = ['mostAccurateTeam', 'leastAccurateTeam']
+	)
+	profile_best_worst_month_resp = profile_best_worst_month_table.get({'name': name,'season':year},
+		AttributesToGet=['best_month', 'worst_month'])
+
+	profile_best_worst_park_resp = profile_best_worst_park_table.get({'name': name, 'season': year},
+		AttributesToGet=['best_park', 'worst_park'])
+	print(team_preference_resp)
 	if career_seasonal_resp != {} and crew_resp != {} and range_table != {}:
 		data = career_seasonal_resp
 		data.update(crew_resp)
 		data.update(range_table)
 		data.update(average_game_length_table_resp)
+		data.update(team_preference_resp)
+		data.update(ejections_resp)
+		data.update(profile_best_worst_month_resp)
+		data.update(profile_best_worst_park_resp)
+		data.update(career_resp)
 		data.update({
 			'firstName': first_name, 
 			'last_name': last_name,
 			'id': ump_id
 		})
+		if 'age' in resp_2019:
+			data['age'] = resp_2019['age']
+		else:
+			data['age'] = -1
 		columns_rename(data, {
 			'BCR_{0}'.format(year): 'icr',
 			'crew number': 'crewNumber',
 			'crew_chief': 'isCrewChief',
 			'total_call': 'pitchesCalled',
 			'games': 'gamesUmped',
-			'average_game_length_2019': 'paceOfPlay'
+			'average_game_length_2019': 'paceOfPlay',
+			'crew number': 'crew',
+			'bad_call_per_game': 'bcpg',
+			'bad_call_per_inning': 'bcpi',
+			'leastAccurateTeam': 'mostBadCalls',
+			'mostAccurateTeam': 'leastBadCalls',
+			'ej_{0}'.format(year): 'ejections',
+			'best_month': 'bestMonth',
+			'worst_month': 'worstMonth',
+			'worst_park': 'worstPark',
+			'best_park': 'bestPark'
 		})
 	return data
 
