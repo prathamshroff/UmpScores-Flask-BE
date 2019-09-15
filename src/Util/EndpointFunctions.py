@@ -14,7 +14,6 @@ import simplejson as json
 from flask import Flask, jsonify, request, Response
 import time
 
-cache = {0: {}, 1: {}, 'use': 0}
 # importing things from cache
 TEAM_NAMES = [name.replace('total_call_', '') for name in \
     team_stats_dataset.get(query_map = {'name':'Jordan Baker', 'data_year' : 2019}).keys() if \
@@ -586,6 +585,7 @@ def create_umpire_object(name, year):
 	data.update(bcr_best_year_resp)
 	data.update(bcr_start_time_resp)
 	data.update(crew_update_resp)
+	data.update({'name': name})
 	data.update({
 		'firstName': first_name, 
 		'last_name': last_name,
@@ -702,6 +702,7 @@ def create_umpire_game_object(name):
 	for games_resp in data:
 		games_resp = {key: games_resp[key] for key in keys}
 		if games_resp != {}:
+			games_resp.update({'name': name})
 			columns_rename(games_resp, {
 				'BCR_SL': 'icrSL',
 				'BCR_FT': 'icrFT',
@@ -737,10 +738,11 @@ def create_team_object(name, data_range):
 	# TEAM_NAMES
 	keys = [{'name': {'S': name}, 'data_year': {'N': str(year)}} for year in data_range]
 	response = team_stats_dataset.batch_get(keys)
+	print(response)
 	# careers_season_resp = careers_season.batch_get(keys)
 	for resp in response:
-		year = int(resp['data_year'])
 		if resp != {}:
+			year = int(resp['data_year'])
 			keys = list(resp.keys())
 
 			# Spaghetti line of code

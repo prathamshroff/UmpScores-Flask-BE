@@ -1,51 +1,69 @@
 from StorageSolutions.tables import *
 import simplejson as json
-from Util.EndpointFunctions import create_rankings_object, create_umpire_object, get_all_games, cache, \
-	create_career_object
+from Util.EndpointFunctions import create_rankings_object, create_umpire_object, get_all_games, \
+	create_career_object, create_umpire_game_object
 from flask import Flask, jsonify, request, Response
 from multiprocessing.pool import ThreadPool as Pool
 from threading import Thread
 import time
 import queue
+def recache_everything(cache, mutex, refPool, data_year_range):
+	time_stamp = time.time()
+	cache_que = queue.Queue()
+	mutex.acquire()
+	try:
+		cache_id = 'green' if cache['use'] == 'blue' else 'blue'
+		cache[cache_id]['umpire_keys'] = umpire_id_lookup.scan()
 
-que = queue.Queue()
+		for umpire in cache[cache_id]['umpire_keys']:
+			get = crew_update_table.get({'name':umpire['name'], 'season':2019},
+				AttributesToGet=['crew chief', 'ump number'])
+			umpire['isCrewChief'] = get['crew chief'] if 'crew chief' in get else -1
+			umpire['number'] = get['ump number'] if 'ump number' in get else -1
 
-now = time.time()
+		cache[cache_id]['umpire_names'] = [obj['name'] for obj in cache[cache_id]['umpire_keys']]
+		for umpire in cache[cache_id]['umpire_keys']:
+			name = umpire['name']
+			parts = name.split()
+			umpire['firstName'] = parts[0]
+			umpire['lastName'] = parts[-1]
 
-refPool = Pool()
-data_year_range = range(2010, 2020)
-ALL_UMPIRE_KEYS = umpire_id_lookup.scan()
 
 
+		CACHE_ARGS = [(name, data_year_range) for name in cache[cache_id]['umpire_names']]
+		gamesThread = Thread(target = get_all_games, args=(cache[cache_id]['umpire_names'], cache_que))
+		gamesThread.start()
 
-for umpire in ALL_UMPIRE_KEYS:
-	get = crew_update_table.get({'name':umpire['name'], 'season':2019},
-		AttributesToGet=['crew chief', 'ump number'])
-	umpire['isCrewChief'] = get['crew chief'] if 'crew chief' in get else -1
-	umpire['number'] = get['ump number'] if 'ump number' in get else -1
+		now = time.time()
+		cache[cache_id]['career'] = refPool.starmap(create_career_object, CACHE_ARGS)
+		cache[cache_id]['career'] = {arr[0]['name']: arr for arr in cache[cache_id]['career'] if len(arr) != 0}
+		print('Cached Career Objects: t = {0}s'.format(time.time() - now))
 
-ALL_UMPIRE_NAMES = [obj['name'] for obj in ALL_UMPIRE_KEYS]
-for umpire in ALL_UMPIRE_KEYS:
-	name = umpire['name']
-	parts = name.split()
-	umpire['firstName'] = parts[0]
-	umpire['lastName'] = parts[-1]
+		now = time.time()
+		cache[cache_id]['umpires'] = refPool.starmap(create_umpire_object, [(name, data_year_range[-1]) for name in cache[cache_id]['umpire_names']])
+		cache[cache_id]['umpires'] = {obj['name']: obj for obj in cache[cache_id]['umpires'] if 'name' in obj}
+		print('Cached Umpires Objects: t = {0}s'.format(time.time() - now))
 
-CACHE_ARGS = [(name, data_year_range) for name in ALL_UMPIRE_NAMES]
-gamesThread = Thread(target = get_all_games, args=(ALL_UMPIRE_NAMES, que))
-gamesThread.start()
+		now = time.time()
+		cache[cache_id]['umpire_games'] = refPool.map(create_umpire_game_object, cache[cache_id]['umpire_names'])
+		cache[cache_id]['umpire_games'] = {arr[0]['name']: arr for arr in cache[cache_id]['umpire_games'] if len(arr) != 0}
+		print('Cached Umpire Game Objects at: t = {0}s'.format(time.time() - now))
 
-cache['use'] = 'blue'
-cache['blue'] = {}
-cache['green'] = {}
+		now = time.time()
+		cache[cache_id]['rankings'] = refPool.starmap(create_rankings_object, CACHE_ARGS)
+		cache[cache_id]['rankings'] = json.dumps(cache[cache_id]['rankings'], use_decimal=True)
+		cache[cache_id]['rankings'] = Response(cache[cache_id]['rankings'], status=200, mimetype='application/json')
+		print('Cached Ranking Objects: t = {0}s'.format(time.time() - now))
 
-cache[cache['use']]['career'] = refPool.starmap(create_career_object, CACHE_ARGS)
-cache[cache['use']]['career'] = {arr[0]['name']: arr for arr in cache[cache['use']]['career'] if len(arr) != 0}
-print('Cached Career Objects: t = {0}s'.format(time.time() - now))
+		now = time.time()
+		gamesThread.join()
+		cache[cache_id]['games'] = cache_que.get()
+		print('Cached Games in: t = {0}s'.format(time.time() - now))
+		cache['use'] = cache_id
+	finally:
+		print('Finished caching in {0}s'.format(time.time() - time_stamp))
+		mutex.release()
 
-cache[cache['use']]['umpires'] = refPool.starmap(create_umpire_object, [(name, data_year_range[-1]) for name in ALL_UMPIRE_NAMES])
-cache[cache['use']]['umpires'] = {obj['name']: obj for obj in cache[cache['use']]['umpires'] if 'name' in obj}
-print('Cached Umpires Objects: t = {0}s'.format(time.time() - now))
 # def get_pitcher_names(umpire_name):
 # 	names = set()
 # 	for year in data_year_range:
@@ -58,15 +76,6 @@ print('Cached Umpires Objects: t = {0}s'.format(time.time() - now))
 # 	get_pitcher_names(umpire)] for umpire in ALL_UMPIRE_NAMES}
 # print('Cached Pitcher Objects: t = {0}s'.format(time.time() - now))
 
-cache[cache['use']]['rankings'] = refPool.starmap(create_rankings_object, CACHE_ARGS)
-cache[cache['use']]['rankings'] = json.dumps(cache[cache['use']]['rankings'], use_decimal=True)
-cache[cache['use']]['rankings'] = Response(cache[cache['use']]['rankings'], status=200, mimetype='application/json')
-print('Cached Ranking Objects: t = {0}s'.format(time.time() - now))
-
-
-gamesThread.join()
-cache[cache['use']]['games'] = que.get()
-print('Cached Games in: t = {0}s'.format(time.time() - now))
 # team_objects = {}
 # for umpire in ALL_UMPIRE_NAMES:
 # 	team_objects[umpire] = []
@@ -75,5 +84,4 @@ print('Cached Games in: t = {0}s'.format(time.time() - now))
 # print('Cached Team Objects: t = {0}s'.format(time.time() - now))
 
 
-print('Finished caching in {0}s'.format(time.time() - now))
 

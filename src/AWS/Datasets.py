@@ -85,6 +85,7 @@ class Table():
         df.drop(to_drop, axis=1, inplace=True)
         return df
 
+    # TODO IMPLEMENT BACKOFF?
     def get(self, query_map, **kwargs):
         """
         Get method takes some query map and some filter options
@@ -158,6 +159,7 @@ class Table():
         print(total_time)
         return data
 
+    # TODO IMPLEMENT BACKOFF
     def query(self, **kwargs):
         resp = self.dynamodb.query(**kwargs)
         if 'Items' in resp:
@@ -254,7 +256,7 @@ class Table():
                 hashmap[key] = hashmap[key][data_type]
         return arr
 
-    def batch_get(self, keys, batch_size = 100):
+    def batch_get(self, keys, batch_size = 100, backoff_init = 50, exp_backoff = False, failed=False):
         """
         Gathers multiple key value pairs from this table. Upon throughput throttling,
         retries request. 
@@ -272,18 +274,47 @@ class Table():
             i = new_i
 
         remaining_keys = []
+        backoff = backoff_init
+        try:
+            for batch in workers:
+                if failed:
+                    time.sleep(backoff)
+                page = self.client.batch_get_item(RequestItems = {
+                    self.__table_name: {
+                        'Keys': batch
+                    }
+                })
+                if 'Responses' in page:
+                    if self.__table_name in page['Responses']:
+                        data += Table.unfoil(page['Responses'][self.__table_name])
 
-        for batch in workers:
-            page = self.client.batch_get_item(RequestItems = {
-                self.__table_name: {
-                    'Keys': batch
-                }
-            })
-            if 'Responses' in page:
-                data += Table.unfoil(page['Responses'][self.__table_name])
-            if page['UnprocessedKeys'] != {}:
-                print('Found UnprocessedKeys in {0}'.format(self.__table_name))
-                remaining_keys += Table.unfoil(page['UnprocessedKeys'][self.__table_name]['Keys'])
+                if page['UnprocessedKeys'] != {}:
+                    print('Found UnprocessedKeys in {0}'.format(self.__table_name))
+                if 'UnprocessedKeys' in page:
+                    if self.__table_name in page['UnprocessedKeys']:
+                        remaining_keys += Table.unfoil(page['UnprocessedKeys'][self.__table_name]['Keys'])
+
+                if backoff > backoff_init:
+                    if exp_backoff:
+                        backoff /= 2
+                    else:
+                        backoff -= backoff_init
+        except botocore.exceptions.ClientError as e:
+            errcode = e.response['Error']['Code']
+            if errcode in Table.RETRY_EXCEPTIONS:
+                time.sleep(backoff/1000)
+                if exp_backoff:
+                    backoff *= 2
+                else:
+                    backoff += backoff_init
+                if (backoff / 1000 > 60):
+                    print('Exponential Backoff Failed. Load too heavy!')
+                    exit(1)
+                else:
+                    print('Increasing backoff to {0}ms during batch request'.format(backoff))
+            return self.batch_get(keys, batch_size=batch_size, backoff_init=backoff, exp_backoff=exp_backoff,
+                failed=True)
+
         return data + self.batch_get(remaining_keys, batch_size = batch_size)
 
     def clear(self, primary_key, sort_key = None, backoff_init = 50, exp_backoff = False):
