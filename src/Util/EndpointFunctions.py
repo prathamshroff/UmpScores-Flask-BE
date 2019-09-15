@@ -364,7 +364,7 @@ def get_game_values(ALL_UMPIRE_NAMES, ump_table, event):
 </event>
 		'''
 
-def get_all_games(ALL_UMPIRE_NAMES):
+def get_all_games(ALL_UMPIRE_NAMES, q):
 	resp = {}
 	games = []
 	# storing this to pass to get_game_values so I can get the right data back
@@ -397,7 +397,7 @@ def get_all_games(ALL_UMPIRE_NAMES):
 	except Exception as e:
 		print("EXCEPTION: ", e)
 	resp["games"] = games
-	return resp
+	q.put(resp)
 
 
 def get_pitcher_names(name):
@@ -655,6 +655,7 @@ def create_career_object(name, data_range):
 			data.update(career_crucial_calls_resp)
 			data.update(season_resp)
 			data.update(crew_resp)
+			data.update({'name': name})
 			columns_rename(data, {
 				'BCR_SL': 'icrSL',
 				'BCR_FT': 'icrFT',
