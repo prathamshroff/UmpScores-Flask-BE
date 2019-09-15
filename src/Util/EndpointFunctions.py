@@ -456,7 +456,7 @@ def create_pitcher_object(umpire_name, pitcher_name):
 
 def columns_rename(d, columns_map):
 	for key in columns_map:
-		if columns_map[key] in d:
+		if key in d:
 			d[columns_map[key]] = d.pop(key)
 		else:
 			d[columns_map[key]] = -1
@@ -532,7 +532,7 @@ def create_umpire_object(name, year):
 	first_name, last_name = parts[0], parts[-1]
 	ump_id = career_resp['id']
 	resp_2019 = umpires_2019_table.get({'name':name}, AttributesToGet=['age'])
-
+	crew_update_resp = crew_update_table.get({'name': name, 'season': year}, AttributesToGet = ['years active'])
 	range_table = careers_range.get(
 		{
 			'name': name
@@ -585,6 +585,7 @@ def create_umpire_object(name, year):
 	data.update(bcr_std_resp)
 	data.update(bcr_best_year_resp)
 	data.update(bcr_start_time_resp)
+	data.update(crew_update_resp)
 	data.update({
 		'firstName': first_name, 
 		'last_name': last_name,
@@ -614,7 +615,8 @@ def create_umpire_object(name, year):
 		'bcr_std_2019': 'consistency',
 		'worst_month': 'worstMonth',
 		'worst_park': 'worstPark',
-		'best_park': 'bestPark'
+		'best_park': 'bestPark',
+		'years active': 'yearsExperience'
 	})
 	return data
 
@@ -632,20 +634,25 @@ def create_career_object(name, data_range):
 				'BCR_CH', 'BCR_FC', 'BCR_EP', 'BCR_KC', 'BCR_FS', 'BCR_PO', 'BCR_KN', 
 				'BCR_SC', 'BCR_FO', 'BCR_UN', 'BCR_FA', 'BCR_IN'])
 
-
-
+		career_crucial_calls_resp = career_crucial_calls_table.get({'name':name, 'season':year},
+			AttributesToGet=['bad_crucial_call'])
 		crew_resp = crew_update_table.get({'name': name, 'season': year},
 			AttributesToGet = ['status'])
 		# change_resp = careers_range_change.get({'name': name}, AttributesToGet=[
 		# 	'BCR_change_{0}-1_{0}'
 		# ])
-		if range_resp != {} and season_resp != {}:
+		if season_resp != {}:
 			data = range_resp
-			data.update(
-				{
-					'paceOfPlay': average_game_length_table_resp['average_game_length_{0}'.format(year)]
-				}
-			)
+			if 'average_game_length_{0}'.format(year) in average_game_length_table_resp:
+				data.update(
+					{
+						'paceOfPlay': average_game_length_table_resp['average_game_length_{0}'.format(year)]
+					}
+				)
+			else:
+				data.update({'paceOfPlay': -1})
+
+			data.update(career_crucial_calls_resp)
 			data.update(season_resp)
 			data.update(crew_resp)
 			columns_rename(data, {
