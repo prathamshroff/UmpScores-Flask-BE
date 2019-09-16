@@ -261,6 +261,7 @@ class Table():
         Gathers multiple key value pairs from this table. Upon throughput throttling,
         retries request. 
         """
+        print(keys)
         if keys == []:
             return []
 
