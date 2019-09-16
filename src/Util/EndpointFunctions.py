@@ -395,8 +395,7 @@ def get_all_games(ALL_UMPIRE_NAMES, q):
 							games.append(event_info)
 	except Exception as e:
 		print("EXCEPTION: ", e)
-	resp["games"] = games
-	q.put(resp)
+	q.put(games)
 
 
 def get_pitcher_names(name):

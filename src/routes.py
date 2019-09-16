@@ -166,7 +166,6 @@ class QuerySearch(Resource):
 
 @api.route('/games')
 class GetTodaysGames(Resource):
-    @api.response(200, 'OK', get_all_umpire_id_pairs)
     def get(self):
         games = json.dumps(cache[cache['use']]['games'])
         resp = Response(games, status=200, mimetype='application/json')
