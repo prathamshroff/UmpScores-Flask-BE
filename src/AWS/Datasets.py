@@ -314,6 +314,9 @@ class Table():
                     print('Increasing backoff to {0}ms during batch request'.format(backoff))
             return self.batch_get(keys, batch_size=batch_size, backoff_init=backoff, exp_backoff=exp_backoff,
                 failed=True)
+        except Exception as e:
+            print(e)
+            print('Failed get on {0}'.format(batch))
 
         return data + self.batch_get(remaining_keys, batch_size = batch_size)
 
