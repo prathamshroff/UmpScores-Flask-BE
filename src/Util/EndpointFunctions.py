@@ -531,7 +531,7 @@ def create_umpire_object(name, year):
 	first_name, last_name = parts[0], parts[-1]
 	ump_id = career_resp['id']
 	resp_2019 = umpires_2019_table.get({'name':name}, AttributesToGet=['age'])
-	crew_update_resp = crew_update_table.get({'name': name, 'season': year}, AttributesToGet = ['years active'])
+	crew_update_resp = crew_update_table.get({'name': name, 'season': year}, AttributesToGet = ['years active', 'ranking'])
 	range_table = careers_range.get(
 		{
 			'name': name
@@ -552,6 +552,7 @@ def create_umpire_object(name, year):
 		},
 		AttributesToGet = ['crew number', 'status', 'crew_chief']
 	)
+	# want to add crew rank here. Might just make a dict of values for now so I don't have to set up another table
 	bcr_best_year_resp = bcr_best_year_table.get({'name':name}, AttributesToGet=['best_year'])
 	ejections_resp = ejections_table.get({'name':name},AttributesToGet=['ej_{0}'.format(year)])
 	average_game_length_table_resp = average_game_length_table.get({
@@ -616,7 +617,8 @@ def create_umpire_object(name, year):
 		'worst_month': 'worstMonth',
 		'worst_park': 'worstPark',
 		'best_park': 'bestPark',
-		'years active': 'yearsExperience'
+		'years active': 'yearsExperience',
+		'ranking': 'rank'
 	})
 	return data
 
@@ -630,7 +632,7 @@ def create_career_object(name, data_range):
 		range_resp = careers_range.get({'name': name}, AttributesToGet=['BCR_{0}'.format(year)])
 
 		season_resp = careers_season.get({'name': name, 'data_year': year},
-			AttributesToGet=['data_year', 'games', 'total_call', 'BCR_SL', 'BCR_FT', 'BCR_CU', 'BCR_FF', 'BCR_SI', 
+			AttributesToGet=['best_pitch', 'worst_pitch', 'data_year', 'games', 'total_call', 'BCR_SL', 'BCR_FT', 'BCR_CU', 'BCR_FF', 'BCR_SI', 
 				'BCR_CH', 'BCR_FC', 'BCR_EP', 'BCR_KC', 'BCR_FS', 'BCR_PO', 'BCR_KN', 
 				'BCR_SC', 'BCR_FO', 'BCR_UN', 'BCR_FA', 'BCR_IN'])
 
@@ -697,7 +699,7 @@ def create_umpire_game_object(name):
 	keys = ['hometeam','awayteam', 'date', 'bad_call_ratio', 'preference', 'BCR_SL', 
 		'BCR_FT', 'BCR_CU', 'BCR_FF', 'BCR_SI', 'BCR_CH', 'BCR_FC', 'BCR_EP', 
 		'BCR_KC', 'BCR_FS', 'BCR_KN', 'BCR_FO', 
-		'total_call', 'call_strike'
+		'total_call', 'call_ball', 'call_strike'
 	]
 	for games_resp in data:
 		games_resp = {key: games_resp[key] for key in keys}
@@ -725,7 +727,8 @@ def create_umpire_game_object(name):
 				'bad_call_ratio': 'icr',
 				'awayteam': 'away',
 				'hometeam': 'home',
-				'total_call': 'ballsCalled',
+				'total_call': 'totalCalled',
+				'call_ball' : 'ballsCalled',
 				'call_strike': 'strikesCalled'
 			})
 			umpire_games.append(games_resp)
