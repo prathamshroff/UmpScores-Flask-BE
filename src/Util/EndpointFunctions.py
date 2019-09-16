@@ -364,7 +364,6 @@ def get_game_values(ALL_UMPIRE_NAMES, ump_table, event):
 		'''
 
 def get_all_games(ALL_UMPIRE_NAMES, q):
-	resp = {}
 	games = []
 	# storing this to pass to get_game_values so I can get the right data back
 	ump_table = get_umpires_for_games()
