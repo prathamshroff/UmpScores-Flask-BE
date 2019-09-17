@@ -486,7 +486,7 @@ def create_rankings_object(name, year_range):
 				AttributesToGet = ['ej_{0}'.format(resp['data_year'])]
 			)
 			crew_update_get_resp = crew_update_table.get({'name': resp['name'], 'season': resp['data_year']},
-				AttributesToGet=['status', 'crew number'])
+				AttributesToGet=['status', 'crew.number'])
 			resp.update(team_preference_resp)
 			resp.update(ejections_resp)
 			resp.update(crew_update_get_resp)
@@ -500,7 +500,8 @@ def create_rankings_object(name, year_range):
 				'leastAccurateTeam': 'mostBadCalls',
 				'mostAccurateTeam': 'leastBadCalls',
 				'ej_{0}'.format(resp['data_year']): 'ejections',
-				'crew number': 'crew'
+				'crew.number': 'crew',
+				'status': 'status'
 			})
 			resp.update({'firstName': parts[0], 'lastName': parts[-1]})
 			if resp['season'] in [2019, '2019']:
@@ -763,7 +764,19 @@ def create_team_object(name, data_range):
 					'ballsCalled': resp['call_ball_{0}'.format(team)],
 					'strikesCalled': resp['call_strike_{0}'.format(team)],
 					'bcr': resp['BCR_{0}'.format(team)],
-					'seasonChangeBcr': prev['BCR_{0}'.format(team)] if prev != {} else -1
+					'seasonChangeBcr': prev['BCR_{0}'.format(team)] if prev != {} else -1,
+					'bcrFO': resp['BCR_{0}'.format(team) + '_FO'],
+					'bcrFF': resp['BCR_{0}'.format(team) + '_FF'],
+					'bcrFT': resp['BCR_{0}'.format(team) + '_FT'],
+					'bcrFC': resp['BCR_{0}'.format(team) + '_FC'],
+					'bcrSI': resp['BCR_{0}'.format(team) + '_SI'],
+					'bcrCH': resp['BCR_{0}'.format(team) + '_CH'],
+					'bcrSL': resp['BCR_{0}'.format(team) + '_SL'],
+					'bcrCU': resp['BCR_{0}'.format(team) + '_CU'],
+					'bcrEP': resp['BCR_{0}'.format(team) + '_EP'],
+					'bcrKC': resp['BCR_{0}'.format(team) + '_KC'],
+					'bcrFS': resp['BCR_{0}'.format(team) + '_FS'],
+					'bcrKN': resp['BCR_{0}'.format(team) + '_KN']
 				}
 				columns_rename(team_stats, {
 					'bcr': 'icr',
