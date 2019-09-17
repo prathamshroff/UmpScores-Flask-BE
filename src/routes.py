@@ -1,39 +1,22 @@
 from StorageSolutions.flask_setup import *
 from StorageSolutions.tables import *
 from Util.EndpointFunctions import *
-from Util.RefratingCache import *
+from Util.RefratingCache import recache_everything
 from flask_restplus import Resource, Api, reqparse, fields
 from flask import Flask, request
 import simplejson as json
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
 from flask import Flask, jsonify, request, Response
+from multiprocessing.pool import ThreadPool as Pool
 import time
 import threading
-# @api.route('/get-umpire-info')
-# class UmpireInfo(Resource):
-#     @api.doc(parser = umpire_parser)
-#     @api.response(200, 'OK', umpire_model)
-#     def get(self):
-#         """
-#         Returns the complete umpire data object
-#         """
-#         now = time.time()
-#         name = request.args.get('name')
-#         name = ' '.join([word.capitalize() for word in name.split()])
-
-#         data = create_umpire_object(name, careers, careers_season, crews, careers_range, data_year_range)
-#         data['career'] = create_career_object(name, careers_season, crews, careers_range, careers_range_change, data_year_range)
-#         data['team'] = []
-#         for team in team_names:
-#             data['team'] += create_team_object(name, team, team_stats_dataset, data_year_range)
-#         # data['pitchers'] = pitcher_objects[name]
-
-#         data = json.dumps(data, use_decimal = True)
-#         resp = Response(data, status=200, mimetype='application/json')
-#         return resp
+data_year_range = range(2010, 2020)
 
 cache_lock = threading.Lock()
+cache = {'blue': {}, 'green': {}, 'use': 'blue'}
+refPool = Pool()
+recache_everything(cache, cache_lock, refPool, data_year_range)
 
 @api.route('/charts')
 class Charts(Resource):
@@ -119,7 +102,8 @@ class Umpire(Resource):
         model
         """
         name = request.args.get('name')
-        data = create_umpire_object(name, data_year_range)
+        name = ' '.join([word.lower().capitalize() for word in name.split()])
+        data = cache[cache['use']]['umpires'][name]
         data = json.dumps(data, use_decimal=True)
         resp = Response(data, status=200, mimetype='application/json')
         return resp
@@ -132,7 +116,7 @@ class Rankings(Resource):
         """
         Returns a list of all umpire objects from every year in the rankings format
         """ 
-        return RANKINGS_OBJECT
+        return cache[cache['use']]['rankings']
 
 
 
@@ -150,7 +134,8 @@ class Career(Resource):
         an array of career objects
         """
         name = request.args.get('name')
-        data = create_career_object(name, data_year_range)
+        name = ' '.join([word.lower().capitalize() for word in name.split()])
+        data = cache[cache['use']]['career'][name]
         data = json.dumps(data, use_decimal=True)
         resp = Response(data, status=200, mimetype='application/json')
         return resp
@@ -181,7 +166,6 @@ class QuerySearch(Resource):
 
 @api.route('/games')
 class GetTodaysGames(Resource):
-    @api.response(200, 'OK', get_all_umpire_id_pairs)
     def get(self):
         games = json.dumps(cache[cache['use']]['games'])
         resp = Response(games, status=200, mimetype='application/json')
@@ -192,15 +176,13 @@ class Recache(Resource):
     @api.doc(parser=cache_parser)
     def get(self):
         password = request.args.get('secret')
-        try:
-            cache_lock.acquire()
-            if password == configs['privilege_secret']:
-                cache['games'] = get_all_games(ALL_UMPIRE_NAMES)
-                return Response([], status=200)
-            else:
-                return Response([], status=400)
-        finally:
-            cache_lock.release()
+        if password == configs['privilege_secret']:
+            recache_everything(cache, cache_lock, refPool, data_year_range)
+            return Response([], status=200)
+            
+        else:
+            return Response([], status=400)
+
 
 @api.route('/umpireList')
 class GetAllUmps(Resource):
@@ -213,7 +195,7 @@ class GetAllUmps(Resource):
         Will return a list of all umpire names and id's. Can be used as a quick hash map
         to convert id's into names and vice versa, or to simply have a list of all umpire names
         """
-        data = json.dumps({'umpires': ALL_UMPIRE_KEYS}, use_decimal=True)
+        data = json.dumps(cache[cache['use']]['umpire_keys'], use_decimal=True)
         resp = Response(data, status=200, mimetype='application/json')
         return resp
 
@@ -232,41 +214,14 @@ class UmpireGames(Resource):
         return format
         """
         name = request.args.get('name')
-        data = create_umpire_game_object(name)
+        name = ' '.join([word.lower().capitalize() for word in name.split()])
+        data = cache[cache['use']]['umpire_games'][name]
         data = json.dumps(data, use_decimal=True)
         resp = Response(data, status=200, mimetype='application/json')
         return resp
 
-# get_games_parser = api.parser()
-# get_games_parser.add_argument('start', type=str, help='20xx-xx-xx', required=True)
-# get_games_parser.add_argument('end', type=str, help='20xx-xx-xx', required=True)
-# @api.route('/get-games', methods=['GET'])
-# class GetGames(Resource):
-#     @api.response(200, 'OK', get_games_model)
-#     @api.doc(parser=get_games_parser)
-#     def get(self):
-#         """
-#         Returns every Game object within our database within some given time frame.
 
-#         Description
-#         ----------
-#         Will return every game object within some timeframe.
-#         """
-#         if request.method == 'GET':
-#             try:
-#                 start = str(request.args.get('start'))
-#                 end = str(request.args.get('end'))
-#             except ValueError as e:
-#                 return 'Please give start and end number fields', 200
-#             filterExpression = Attr('date').between(start, end)
-#             resp = games_date_lookup.scan(FilterExpression=filterExpression)
-#             for i in range(len(resp)):
-#                 query = {
-#                     'game': resp[i]['game']
-#                 }
-#                 resp[i] = games_dataset.get(query)
-#             data = json.dumps(
-#                 {'games':resp}, use_decimal=True
-#             )
-#             resp = Response(data, status=200, mimetype='application/json')
-#             return resp
+@api.route('/whichCache')
+class UmpireGames(Resource):
+    def get(self):
+        return cache['use']
