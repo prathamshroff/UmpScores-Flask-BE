@@ -511,7 +511,7 @@ def create_rankings_object(name, year_range):
 #TODO CACHE UMPIRES
 def create_umpire_object(name, year):
 	name = ' '.join([word.capitalize() for word in name.lower().split()])
-	career_resp = careers_season.get({'name':name, 'data_year':2019},
+	career_resp_bcvals = careers_season.get({'name':name, 'data_year':2019},
 		AttributesToGet=['bad_call_per_inning', 'bad_call_per_game'])
 	career_resp = careers.get(
 		{
@@ -529,7 +529,7 @@ def create_umpire_object(name, year):
 	first_name, last_name = parts[0], parts[-1]
 	ump_id = career_resp['id']
 	resp_2019 = umpires_2019_table.get({'name':name}, AttributesToGet=['age'])
-	crew_update_resp = crew_update_table.get({'name': name, 'season': year}, AttributesToGet = ['years active', 'ranking'])
+	crew_update_resp = crew_update_table.get({'name': name, 'season': year}, AttributesToGet = ['years.active', 'ranking'])
 	range_table = careers_range.get(
 		{
 			'name': name
@@ -548,7 +548,7 @@ def create_umpire_object(name, year):
 			'name': name,
 			'season': year
 		},
-		AttributesToGet = ['crew number', 'status', 'crew_chief']
+		AttributesToGet = ['crew.number', 'status', 'crew_chief', 'ump.number']
 	)
 	# want to add crew rank here. Might just make a dict of values for now so I don't have to set up another table
 	bcr_best_year_resp = bcr_best_year_table.get({'name':name}, AttributesToGet=['best_year'])
@@ -566,7 +566,7 @@ def create_umpire_object(name, year):
 		AttributesToGet=['best_month', 'worst_month'])
 	bcr_weather_resp = bcr_weather_table.get({'name':name}, AttributesToGet=['best_weather'])
 	profile_best_worst_park_resp = profile_best_worst_park_table.get({'name': name, 'season': year},
-		AttributesToGet=['best_park', 'worst_park'])
+		AttributesToGet=['best_park', 'worst_worst'])
 	bcr_start_time_resp = bcr_start_time_table.get({'name': name}, AttributesToGet=['best_start_time'])
 	
 	bcr_std_resp = bcr_std_table.get({'name':name}, AttributesToGet=['bcr_std_2019'])
@@ -578,6 +578,7 @@ def create_umpire_object(name, year):
 	data.update(ejections_resp)
 	data.update(profile_best_worst_month_resp)
 	data.update(profile_best_worst_park_resp)
+	data.update(career_resp_bcvals)
 	data.update(career_resp)
 	data.update(bcr_weather_resp)
 	data.update(bcr_std_resp)
@@ -596,14 +597,14 @@ def create_umpire_object(name, year):
 		data['age'] = -1
 	columns_rename(data, {
 		'BCR_{0}'.format(year): 'icr',
-		'crew number': 'crewNumber',
+		'crew.number': 'crewNumber',
+		'ump.number': 'umpNumber',
 		'crew_chief': 'isCrewChief',
 		'total_call': 'pitchesCalled',
 		'games': 'gamesUmped',
 		'best_weather': 'weatherPreference',
 		'average_game_length_2019': 'paceOfPlay',
 		'best_year': 'bestSeason',
-		'crew number': 'crew',
 		'best_start_time': 'timePreference',
 		'bad_call_per_game': 'bcpg',
 		'bad_call_per_inning': 'bcpi',
@@ -613,9 +614,9 @@ def create_umpire_object(name, year):
 		'best_month': 'bestMonth',
 		'bcr_std_2019': 'consistency',
 		'worst_month': 'worstMonth',
-		'worst_park': 'worstPark',
+		'worst_worst': 'worstPark',
 		'best_park': 'bestPark',
-		'years active': 'yearsExperience',
+		'years.active': 'yearsExperience',
 		'ranking': 'rank'
 	})
 	return data
@@ -628,7 +629,12 @@ def create_career_object(name, data_range):
 		AttributesToGet=['average_game_length_{0}'.format(year) for year in data_range])
 	for year in data_range:
 		range_resp = careers_range.get({'name': name}, AttributesToGet=['BCR_{0}'.format(year)])
-
+		if year > 2010:
+			change_resp = careers_range_change.get({'name':name}, AttributesToGet=['BCR_change_{0}'.format(year-1) + '_{0}'.format(year)])
+		else:
+			# change_resp = careers_range_change.get({'name':name}, AttributesToGet=['BCR_change_{0}'.format(year) + '_{0}'.format(year + 1)])
+			change_resp = {'BCR_change_2009_2010': -1}
+			# need to change this to return -1 but need to check the variable type
 		season_resp = careers_season.get({'name': name, 'data_year': year},
 			AttributesToGet=['best_pitch', 'worst_pitch', 'data_year', 'games', 'total_call', 'BCR_SL', 'BCR_FT', 'BCR_CU', 'BCR_FF', 'BCR_SI', 
 				'BCR_CH', 'BCR_FC', 'BCR_EP', 'BCR_KC', 'BCR_FS', 'BCR_PO', 'BCR_KN', 
@@ -655,6 +661,7 @@ def create_career_object(name, data_range):
 			data.update(career_crucial_calls_resp)
 			data.update(season_resp)
 			data.update(crew_resp)
+			data.update(change_resp)
 			data.update({'name': name})
 			columns_rename(data, {
 				'BCR_SL': 'icrSL',
