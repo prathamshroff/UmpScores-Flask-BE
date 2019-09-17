@@ -17,11 +17,12 @@ def recache_everything(cache, mutex, refPool, data_year_range):
 
 		for umpire in cache[cache_id]['umpire_keys']:
 			get = crew_update_table.get({'name':umpire['name'], 'season':2019},
-				AttributesToGet=['crew_chief', 'crew.chief', 'ump.number', 'status'])
+				AttributesToGet=['crew_chief', 'crew.chief', 'ump.number', 'status', 'crew.number'])
 			umpire['isCrewChief'] = get['crew_chief'] if 'crew_chief' in get else -1
 			umpire['altIsCrewChief'] = get['crew.chief'] if 'crew.chief' in get else -1
 			umpire['number'] = get['ump.number'] if 'ump.number' in get else -1
 			umpire['status'] = get['status'] if 'status' in get else -1
+			umpire['crewNumber'] = get['crew.number'] if 'crew.number' in get else -1
 
 		cache[cache_id]['umpire_names'] = [obj['name'] for obj in cache[cache_id]['umpire_keys']]
 		for umpire in cache[cache_id]['umpire_keys']:
