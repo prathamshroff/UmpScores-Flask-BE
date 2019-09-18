@@ -183,6 +183,7 @@ class Table():
             if true, will use exponentially increasing waits in between requests. If false, will use
             linearly increasing waits.
         """ 
+        print('uploading {0} to {1}'.format(refined_filepath, self.__table_name))
         df = pd.read_csv(refined_filepath, keep_default_na=False)
         if 'Unnamed: 0' in df.columns:
             df = df.drop(columns=['Unnamed: 0'])

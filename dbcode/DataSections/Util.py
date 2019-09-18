@@ -9,7 +9,7 @@ def pickle(f, kwargs):
 	return f(**kwargs)
 
 def single_file_upload(table, filepath, primary_key, output_filepath=None, 
-	columns_to_rename={'ump':'name'}, sort_key=None, reader=pd.read_csv):
+	columns_to_rename={'ump':'name'}, sort_key=None, reader=pd.read_csv, clear=True):
 	if output_filepath == None:
 		output_filepath = filepath
 
@@ -19,7 +19,8 @@ def single_file_upload(table, filepath, primary_key, output_filepath=None,
 	if 'Unnamed: 0' in df.columns:
 		df.drop(columns=['Unnamed: 0'], inplace=True)
 	df.to_csv(output_filepath)
-	table.clear(primary_key, sort_key = sort_key)
+	if clear:
+		table.clear(primary_key, sort_key = sort_key)
 	table.upload(output_filepath)
 	print('Uploaded {0} to {1}'.format(output_filepath, table))
 
