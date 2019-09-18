@@ -747,7 +747,6 @@ def create_team_object(name, data_range):
 	# TEAM_NAMES
 	keys = [{'name': {'S': name}, 'data_year': {'N': str(year)}} for year in data_range]
 	response = team_stats_dataset.batch_get(keys)
-	print(response)
 	# careers_season_resp = careers_season.batch_get(keys)
 	for resp in response:
 		if resp != {}:
