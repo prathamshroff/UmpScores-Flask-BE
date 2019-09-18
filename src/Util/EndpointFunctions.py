@@ -486,7 +486,7 @@ def create_rankings_object(name, year_range):
 				AttributesToGet = ['ej_{0}'.format(resp['data_year'])]
 			)
 			crew_update_get_resp = crew_update_table.get({'name': resp['name'], 'season': resp['data_year']},
-				AttributesToGet=['status', 'crew number'])
+				AttributesToGet=['status', 'crew.number'])
 			resp.update(team_preference_resp)
 			resp.update(ejections_resp)
 			resp.update(crew_update_get_resp)
@@ -500,7 +500,8 @@ def create_rankings_object(name, year_range):
 				'leastAccurateTeam': 'mostBadCalls',
 				'mostAccurateTeam': 'leastBadCalls',
 				'ej_{0}'.format(resp['data_year']): 'ejections',
-				'crew number': 'crew'
+				'crew.number': 'crew',
+				'status': 'status'
 			})
 			resp.update({'firstName': parts[0], 'lastName': parts[-1]})
 			if resp['season'] in [2019, '2019']:
@@ -511,7 +512,7 @@ def create_rankings_object(name, year_range):
 #TODO CACHE UMPIRES
 def create_umpire_object(name, year):
 	name = ' '.join([word.capitalize() for word in name.lower().split()])
-	career_resp = careers_season.get({'name':name, 'data_year':2019},
+	career_resp_bcvals = careers_season.get({'name':name, 'data_year':2019},
 		AttributesToGet=['bad_call_per_inning', 'bad_call_per_game'])
 	career_resp = careers.get(
 		{
@@ -529,7 +530,7 @@ def create_umpire_object(name, year):
 	first_name, last_name = parts[0], parts[-1]
 	ump_id = career_resp['id']
 	resp_2019 = umpires_2019_table.get({'name':name}, AttributesToGet=['age'])
-	crew_update_resp = crew_update_table.get({'name': name, 'season': year}, AttributesToGet = ['years active', 'ranking'])
+	crew_update_resp = crew_update_table.get({'name': name, 'season': year}, AttributesToGet = ['years.active', 'ranking'])
 	range_table = careers_range.get(
 		{
 			'name': name
@@ -548,7 +549,7 @@ def create_umpire_object(name, year):
 			'name': name,
 			'season': year
 		},
-		AttributesToGet = ['crew number', 'status', 'crew_chief']
+		AttributesToGet = ['crew.number', 'status', 'crew_chief', 'ump.number']
 	)
 	# want to add crew rank here. Might just make a dict of values for now so I don't have to set up another table
 	bcr_best_year_resp = bcr_best_year_table.get({'name':name}, AttributesToGet=['best_year'])
@@ -566,7 +567,7 @@ def create_umpire_object(name, year):
 		AttributesToGet=['best_month', 'worst_month'])
 	bcr_weather_resp = bcr_weather_table.get({'name':name}, AttributesToGet=['best_weather'])
 	profile_best_worst_park_resp = profile_best_worst_park_table.get({'name': name, 'season': year},
-		AttributesToGet=['best_park', 'worst_park'])
+		AttributesToGet=['best_park', 'worst_worst'])
 	bcr_start_time_resp = bcr_start_time_table.get({'name': name}, AttributesToGet=['best_start_time'])
 	
 	bcr_std_resp = bcr_std_table.get({'name':name}, AttributesToGet=['bcr_std_2019'])
@@ -578,6 +579,7 @@ def create_umpire_object(name, year):
 	data.update(ejections_resp)
 	data.update(profile_best_worst_month_resp)
 	data.update(profile_best_worst_park_resp)
+	data.update(career_resp_bcvals)
 	data.update(career_resp)
 	data.update(bcr_weather_resp)
 	data.update(bcr_std_resp)
@@ -596,14 +598,14 @@ def create_umpire_object(name, year):
 		data['age'] = -1
 	columns_rename(data, {
 		'BCR_{0}'.format(year): 'icr',
-		'crew number': 'crewNumber',
+		'crew.number': 'crewNumber',
+		'ump.number': 'umpNumber',
 		'crew_chief': 'isCrewChief',
 		'total_call': 'pitchesCalled',
 		'games': 'gamesUmped',
 		'best_weather': 'weatherPreference',
 		'average_game_length_2019': 'paceOfPlay',
 		'best_year': 'bestSeason',
-		'crew number': 'crew',
 		'best_start_time': 'timePreference',
 		'bad_call_per_game': 'bcpg',
 		'bad_call_per_inning': 'bcpi',
@@ -613,9 +615,9 @@ def create_umpire_object(name, year):
 		'best_month': 'bestMonth',
 		'bcr_std_2019': 'consistency',
 		'worst_month': 'worstMonth',
-		'worst_park': 'worstPark',
+		'worst_worst': 'worstPark',
 		'best_park': 'bestPark',
-		'years active': 'yearsExperience',
+		'years.active': 'yearsExperience',
 		'ranking': 'rank'
 	})
 	return data
@@ -628,7 +630,12 @@ def create_career_object(name, data_range):
 		AttributesToGet=['average_game_length_{0}'.format(year) for year in data_range])
 	for year in data_range:
 		range_resp = careers_range.get({'name': name}, AttributesToGet=['BCR_{0}'.format(year)])
-
+		if year > 2010:
+			change_resp = careers_range_change.get({'name':name}, AttributesToGet=['BCR_change_{0}'.format(year-1) + '_{0}'.format(year)])
+		else:
+			# change_resp = careers_range_change.get({'name':name}, AttributesToGet=['BCR_change_{0}'.format(year) + '_{0}'.format(year + 1)])
+			change_resp = {'BCR_change_2009_2010': -1}
+			# need to change this to return -1 but need to check the variable type
 		season_resp = careers_season.get({'name': name, 'data_year': year},
 			AttributesToGet=['best_pitch', 'worst_pitch', 'data_year', 'games', 'total_call', 'BCR_SL', 'BCR_FT', 'BCR_CU', 'BCR_FF', 'BCR_SI', 
 				'BCR_CH', 'BCR_FC', 'BCR_EP', 'BCR_KC', 'BCR_FS', 'BCR_PO', 'BCR_KN', 
@@ -655,6 +662,7 @@ def create_career_object(name, data_range):
 			data.update(career_crucial_calls_resp)
 			data.update(season_resp)
 			data.update(crew_resp)
+			data.update(change_resp)
 			data.update({'name': name})
 			columns_rename(data, {
 				'BCR_SL': 'icrSL',
@@ -739,7 +747,6 @@ def create_team_object(name, data_range):
 	# TEAM_NAMES
 	keys = [{'name': {'S': name}, 'data_year': {'N': str(year)}} for year in data_range]
 	response = team_stats_dataset.batch_get(keys)
-	print(response)
 	# careers_season_resp = careers_season.batch_get(keys)
 	for resp in response:
 		if resp != {}:
@@ -756,7 +763,19 @@ def create_team_object(name, data_range):
 					'ballsCalled': resp['call_ball_{0}'.format(team)],
 					'strikesCalled': resp['call_strike_{0}'.format(team)],
 					'bcr': resp['BCR_{0}'.format(team)],
-					'seasonChangeBcr': prev['BCR_{0}'.format(team)] if prev != {} else -1
+					'seasonChangeBcr': prev['BCR_{0}'.format(team)] if prev != {} else -1,
+					'bcrFO': resp['BCR_{0}'.format(team) + '_FO'],
+					'bcrFF': resp['BCR_{0}'.format(team) + '_FF'],
+					'bcrFT': resp['BCR_{0}'.format(team) + '_FT'],
+					'bcrFC': resp['BCR_{0}'.format(team) + '_FC'],
+					'bcrSI': resp['BCR_{0}'.format(team) + '_SI'],
+					'bcrCH': resp['BCR_{0}'.format(team) + '_CH'],
+					'bcrSL': resp['BCR_{0}'.format(team) + '_SL'],
+					'bcrCU': resp['BCR_{0}'.format(team) + '_CU'],
+					'bcrEP': resp['BCR_{0}'.format(team) + '_EP'],
+					'bcrKC': resp['BCR_{0}'.format(team) + '_KC'],
+					'bcrFS': resp['BCR_{0}'.format(team) + '_FS'],
+					'bcrKN': resp['BCR_{0}'.format(team) + '_KN']
 				}
 				columns_rename(team_stats, {
 					'bcr': 'icr',
