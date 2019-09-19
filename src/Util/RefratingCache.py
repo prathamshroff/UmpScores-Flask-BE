@@ -7,6 +7,8 @@ from multiprocessing.pool import ThreadPool as Pool
 from threading import Thread
 import time
 import queue
+from copy import deepcopy
+
 def recache_everything(cache, mutex, refPool, data_year_range):
 	time_stamp = time.time()
 	cache_que = queue.Queue()
@@ -66,24 +68,18 @@ def recache_everything(cache, mutex, refPool, data_year_range):
 		print('Finished caching in {0}s'.format(time.time() - time_stamp))
 		mutex.release()
 
-# def get_pitcher_names(umpire_name):
-# 	names = set()
-# 	for year in data_year_range:
-# 		pitchers = umpire_pitchers.get(query_map = {'name': umpire_name, 'season': 2019}).keys()
-# 		subnames = [name.replace('total_call_', '').replace('.', ' ') for name in pitchers if name.startswith('total_call_')]
-# 		names = names.union(subnames)
-# 	return names
 
-# pitcher_objects = {umpire: [create_pitcher_object(pitcher, pitcher_stats, data_year_range) for pitcher in \
-# 	get_pitcher_names(umpire)] for umpire in ALL_UMPIRE_NAMES}
-# print('Cached Pitcher Objects: t = {0}s'.format(time.time() - now))
-
-# team_objects = {}
-# for umpire in ALL_UMPIRE_NAMES:
-# 	team_objects[umpire] = []
-# 	for team in team_names:
-# 		team_objects[umpire] += create_team_object(umpire, team, team_stats_dataset, data_year_range)
-# print('Cached Team Objects: t = {0}s'.format(time.time() - now))
-
+def recache_games(cache, mutex):
+	mutex.acquire()
+	try:
+		time_stamp = time.time()
+		q = queue.Queue()
+		get_all_games(cache[cache['use']]['umpire_names'], q)
+		games = q.get()
+		games = [obj for obj in games if obj != {} and type(obj) != KeyError]
+		cache[cache['use']]['games'] = games
+	finally:
+		print('Cached Only Games in {0}s'.format(time.time() - time_stamp))
+		mutex.release()
 
 

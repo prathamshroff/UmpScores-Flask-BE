@@ -1,7 +1,7 @@
 from StorageSolutions.flask_setup import *
 from StorageSolutions.tables import *
 from Util.EndpointFunctions import *
-from Util.RefratingCache import recache_everything
+from Util.RefratingCache import recache_everything, recache_games
 from flask_restplus import Resource, Api, reqparse, fields
 from flask import Flask, request
 import simplejson as json
@@ -183,6 +183,16 @@ class Recache(Resource):
         else:
             return Response([], status=400)
 
+@api.route('/updateGamesCache')
+class UpdateGamesCache(Resource):
+    @api.doc(parser=cache_parser)
+    def get(self):
+        password = request.args.get('secret')
+        if password == configs['privilege_secret']:
+            recache_games(cache, cache_lock)
+            return Response([], status=200)
+        else: 
+            return Response([], status=400)
 
 @api.route('/umpireList')
 class GetAllUmps(Resource):
