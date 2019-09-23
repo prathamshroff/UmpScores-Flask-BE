@@ -709,7 +709,6 @@ def create_umpire_game_object(name):
 
 	game_ids = [str(item['game']) for item in resp]
 	req = [{'game': {'N': game}} for game in game_ids]
-	print(req)
 	data = games_dataset.batch_get(req)
 	keys = ['hometeam','awayteam', 'date', 'bad_call_ratio', 'preference', 'BCR_SL', 
 		'BCR_FT', 'BCR_CU', 'BCR_FF', 'BCR_SI', 'BCR_CH', 'BCR_FC', 'BCR_EP', 
