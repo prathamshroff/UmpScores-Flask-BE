@@ -27,6 +27,7 @@ def create_chart_object(name, year_range):
 	filterExpression = Key('name').eq(name)
 	data = umpire_zones.query(KeyConditionExpression = filterExpression)
 	months = ['January', 'February']
+	
 	resp = {
 		'heatMap': [],
 	    'heatMapSL': [],
@@ -412,6 +413,12 @@ def get_pitcher_names(name):
 def create_pitcher_object(umpire_name, pitcher_name):
 	pitcher_name = ' '.join([word.capitalize() for word in pitcher_name.lower().split()])
 	umpire_name = ' '.join([word.capitalize() for word in umpire_name.lower().split()])
+	p_first_name = pitcher_name.split(" ")[0]
+	p_last_name = pitcher_name.split(" ")[1]
+	ws_ratio_attrib = "ws_ratio_" + p_first_name + "." + p_last_name
+	print(ws_ratio_attrib)
+	# ws_resp = pitcher_walk_strikeout.get({'name': umpire_name}, AttributesToGet=['ws_ratio_Aaron.Cook'])
+	# print(ws_resp)
 
 	data = pitcher_stats.query(
 		KeyConditionExpression = Key('name').eq(pitcher_name)
@@ -531,6 +538,7 @@ def create_umpire_object(name, year):
 	ump_id = career_resp['id']
 	resp_2019 = umpires_2019_table.get({'name':name}, AttributesToGet=['age'])
 	crew_update_resp = crew_update_table.get({'name': name, 'season': year}, AttributesToGet = ['years.active', 'ranking'])
+	
 	range_table = careers_range.get(
 		{
 			'name': name
@@ -542,7 +550,7 @@ def create_umpire_object(name, year):
 			'name': name,
 			'data_year': year	
 		},
-		AttributesToGet = ['total_call', 'games', 'data_year']
+		AttributesToGet = ['total_call', 'games', 'data_year', 'bc_strike', 'bc_ball']
 	)
 	crew_resp = crew_update_table.get(
 		{
