@@ -416,7 +416,7 @@ def refresh_all_aws_resources():
 	# upload_umpire_pitchers()
 	# upload_pitcher_stats()
 	# ump_game_lookup_refresh()
-	# dataPrep(tasks)
+	dataPrep(tasks)
 	# create_game_date()
 	# umpire_id_lookup_reset()
 	# media_refresh()
