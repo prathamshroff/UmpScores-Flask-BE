@@ -293,7 +293,7 @@ class Table():
                     print('Found UnprocessedKeys in {0}'.format(self.__table_name))
                 if 'UnprocessedKeys' in page:
                     if self.__table_name in page['UnprocessedKeys']:
-                        remaining_keys += Table.unfoil(page['UnprocessedKeys'][self.__table_name]['Keys'])
+                        remaining_keys += page['UnprocessedKeys'][self.__table_name]['Keys']
 
                 if backoff > backoff_init:
                     if exp_backoff:
