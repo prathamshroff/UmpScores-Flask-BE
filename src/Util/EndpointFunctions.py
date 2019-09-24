@@ -16,7 +16,7 @@ import time
 
 # importing things from cache
 TEAM_NAMES = [name.replace('total_call_', '') for name in \
-    team_stats_dataset.get(query_map = {'name':'Jordan Baker', 'data_year' : 2019}).keys() if \
+    team_stats_dataset.get(query_map = {'name':'jordan baker', 'data_year' : 2019}).keys() if \
     name.startswith('total_call_')]
 TEAM_NAMES = [name for name in TEAM_NAMES if '_' not in name]
 # def create_umpire_list():
