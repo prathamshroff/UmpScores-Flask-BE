@@ -60,9 +60,9 @@ def upload_umpire_pitchers():
 		season_filepath = os.path.join(parent_folder, season_folder)
 		file = os.path.join(season_filepath, 'ump_pitcher.csv')
 		df = Table.fillna(pd.read_csv(file), [])
-		df = df.drop(columns = ['Unnamed: 0'])
 		df['season'] = [season_folder] * len(df)
-		df.rename(columns = {'ump': 'name'}, inplace = True)
+		df['name'] = df['ump'].apply(lambda ump: ump.lower())
+		df.drop(columns = ['ump', 'Unnamed: 0'], inplace = True)
 		output_filepath = os.path.join(season_filepath, 'ump_pitcher_refined.csv')
 		df.to_csv(output_filepath)
 		umpire_pitchers.upload(output_filepath)
@@ -76,10 +76,10 @@ def upload_pitcher_stats():
 	parent_folder = 'output-data/Pitcher-Stats'
 	for season_folder in os.listdir(parent_folder):
 		season_filepath = os.path.join(parent_folder, season_folder)
-		if season_folder != 'Archive':
+		if season_folder not in ['Archive', 'walk-strikeout']:
 			df = pd.read_csv(os.path.join(season_filepath, 'pitcher_BCR.csv'))
 			for filename in os.listdir(season_filepath):
-				if filename not in ['pitcher_BCR.csv', 'ump_pitcher.csv', 'merged.csv']:
+				if filename not in ['pitcher_BCR.csv', 'ump_pitcher.csv', 'ump_pitcher_refined.csv', 'merged.csv']:
 					df = pd.merge(df, pd.read_csv(os.path.join(season_filepath, filename)),
 						left_on = ['name', 'team'], right_on = ['name', 'team'], suffixes = ('', '_y'))
 					df = Table.drop_y(df)
@@ -87,6 +87,7 @@ def upload_pitcher_stats():
 			df = df.drop(columns = ['Unnamed: 0'])
 			df['season'] = [season_folder] * len(df)
 			df = df.apply(add_pitcher_name, axis=1)
+			df['name'] = df['name'].apply(lambda row: row.lower())
 			output_filename = os.path.join(season_filepath, 'merged.csv')
 			df.to_csv(output_filename)
 			pitcher_stats.upload(output_filename)
@@ -107,6 +108,7 @@ def ump_game_lookup_refresh():
 	output.rename(columns = {'ump': 'name'}, inplace = True)
 	if 'Unnamed: 0' in output.columns:
 		output = output.drop(columns = ['Unnamed: 0'])
+	output['name'] = output['name'].apply(lambda row: row.lower())
 	output.to_csv('refrating_ump_game_lookup.csv')
 	
 	ump_game_lookup.clear('name', sort_key = 'game')
@@ -244,6 +246,7 @@ def umpire_id_lookup_reset():
 		df['ump_profile_pic'] = df['name'].apply(lambda row: get_url(row))
 	if 'Unnamed: 0' in df.columns:
 		df = df.drop(columns=['Unnamed: 0'])
+	df['name'] = df['name'].apply(lambda row: row.lower())
 	df.to_csv('name_id.csv')
 	umpire_id_lookup.upload('name_id.csv')
 
@@ -303,6 +306,8 @@ def dataPrep(filepaths):
 				merge['date'] = merge['date'].apply(lambda row: date_format(row))
 
 			merge = Table.drop_y(merge)
+			if 'name' in merge.columns:
+				merge['name'] = merge['name'].apply(lambda row: row.lower())
 			merge.to_csv(os.path.join(os.path.join(path, year), 'merged.csv'))
 
 
@@ -404,22 +409,20 @@ def refresh_all_aws_resources():
 		'output-data/Game-Stats'
 	]
 	stamp = time.time()
-	Pitcher.upload_strikeout(pool)
-	# Pitcher.pitcher_upload_simple_folders(pool)
+	# Pitcher.upload_strikeout(pool)
 	# Career.career_upload_simple_folders(pool)
 	# Profile.profile_upload_simple_folders(pool)
 	# single_files_scheduler()
-
 	# upload_umpire_pitchers()
-	# upload_pitcher_stats()
-	# ump_game_lookup_refresh()
-	# dataPrep(tasks)
-	# create_game_date()
-	# umpire_id_lookup_reset()
-	# media_refresh()
-	# dataUpload(tasks)
-	# umpires_cloudsearch.clear()
-	# umpires_cloudsearch.flush()
+	upload_pitcher_stats()
+	ump_game_lookup_refresh()
+	dataPrep(tasks)
+	create_game_date()
+	umpire_id_lookup_reset()
+	media_refresh()
+	dataUpload(tasks)
+	umpires_cloudsearch.clear()
+	umpires_cloudsearch.flush()
 	print('Completed all tasks in {0}s'.format(time.time() - stamp))
 
 if __name__ == '__main__':

@@ -29,6 +29,7 @@ def upload_strikeout(pool):
 			df.rename(columns={'ump':'name'}, inplace=True)
 		if 'Unnamed: 0' in df.columns:
 			df.drop(columns=['Unnamed: 0'], inplace=True)
+		df['name'] = df['name'].apply(lambda row: row.lower())
 		df['season'] = len(df) * [file.split('_')[-1].split('.')[0]]
 		df.to_csv(file)
 	pool.map(pitcher_walk_strikeout.upload, files)

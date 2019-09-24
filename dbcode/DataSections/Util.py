@@ -5,6 +5,7 @@ import boto3
 sys.path.append('../src')
 from AWS.CloudSearch import Search
 from AWS.Datasets import Table
+###output-data/Career/BCR By Season/BCR_among_all_umps.csv GIVE TOTAL A NAME
 def pickle(f, kwargs):
 	return f(**kwargs)
 
@@ -18,17 +19,20 @@ def single_file_upload(table, filepath, primary_key, output_filepath=None,
 	df = Table.fillna(df, [])
 	if 'Unnamed: 0' in df.columns:
 		df.drop(columns=['Unnamed: 0'], inplace=True)
+	if 'name' in df.columns:
+		df['name'] = df['name'].apply(lambda row: row.lower())
+
 	df.to_csv(output_filepath)
 	if clear:
 		table.clear(primary_key, sort_key = sort_key)
+
 	table.upload(output_filepath)
-	print('Uploaded {0} to {1}'.format(output_filepath, table))
+	print('Uploaded {0} to {1}\n'.format(output_filepath, table))
 
 def simple_merge_folder(table, root, primary_key, get_season, columns_to_rename={'ump':'name'},
 	sort_key=None, exclude_files = ['merged.csv']):
 	files = [os.path.join(root, file) for file in os.listdir(root) if file not in exclude_files]
 	merge = pd.read_csv(files[0])
-	print(files)
 	merge[sort_key] = len(merge) * [get_season(files[0])]
 	merge.rename(columns=columns_to_rename, inplace=True)	
 	for i in range(len(files))[1:]:
@@ -37,7 +41,6 @@ def simple_merge_folder(table, root, primary_key, get_season, columns_to_rename=
 			try:
 				df = pd.read_csv(files[i])
 				df.rename(columns=columns_to_rename, inplace=True)
-				print(sort_key)
 				df[sort_key] = len(df) * [get_season(files[i])]
 				merge = pd.concat((merge, df))
 				merge = Table.drop_y(merge)
@@ -47,6 +50,9 @@ def simple_merge_folder(table, root, primary_key, get_season, columns_to_rename=
 
 	if 'Unnamed: 0' in merge.columns:
 		merge.drop(columns=['Unnamed: 0'], inplace=True)
+	if 'name' in merge.columns:
+		merge['name'] = merge['name'].apply(lambda row: row.lower())
+
 	merge = Table.fillna(merge, [])
 	merge.to_csv(output)
 	table.clear(primary_key, sort_key=sort_key)

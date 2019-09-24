@@ -1,0 +1,57 @@
+0
+EXCEPTION:  'NoneType' object has no attribute 'get'
+EXCEPTION:  'status'
+Cached Career Objects: t = 45.14782404899597s
+Cached Umpires Objects: t = 17.898599863052368s
+Cached Umpire Game Objects at: t = 45.670610189437866s
+Cached Ranking Objects: t = 19.625505924224854s
+Cached Games in: t = 5.125999450683594e-05s
+Finished caching in 130.89253783226013s
+Starting in testing mode
+ * Serving Flask app "StorageSolutions.flask_setup" (lazy loading)
+ * Environment: production
+   WARNING: Do not use the development server in a production environment.
+   Use a production WSGI server instead.
+ * Debug mode: on
+./src/Util/EndpointFunctions.py:251: UserWarning: No parser was explicitly specified, so I'm using the best available HTML parser for this system ("lxml"). This usually isn't a problem, but if you run this code on another system, or in a different virtual environment, it may use a different parser and behave differently.
+
+The code that caused this warning is on line 251 of the file ./src/Util/EndpointFunctions.py. To get rid of this warning, pass the additional argument 'features="lxml"' to the BeautifulSoup constructor.
+
+  soup = BeautifulSoup(page.text)
+ * Running on http://127.0.0.1:3000/ (Press CTRL+C to quit)
+ * Restarting with stat
+./src/Util/EndpointFunctions.py:251: UserWarning: No parser was explicitly specified, so I'm using the best available HTML parser for this system ("lxml"). This usually isn't a problem, but if you run this code on another system, or in a different virtual environment, it may use a different parser and behave differently.
+
+The code that caused this warning is on line 251 of the file ./src/Util/EndpointFunctions.py. To get rid of this warning, pass the additional argument 'features="lxml"' to the BeautifulSoup constructor.
+
+  soup = BeautifulSoup(page.text)
+ * Debugger is active!
+ * Debugger PIN: 169-698-543
+127.0.0.1 - - [24/Sep/2019 09:29:05] "[37mGET /pitcher?u=jordan%20baker&p=andrew%20miller HTTP/1.1[0m" 200 -
+127.0.0.1 - - [24/Sep/2019 09:29:12] "[37mGET /pitcher?u=jordan%20baker&p=andrew%20mler HTTP/1.1[0m" 200 -
+[2019-09-24 09:29:19,148] ERROR in app: Exception on /umpire [GET]
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/site-packages/flask/app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/site-packages/flask/app.py", line 1799, in dispatch_request
+    return self.view_functions[rule.endpoint](**req.view_args)
+  File "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/site-packages/flask_restplus/api.py", line 325, in wrapper
+    resp = resource(*args, **kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/site-packages/flask/views.py", line 88, in view
+    return self.dispatch_request(*args, **kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/site-packages/flask_restplus/resource.py", line 44, in dispatch_request
+    resp = meth(*args, **kwargs)
+  File "./src/routes.py", line 111, in get
+    data = cache[cache['use']]['umpires'][name]
+KeyError: 'Cb Bucknor'
+127.0.0.1 - - [24/Sep/2019 09:29:19] "[1m[35mGET /umpire?name=cb%20bucknor HTTP/1.1[0m" 500 -
+0
+EXCEPTION:  'NoneType' object has no attribute 'get'
+EXCEPTION:  'status'
+Cached Career Objects: t = 42.37996792793274s
+Cached Umpires Objects: t = 12.107059001922607s
+Cached Umpire Game Objects at: t = 30.174673080444336s
+Cached Ranking Objects: t = 19.53092908859253s
+Cached Games in: t = 4.315376281738281e-05s
+Finished caching in 107.04667615890503s
+Starting in testing mode

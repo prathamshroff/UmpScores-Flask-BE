@@ -345,6 +345,7 @@ class Table():
             'TableName': self.__table_name
         }
         page_iterator = paginator.paginate(**operation_parameters)
+        print('Clearing table {0}'.format(self.__table_name))
         for scan in page_iterator:
             backoff = backoff_init
             while True:
@@ -376,8 +377,7 @@ class Table():
                                         backoff /= 2
                                     else:
                                         backoff -= backoff_init
-                                print('Deleted pk: {0}, sk: {1}'.format(primary_val, 
-                                    sort_val))
+                                
                     break
                 except botocore.exceptions.ClientError as e:
                     errcode = e.response['Error']['Code']

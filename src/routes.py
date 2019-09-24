@@ -20,8 +20,14 @@ recache_everything(cache, cache_lock, refPool, data_year_range)
 
 @api.route('/charts')
 class Charts(Resource):
+    """
+    Returns chart statistics regarding a specific umpire
+
+    Description
+    ----------
+    Give an umpire name and returns chart statistics for the front end
+    """
     @api.doc(parser = umpire_parser)
-    # @api.marshal_with(charts_model)
     def get(self):
         name = request.args.get('name')
         data = create_chart_object(name, data_year_range)
@@ -71,7 +77,6 @@ class GetPitchers(Resource):
 @api.route('/teams')
 class Teams(Resource):
     @api.doc(parser = umpire_parser)
-    # @api.response(200, 'OK', team_model)
     def get(self):
         """
         Will return an array of dicts where a dict represents team stats
@@ -102,7 +107,7 @@ class Umpire(Resource):
         model
         """
         name = request.args.get('name')
-        name = ' '.join([word.lower().capitalize() for word in name.split()])
+        name = name.lower()
         data = cache[cache['use']]['umpires'][name]
         data = json.dumps(data, use_decimal=True)
         resp = Response(data, status=200, mimetype='application/json')
@@ -134,7 +139,7 @@ class Career(Resource):
         an array of career objects
         """
         name = request.args.get('name')
-        name = ' '.join([word.lower().capitalize() for word in name.split()])
+        name = name.lower()
         data = cache[cache['use']]['career'][name]
         data = json.dumps(data, use_decimal=True)
         resp = Response(data, status=200, mimetype='application/json')
@@ -167,6 +172,13 @@ class QuerySearch(Resource):
 @api.route('/games')
 class GetTodaysGames(Resource):
     def get(self):
+        """
+        Generates a list of games for today
+
+        Description
+        ----------
+        Will return a cached object representing the games for this day
+        """
         games = json.dumps(cache[cache['use']]['games'])
         resp = Response(games, status=200, mimetype='application/json')
         return resp
@@ -175,6 +187,13 @@ class GetTodaysGames(Resource):
 class Recache(Resource):
     @api.doc(parser=cache_parser)
     def get(self):
+        """
+        Will recache all internal objects
+
+        Description
+        ----------
+        Takes in a secret. If the secret is valid, caching will commence.
+        """
         password = request.args.get('secret')
         if password == configs['privilege_secret']:
             recache_everything(cache, cache_lock, refPool, data_year_range)
@@ -187,6 +206,13 @@ class Recache(Resource):
 class UpdateGamesCache(Resource):
     @api.doc(parser=cache_parser)
     def get(self):
+        """
+        Will recache all game objects
+
+        Description
+        ----------
+        Takes in a secret. If the secret is valid, caching will commence.
+        """
         password = request.args.get('secret')
         if password == configs['privilege_secret']:
             recache_games(cache, cache_lock)
@@ -224,7 +250,7 @@ class UmpireGames(Resource):
         return format
         """
         name = request.args.get('name')
-        name = ' '.join([word.lower().capitalize() for word in name.split()])
+        name = name.lower()
         data = cache[cache['use']]['umpire_games'][name]
         data = json.dumps(data, use_decimal=True)
         resp = Response(data, status=200, mimetype='application/json')
@@ -234,4 +260,13 @@ class UmpireGames(Resource):
 @api.route('/whichCache')
 class UmpireGames(Resource):
     def get(self):
+        """
+        Returns which deployment is currently being used
+
+        Description
+        ----------
+        Currently using a blue green deployment setup. Depending on which
+        is currently in use, output of this endpoint will either be blue or green.
+        Used for debugging purposes and to test if caching was done correctly.
+        """
         return cache['use']

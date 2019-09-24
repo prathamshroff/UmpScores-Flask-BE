@@ -23,7 +23,7 @@ TEAM_NAMES = [name for name in TEAM_NAMES if '_' not in name]
 # 	print(ALL_UMPIRE_KEYS
 
 def create_chart_object(name, year_range):
-	name = ' '.join([word.capitalize() for word in name.lower().split()])
+	name = name.lower()
 	filterExpression = Key('name').eq(name)
 	data = umpire_zones.query(KeyConditionExpression = filterExpression)
 	months = ['January', 'February']
@@ -398,7 +398,7 @@ def get_all_games(ALL_UMPIRE_NAMES, q):
 
 
 def get_pitcher_names(name):
-	name = ' '.join([word.capitalize() for word in name.lower().split()])
+	name = name.lower()
 	names = set()
 	resp = umpire_pitchers.query(KeyConditionExpression = Key('name').eq(name))
 	for page in resp:
@@ -410,8 +410,8 @@ def get_pitcher_names(name):
 
 
 def create_pitcher_object(umpire_name, pitcher_name):
-	pitcher_name = ' '.join([word.capitalize() for word in pitcher_name.lower().split()])
-	umpire_name = ' '.join([word.capitalize() for word in umpire_name.lower().split()])
+	pitcher_name = pitcher_name.lower()
+	umpire_name = umpire_name.lower()
 
 	data = pitcher_stats.query(
 		KeyConditionExpression = Key('name').eq(pitcher_name)
@@ -460,6 +460,7 @@ def columns_rename(d, columns_map):
 
 def create_rankings_object(name, year_range):
 	subarr = []
+	name = name.lower()
 	parts = name.split()
 	# for year in year_range:
 	career_resp = careers_season.query(
@@ -511,7 +512,7 @@ def create_rankings_object(name, year_range):
 
 #TODO CACHE UMPIRES
 def create_umpire_object(name, year):
-	name = ' '.join([word.capitalize() for word in name.lower().split()])
+	name = name.lower()
 	career_resp_bcvals = careers_season.get({'name':name, 'data_year':2019},
 		AttributesToGet=['bad_call_per_inning', 'bad_call_per_game'])
 	career_resp = careers.get(
@@ -624,7 +625,7 @@ def create_umpire_object(name, year):
 
 
 def create_career_object(name, data_range):
-	name = ' '.join([word.capitalize() for word in name.lower().split()])
+	name = name.lower()
 	career = []
 	average_game_length_table_resp = average_game_length_table.get({'name':name}, 
 		AttributesToGet=['average_game_length_{0}'.format(year) for year in data_range])
@@ -692,7 +693,7 @@ def create_career_object(name, data_range):
 
 def create_umpire_game_object(name):
 	umpire_games = []
-	name = ' '.join([word.capitalize() for word in name.lower().split()])
+	name = name.lower()
 
 	filterExpression = Key('name').eq(name)
 	resp = ump_game_lookup.query(
@@ -743,7 +744,7 @@ def create_umpire_game_object(name):
 
 def create_team_object(name, data_range):
 	data = []
-	name = ' '.join([word.capitalize() for word in name.lower().split()])
+	name = name.lower()
 	# TEAM_NAMES
 	keys = [{'name': {'S': name}, 'data_year': {'N': str(year)}} for year in data_range]
 	response = team_stats_dataset.batch_get(keys)
