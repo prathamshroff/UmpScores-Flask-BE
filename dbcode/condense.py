@@ -405,8 +405,8 @@ def loadYear(parent_folder, string_fields):
 
 def refresh_all_aws_resources():
 	tasks = [
-		'output-data/Team-Stats',
-		'output-data/Game-Stats'
+		'output-data/Team-Stats'
+		# 'output-data/Game-Stats'
 	]
 	stamp = time.time()
 	# Pitcher.upload_strikeout(pool)
@@ -414,15 +414,15 @@ def refresh_all_aws_resources():
 	# Profile.profile_upload_simple_folders(pool)
 	# single_files_scheduler()
 	# upload_umpire_pitchers()
-	upload_pitcher_stats()
-	ump_game_lookup_refresh()
-	dataPrep(tasks)
-	create_game_date()
-	umpire_id_lookup_reset()
-	media_refresh()
+	# upload_pitcher_stats()
+	# ump_game_lookup_refresh()
+	# dataPrep(tasks)
+	# create_game_date()
+	# umpire_id_lookup_reset()
+	# media_refresh()
 	dataUpload(tasks)
-	umpires_cloudsearch.clear()
-	umpires_cloudsearch.flush()
+	# umpires_cloudsearch.clear()
+	# umpires_cloudsearch.flush()
 	print('Completed all tasks in {0}s'.format(time.time() - stamp))
 
 if __name__ == '__main__':
