@@ -18,7 +18,7 @@ import time
 TEAM_NAMES = [name.replace('total_call_', '') for name in \
     team_stats_dataset.get(query_map = {'name':'jordan baker', 'data_year' : 2019}).keys() if \
     name.startswith('total_call_')]
-TEAM_NAMES = [name for name in TEAM_NAMES if '_' not in name]
+TEAM_NAMES = [name.split('_')[0] for name in TEAM_NAMES if name.endswith('_')]
 # def create_umpire_list():
 # 	print(ALL_UMPIRE_KEYS
 
@@ -751,6 +751,7 @@ def create_team_object(name, data_range):
 	keys = [{'name': {'S': name}, 'data_year': {'N': str(year)}} for year in data_range]
 	response = team_stats_dataset.batch_get(keys)
 	# careers_season_resp = careers_season.batch_get(keys)
+	print('TEAM NAMES: {0}'.format(TEAM_NAMES))
 	for resp in response:
 		if resp != {}:
 			year = int(resp['data_year'])
