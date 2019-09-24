@@ -763,9 +763,9 @@ def create_team_object(name, data_range):
 				team_stats = {
 					'team': team,
 					'season': year,
-					'pitchesCalled': resp['total_call_{0}_'.format(team)] if 'total_call_{0}_'.format(team) in resp else resp['total_call_{0}'.format(team)],
-					'ballsCalled': resp['call_ball_{0}'.format(team)] if 'call_ball_'+team in resp else -1,
-					'strikesCalled': resp['call_strike_{0}'.format(team)] if 'call_strike'+team in resp else -1,
+					'pitchesCalled': resp['total_call_{0}'.format(team)],
+					'ballsCalled': resp['call_ball_{0}'.format(team)],
+					'strikesCalled': resp['call_strike_{0}'.format(team)],
 					'bcr': resp['BCR_{0}'.format(team)],
 					'seasonChangeBcr': prev['BCR_{0}'.format(team)] if prev != {} else -1,
 					'bcrFO': resp['BCR_{0}'.format(team) + '_FO'],
