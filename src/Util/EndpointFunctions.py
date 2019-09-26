@@ -26,7 +26,6 @@ def create_chart_object(name, year_range):
 	name = name.lower()
 	filterExpression = Key('name').eq(name)
 	data = umpire_zones.query(KeyConditionExpression = filterExpression)
-	months = ['January', 'February']
 	
 	resp = {
 		'heatMap': [],
@@ -54,7 +53,7 @@ def create_chart_object(name, year_range):
 		year_range if 'BCR_{0}'.format(year) in range_resp]
 
 	resp['seasonalBcrByMonth'] = []
-	month_resp = profile_month_table.query(KeyConditionExpression = Key('name').eq(name))
+	month_resp = profile_best_worst_month_table.query(KeyConditionExpression = Key('name').eq(name))
 	for year_data in month_resp:
 		season = year_data['season']
 
