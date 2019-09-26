@@ -36,15 +36,15 @@ def single_files_scheduler():
 	)
 	t1.start()
 	args = [
-		[average_game_length_table, 'output-data/Career/average_game_length.csv', 'name'],
-		[bcr_best_year_table, 'output-data/Profile/best_year.csv', 'name'],
-		[bcr_weather_table, 'output-data/Profile/bcr_weather.csv', 'name'],
-		[bcr_start_time_table, 'output-data/Profile/bcr_start_time.csv', 'name'],
-		[bcr_std_table, 'output-data/Career/bcr_std.csv', 'name'],
-		[ejections_table, 'output-data/Career/ejections.csv', 'name'],
-		[careers_range_change, 'output-data/Career/Change_in_BCR_2010-2019.csv', 'name'],
-		[careers, 'output-data/Career/career.csv', 'name'],
-		[careers_range, 'output-data/Career/BCR By Season/BCR_among_all_umps.csv', 'name']
+		# [average_game_length_table, 'output-data/Career/average_game_length.csv', 'name'],
+		# [bcr_best_year_table, 'output-data/Profile/best_year.csv', 'name'],
+		# [bcr_weather_table, 'output-data/Profile/bcr_weather.csv', 'name'],
+		# [bcr_start_time_table, 'output-data/Profile/bcr_start_time.csv', 'name'],
+		# [bcr_std_table, 'output-data/Career/bcr_std.csv', 'name'],
+		# [ejections_table, 'output-data/Career/ejections.csv', 'name'],
+		# [careers_range_change, 'output-data/Career/Change_in_BCR_2010-2019.csv', 'name'],
+		# [careers, 'output-data/Career/career.csv', 'name'],
+		# [careers_range, 'output-data/Career/BCR By Season/BCR_among_all_umps.csv', 'name']
 		
 	]
 	pool.starmap(single_file_upload, args)
@@ -412,15 +412,15 @@ def refresh_all_aws_resources():
 	# Pitcher.upload_strikeout(pool)
 	# Career.career_upload_simple_folders(pool)
 	# Profile.profile_upload_simple_folders(pool)
-	# single_files_scheduler()
+	single_files_scheduler()
 	# upload_umpire_pitchers()
 	# upload_pitcher_stats()
 	# ump_game_lookup_refresh()
-	dataPrep(tasks)
+	# dataPrep(tasks)
 	# create_game_date()
 	# umpire_id_lookup_reset()
 	# media_refresh()
-	dataUpload(tasks)
+	# dataUpload(tasks)
 	# umpires_cloudsearch.clear()
 	# umpires_cloudsearch.flush()
 	print('Completed all tasks in {0}s'.format(time.time() - stamp))

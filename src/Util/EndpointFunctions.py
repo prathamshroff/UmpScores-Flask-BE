@@ -185,7 +185,7 @@ def create_chart_object(name, year_range):
 def get_event_lines(event_id):
 	resp = {}
 	# "http://xml.donbest.com/v2/odds/5/event_id" + event_id +"/?token=K_E_Oc-S6!F!Kypt"
-	xmlData = requests.get("http://xml.donbest.com/v2/odds/5/" + event_id +"/?token=K_E_Oc-S6!F!Kypt")
+	xmlData = requests.get("http://xml.donbest.com/v2/odds/5/" + event_id +"/?token=!m5__dQ_ZN-aH-v4")
 	root = ET.fromstring(xmlData.text)
 	try:
 		for line in root.iter("line"):
@@ -276,9 +276,8 @@ def get_umpires_for_games():
 def format_umpire_name(ALL_UMPIRE_NAMES, name):
 	umpire_name = ""
 	if (name != "Umpire information is NOT AVAILABLE for this game"):
-		last_name = name[1:].title().strip()
+		last_name = name[1:].title().strip().lower()
 		for item in ALL_UMPIRE_NAMES:
-			# print("ITEM : ", item)
 			if (last_name in item):
 				umpire_name = item
 	else:
@@ -292,6 +291,7 @@ def get_game_values(ALL_UMPIRE_NAMES, ump_table, event):
 		if (event_lines["status"] == 200):
 			resp["awayLine"] = event_lines["awayLine"]
 			resp["homeLine"] = event_lines["homeLine"]
+			print("LINES: ", resp)
 		# now we can query the money lines in a new function
 		for participant in event.iter("participant"):
 			# get side + team
@@ -316,6 +316,7 @@ def get_game_values(ALL_UMPIRE_NAMES, ump_table, event):
 			if (resp["awayTeam"] in key and resp["homeTeam"] in key):
 				# grab the umpire value in ump_table
 				resp["umpireName"] = format_umpire_name(ALL_UMPIRE_NAMES, ump_table[key][1])
+				print("UMP NAME: ", resp["umpireName"])
 				found = 1
 		swaps = {"CWS":"CHW", "CHW":"CWS", "TB":"TAM", "TAM":"TB", "FLA":"MIA", "MIA":"FLA"}
 		# means there might be mismatched team abbreviations
@@ -335,30 +336,30 @@ def get_game_values(ALL_UMPIRE_NAMES, ump_table, event):
 		print("EXCEPTION: ", e)
 	return resp
 '''
-<event id="970233" season="REGULAR" date="2019-09-09T23:05:00+0" name="Atlanta Braves vs Philadelphia Phillies">
+<event id="970457" season="REGULAR" date="2019-09-26T16:35:00+0" name="Milwaukee Brewers vs Cincinnati Reds">
 	<event_type>team_event</event_type>
 	<event_state>PENDING</event_state>
 	<event_state_id>0</event_state_id>
 	<time_changed>false</time_changed>
 	<neutral>false</neutral>
 	<game_number>1</game_number>
-	<location name="Citizens B Park" id="8" link="/v2/location/8"/>
-	<participant rot="951" side="AWAY">
-		<team id="1288" name="Atlanta Braves" link="/v2/team/1288"/>
+	<location name="Great American Ballpark" id="650" link="/v2/location/650"/>
+	<participant rot="901" side="AWAY">
+		<team id="1298" name="Milwaukee Brewers" link="/v2/team/1298"/>
 		<pitcherChanged>false</pitcherChanged>
-		<pitcher hand="RIGHT" id="341549" full_name="Mike Foltynewicz">M FOLTYNEWICZ</pitcher>
+		<pitcher hand="RIGHT" id="342944" full_name="Chase Anderson">C ANDERSON</pitcher>
 	</participant>
-	<participant rot="952" side="HOME">
-		<team id="1290" name="Philadelphia Phillies" link="/v2/team/1290"/>
+	<participant rot="902" side="HOME">
+		<team id="1295" name="Cincinnati Reds" link="/v2/team/1295"/>
 		<pitcherChanged>false</pitcherChanged>
-		<pitcher hand="RIGHT" id="343344" full_name="Aaron Nola">A NOLA</pitcher>
+		<pitcher hand="RIGHT" id="342058" full_name="Luis Castillo">L CASTILLO</pitcher>
 	</participant>
 	<live>true</live>
 	<lines>
-		<current link="/v2/odds/5/970233"/>
-		<opening link="/v2/open/5/970233"/>
+		<current link="/v2/odds/5/970457"/>
+		<opening link="/v2/open/5/970457"/>
 	</lines>
-	<score link="/v2/score/970233"/>
+	<score link="/v2/score/970457"/>
 	<pitcher_changed>false</pitcher_changed>
 </event>
 		'''
@@ -367,7 +368,7 @@ def get_all_games(ALL_UMPIRE_NAMES, q):
 	games = []
 	# storing this to pass to get_game_values so I can get the right data back
 	ump_table = get_umpires_for_games()
-	xmlData = requests.get("http://xml.donbest.com/v2/schedule/?token=K_E_Oc-S6!F!Kypt")
+	xmlData = requests.get("http://xml.donbest.com/v2/schedule/?token=!m5__dQ_ZN-aH-v4")
 	root = ET.fromstring(xmlData.text)
 	count = 0
 	try:
@@ -388,6 +389,7 @@ def get_all_games(ALL_UMPIRE_NAMES, q):
 						# compare date to today
 						if (today == dateRealObject):
 							count += 1
+							print("EVENT: ", event.attrib)
 							# 2018-11-15T12:54:55.604Z
 							# pass event object for further parsing
 							event_info = get_game_values(ALL_UMPIRE_NAMES, ump_table, event)
