@@ -14,27 +14,27 @@ def career_upload_simple_folders(pool):
 			'sort_key':'season',
 			'exclude_files': ['merged.csv', 'ARCHIVE']
 		},
-		# {
-		# 	'table': careers_season,
-		# 	'root': 'output-data/Career/BCR By Season/',
-		# 	'primary_key': 'name',
-		# 	'get_season': lambda file: file.split('_')[2].split('.')[0],
-		# 	'sort_key': 'data_year',
-		# 	'exclude_files': ['merged.csv', 'BCR_among_all_umps.csv']
-		# },
-		# {
-		# 	'table': career_crucial_calls_table,
-		# 	'root': 'output-data/Career/crucial calls',
-		# 	'primary_key': 'name',
-		# 	'get_season': lambda file: file.split('_')[-1].split('.')[0],
-		# 	'sort_key': 'season'
-		# },
-		# {
-		# 	'table': umpire_zones,
-		# 	'root': 'output-data/Career/pitch+zone',
-		# 	'primary_key': 'name',
-		# 	'get_season': lambda file: file.split('_')[-1].split('.')[0],
-		# 	'sort_key': 'season'
-		# }
+		{
+			'table': careers_season,
+			'root': 'output-data/Career/BCR By Season/',
+			'primary_key': 'name',
+			'get_season': lambda file: file.split('_')[2].split('.')[0],
+			'sort_key': 'data_year',
+			'exclude_files': ['merged.csv', 'BCR_among_all_umps.csv']
+		},
+		{
+			'table': career_crucial_calls_table,
+			'root': 'output-data/Career/crucial calls',
+			'primary_key': 'name',
+			'get_season': lambda file: file.split('_')[-1].split('.')[0],
+			'sort_key': 'season'
+		},
+		{
+			'table': umpire_zones,
+			'root': 'output-data/Career/pitch+zone',
+			'primary_key': 'name',
+			'get_season': lambda file: file.split('_')[-1].split('.')[0],
+			'sort_key': 'season'
+		}
 	]
 	pool.starmap(pickle, [(simple_merge_folder, arg) for arg in kwargs])
