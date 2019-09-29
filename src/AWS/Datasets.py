@@ -85,7 +85,6 @@ class Table():
         df.drop(to_drop, axis=1, inplace=True)
         return df
 
-    # TODO IMPLEMENT BACKOFF?
     def get(self, query_map, **kwargs):
         """
         Get method takes some query map and some filter options
@@ -117,10 +116,69 @@ class Table():
                         }
 
         """
-        data = self.dynamodb.get_item(Key = query_map, **kwargs)
-        if 'Item' not in data:
-            return {}
-        return data['Item']
+        kwargs['Key'] = query_map
+        resp = Table.exp_backoff(self.dynamodb.get_item, **kwargs)
+        return resp['Item'] if 'Item' in resp else {}
+        
+
+    @staticmethod
+    def exp_backoff(f, backoff_init=50, exp_backoff = False, **kwargs):
+        backoff = backoff_init
+        while True:
+            try:
+                # cloudsearch cache just means new items were added to dynamodb
+                # therefore we need to add them to cloudsearch
+                resp = f(**kwargs)
+                if backoff > backoff_init:
+                    if exp_backoff:
+                        backoff /= 2
+                    else:
+                        backoff -= backoff_init
+                return resp
+            except botocore.exceptions.ParamValidationError as e:
+                print("Wrong Item type")
+                print(e)
+                exit(0)
+            except botocore.exceptions.ClientError as e:
+                errcode = e.response['Error']['Code']
+                if errcode in Table.RETRY_EXCEPTIONS:
+                    time.sleep(backoff / 1000)
+                    if exp_backoff:
+                        backoff *= 2
+                    else:
+                        backoff += backoff_init
+                    if (backoff / 1000 > 60):
+                        print('Exponential Backoff Failed. Load too heavy!')
+                        exit(1)
+                    else:
+                        print('Increasing backoff to {0}ms'.format(backoff))
+                elif errcode == 'ValidationException':
+                    print(e)
+                    print(item)
+                    exit(1)
+                else:
+                    print(e)
+                    exit(1)
+            except Exception as e:
+                print("Unknown Error {0}".format(e))
+                return
+
+    def paginate_with_backoff(self, f, exp_backoff = True, **kwargs):
+        resp = Table.exp_backoff(f, exp_backoff = exp_backoff, **kwargs)
+        data = resp['Items']
+        iteration = 0
+        total_time = 0
+        while 'LastEvaluatedKey' in resp:
+            now = time.time()
+            kwargs['ExclusiveStartKey'] = response['LastEvaluatedKey']
+            resp = f(**kwargs)
+            local_time = time.time() - now
+            total_time += local_time
+            data.extend(resp['Items'])
+            print('{0} iteration {1} loading new page in {2}s'.format(self.__table_name, 
+                iteration, local_time))
+            iteration += 1
+        return data
 
     def scan(self, **kwargs):
         """
@@ -143,29 +201,10 @@ class Table():
                 ...]
 
         """
-        response = self.dynamodb.scan(**kwargs)
-        data = response['Items']
-        iteration = 0
-        total_time = 0
-        while 'LastEvaluatedKey' in response: 
-            now = time.time()
-            response = self.dynamodb.scan(**kwargs, ExclusiveStartKey=response['LastEvaluatedKey'])
-            local_time = time.time() - now
-            total_time += local_time
-            print('{0} iteration {1} loading new page in {2}s'.format(self.__table_name, 
-                iteration, local_time))
-            iteration +=1
-            data.extend(response['Items'])
-        print(total_time)
-        return data
+        return self.paginate_with_backoff(self.dynamodb.scan, exp_backoff = True, **kwargs)
 
-    # TODO IMPLEMENT BACKOFF
     def query(self, **kwargs):
-        resp = self.dynamodb.query(**kwargs)
-        if 'Items' in resp:
-            return resp['Items']
-        else:
-            return []
+        return self.paginate_with_backoff(self.dynamodb.query, exp_backoff=True, **kwargs)
         
     def upload(self, refined_filepath, backoff_init = 50, exp_backoff = False): 
         """

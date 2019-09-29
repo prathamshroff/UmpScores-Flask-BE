@@ -30,10 +30,7 @@ class Charts(Resource):
     @api.doc(parser = umpire_parser)
     def get(self):
         name = request.args.get('name')
-        data = create_chart_object(name, data_year_range)
-        data = json.dumps(data, use_decimal = True)
-        resp = Response(data, status=200, mimetype = 'application/json')
-        return resp
+        return cache[cache['use']]['/charts'][name.lower()]
 
 @api.route('/pitcher')
 class Pitcher(Resource):
@@ -68,10 +65,7 @@ class GetPitchers(Resource):
     @api.doc(parser = umpire_parser)
     def get(self):
         name = request.args.get('name')
-        data = get_pitcher_names(name)
-        data = json.dumps(data, use_decimal = True)
-        resp = Response(data, status=200, mimetype='application/json')
-        return resp
+        return cache[cache['use']]['/get-pitchers'][name.lower()]
         
 
 @api.route('/teams')
@@ -87,10 +81,7 @@ class Teams(Resource):
         Takes in some full umpire name and generates an array of team objects
         """
         name = request.args.get('name')
-        data = create_team_object(name, data_year_range)
-        data = json.dumps(data, use_decimal=True)
-        resp = Response(data, status=200, mimetype='application/json')
-        return resp
+        return cache[cache['use']]['/teams'][name.lower()]
 
 @api.route('/umpire')
 class Umpire(Resource):
@@ -107,8 +98,7 @@ class Umpire(Resource):
         model
         """
         name = request.args.get('name')
-        name = name.lower()
-        data = cache[cache['use']]['umpires'][name]
+        data = cache[cache['use']]['/umpire'][name.lower()]
         data = json.dumps(data, use_decimal=True)
         resp = Response(data, status=200, mimetype='application/json')
         return resp
@@ -121,7 +111,7 @@ class Rankings(Resource):
         """
         Returns a list of all umpire objects from every year in the rankings format
         """ 
-        return cache[cache['use']]['rankings']
+        return cache[cache['use']]['/rankings']
 
 
 
@@ -139,8 +129,7 @@ class Career(Resource):
         an array of career objects
         """
         name = request.args.get('name')
-        name = name.lower()
-        data = cache[cache['use']]['career'][name]
+        data = cache[cache['use']]['/career'][name.lower()]
         data = json.dumps(data, use_decimal=True)
         resp = Response(data, status=200, mimetype='application/json')
         return resp
@@ -231,7 +220,7 @@ class GetAllUmps(Resource):
         Will return a list of all umpire names and id's. Can be used as a quick hash map
         to convert id's into names and vice versa, or to simply have a list of all umpire names
         """
-        data = json.dumps(cache[cache['use']]['umpire_keys'], use_decimal=True)
+        data = json.dumps(cache[cache['use']]['/umpireList'], use_decimal=True)
         resp = Response(data, status=200, mimetype='application/json')
         return resp
 
@@ -250,8 +239,7 @@ class UmpireGames(Resource):
         return format
         """
         name = request.args.get('name')
-        name = name.lower()
-        data = cache[cache['use']]['umpire_games'][name]
+        data = cache[cache['use']]['/umpireGames'][name.lower()]
         data = json.dumps(data, use_decimal=True)
         resp = Response(data, status=200, mimetype='application/json')
         return resp

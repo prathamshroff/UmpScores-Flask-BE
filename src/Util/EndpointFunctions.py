@@ -28,6 +28,7 @@ def create_chart_object(name, year_range):
 	data = umpire_zones.query(KeyConditionExpression = filterExpression)
 	
 	resp = {
+		'name': name,
 		'heatMap': [],
 	    'heatMapSL': [],
 	    'heatMapFT': [],
@@ -248,7 +249,7 @@ def get_team_abbreviation(team):
 
 def get_umpires_for_games():
 	page = requests.get("https://www.statfox.com/mlb/umpiremain.asp")
-	soup = BeautifulSoup(page.text)
+	soup = BeautifulSoup(page.text, "lxml")
 	tables = soup.findAll("table")
 	cells = tables[2].findAll("td")
 	headerObject = tables[2].findAll("th", { "class" : "header1" })
@@ -291,7 +292,7 @@ def get_game_values(ALL_UMPIRE_NAMES, ump_table, event):
 		if (event_lines["status"] == 200):
 			resp["awayLine"] = event_lines["awayLine"]
 			resp["homeLine"] = event_lines["homeLine"]
-			print("LINES: ", resp)
+			# print("LINES: ", resp)
 		# now we can query the money lines in a new function
 		for participant in event.iter("participant"):
 			# get side + team
@@ -316,7 +317,7 @@ def get_game_values(ALL_UMPIRE_NAMES, ump_table, event):
 			if (resp["awayTeam"] in key and resp["homeTeam"] in key):
 				# grab the umpire value in ump_table
 				resp["umpireName"] = format_umpire_name(ALL_UMPIRE_NAMES, ump_table[key][1])
-				print("UMP NAME: ", resp["umpireName"])
+				# print("UMP NAME: ", resp["umpireName"])
 				found = 1
 		swaps = {"CWS":"CHW", "CHW":"CWS", "TB":"TAM", "TAM":"TB", "FLA":"MIA", "MIA":"FLA"}
 		# means there might be mismatched team abbreviations
@@ -389,7 +390,7 @@ def get_all_games(ALL_UMPIRE_NAMES, q):
 						# compare date to today
 						if (today == dateRealObject):
 							count += 1
-							print("EVENT: ", event.attrib)
+							# print("EVENT: ", event.attrib)
 							# 2018-11-15T12:54:55.604Z
 							# pass event object for further parsing
 							event_info = get_game_values(ALL_UMPIRE_NAMES, ump_table, event)
@@ -752,7 +753,6 @@ def create_team_object(name, data_range):
 	keys = [{'name': {'S': name}, 'data_year': {'N': str(year)}} for year in data_range]
 	response = team_stats_dataset.batch_get(keys)
 	# careers_season_resp = careers_season.batch_get(keys)
-	print('TEAM NAMES: {0}'.format(TEAM_NAMES))
 	for resp in response:
 		if resp != {}:
 			year = int(resp['data_year'])
@@ -762,6 +762,7 @@ def create_team_object(name, data_range):
 			prev = team_stats_dataset.get({'name':name, 'data_year': year-1})
 			for team in TEAM_NAMES:
 				team_stats = {
+					'name': name,
 					'team': team,
 					'season': year,
 					'pitchesCalled': resp['total_call_{0}'.format(team)],
