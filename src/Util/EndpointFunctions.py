@@ -188,12 +188,13 @@ def create_chart_object(name, year_range):
 
 def get_event_lines(event_id):
 	resp = {}
-	# "http://xml.donbest.com/v2/odds/5/event_id" + event_id +"/?token=K_E_Oc-S6!F!Kypt"
-	xmlData = requests.get("http://xml.donbest.com/v2/odds/5/" + event_id +"/?token=!m5__dQ_ZN-aH-v4")
+	# old token: !m5__dQ_ZN-aH-v4
+	# new token: !FSUT!-5S_7ogtMs
+	xmlData = requests.get("http://xml.donbest.com/v2/odds/5/" + event_id +"/?token=!FSUT!-5S_7ogtMs")
 	root = ET.fromstring(xmlData.text)
 	try:
 		for line in root.iter("line"):
-			if (line.get("period") == "FG" and line.get("type") == "current"):
+			if (line.get("period") == "FG" and line.get("type") == "previous"):
 				awayLine = line.find("money").get("away_money")
 				homeLine = line.find("money").get("home_money")
 				resp["awayLine"] = awayLine
@@ -317,6 +318,7 @@ def get_game_values(ALL_UMPIRE_NAMES, ump_table, event):
 		resp["date"] = dateCorrectedString
 		found = 0
 		for key in ump_table.keys():
+			print("GETTING TO  THE KEY IN UMP_TABLE.keys() point")
 			if (resp["awayTeam"] in key and resp["homeTeam"] in key):
 				# grab the umpire value in ump_table
 				resp["umpireName"] = format_umpire_name(ALL_UMPIRE_NAMES, ump_table[key][1])
@@ -372,7 +374,7 @@ def get_all_games(ALL_UMPIRE_NAMES, q):
 	games = []
 	# storing this to pass to get_game_values so I can get the right data back
 	ump_table = get_umpires_for_games()
-	xmlData = requests.get("http://xml.donbest.com/v2/schedule/?token=!m5__dQ_ZN-aH-v4")
+	xmlData = requests.get("http://xml.donbest.com/v2/schedule/?token=!FSUT!-5S_7ogtMs")
 	root = ET.fromstring(xmlData.text)
 	count = 0
 	try:
