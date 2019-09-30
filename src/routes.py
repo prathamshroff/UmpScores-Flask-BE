@@ -30,7 +30,9 @@ class Charts(Resource):
     @api.doc(parser = umpire_parser)
     def get(self):
         name = request.args.get('name')
-        return cache[cache['use']]['/charts'][name.lower()]
+        data = json.dumps(cache[cache['use']]['/charts'][name.lower()], use_decimal=True)
+        resp = Response(data, status=200, mimetype='application/json')
+        return resp
 
 @api.route('/pitcher')
 class Pitcher(Resource):
@@ -65,7 +67,9 @@ class GetPitchers(Resource):
     @api.doc(parser = umpire_parser)
     def get(self):
         name = request.args.get('name')
-        return cache[cache['use']]['/get-pitchers'][name.lower()]
+        data = json.dumps(cache[cache['use']]['/get-pitchers'][name.lower()], use_decimal=True)
+        resp = Response(data, status=200, mimetype='application/json')
+        return resp
         
 
 @api.route('/teams')
@@ -81,7 +85,9 @@ class Teams(Resource):
         Takes in some full umpire name and generates an array of team objects
         """
         name = request.args.get('name')
-        return cache[cache['use']]['/teams'][name.lower()]
+        data = json.dumps(cache[cache['use']]['/teams'][name.lower()], use_decimal=True)
+        resp = Response(data, status=200, mimetype='application/json')
+        return resp
 
 @api.route('/umpire')
 class Umpire(Resource):
@@ -168,7 +174,7 @@ class GetTodaysGames(Resource):
         ----------
         Will return a cached object representing the games for this day
         """
-        games = json.dumps(cache[cache['use']]['games'])
+        games = json.dumps(cache[cache['use']]['/games'], use_decimal=True)
         resp = Response(games, status=200, mimetype='application/json')
         return resp
 

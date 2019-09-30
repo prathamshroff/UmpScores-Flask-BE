@@ -42,8 +42,7 @@ def recache_everything(cache, mutex, refPool, data_year_range):
 
 		now = time.time()
 		cache[cache_id]['/get-pitchers'] = refPool.map(get_pitcher_names, cache[cache_id]['umpire_names'])
-		cache[cache_id]['/get-pitchers'] = json.dumps(cache[cache_id]['/get-pitchers'], use_decimal=True)
-		cache[cache_id]['/get-pitchers'] = Response(cache[cache_id]['/get-pitchers'], status=200, mimetype='application/json')
+		cache[cache_id]['/get-pitchers'] = {arr['name']: arr for arr in cache[cache_id]['/get-pitchers'] if len(arr) != 0}
 		print('Cached /get-pitchers: t = {0}s'.format(time.time() - now))
 
 		now = time.time()
