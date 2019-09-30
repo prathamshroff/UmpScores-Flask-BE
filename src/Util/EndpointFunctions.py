@@ -657,7 +657,7 @@ def create_career_object(name, data_range):
 		# 	'BCR_change_{0}-1_{0}'
 		# ])
 		if season_resp != {}:
-			data = range_resp
+			data = {}
 			if 'average_game_length_{0}'.format(year) in average_game_length_table_resp:
 				data.update(
 					{
