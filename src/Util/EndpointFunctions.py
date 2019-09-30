@@ -536,18 +536,18 @@ def create_umpire_object(name, year):
 	resp_2019 = umpires_2019_table.get({'name':name}, AttributesToGet=['age'])
 	crew_update_resp = crew_update_table.get({'name': name, 'season': year}, AttributesToGet = ['years.active', 'ranking'])
 	
-	range_table = careers_range.get(
-		{
-			'name': name
-		},
-		AttributesToGet = ['BCR_{0}'.format(year)]
-	)
+	# range_table = careers_range.get(
+	# 	{
+	# 		'name': name
+	# 	},
+	# 	AttributesToGet = ['BCR_{0}'.format(year)]
+	# )
 	career_seasonal_resp = careers_season.get(
 		{
 			'name': name,
 			'data_year': year	
 		},
-		AttributesToGet = ['total_call', 'games', 'data_year', 'bc_strike', 'bc_ball']
+		AttributesToGet = ['total_call', 'games', 'data_year', 'bc_strike', 'bc_ball', 'bad_call_ratio']
 	)
 	crew_resp = crew_update_table.get(
 		{
@@ -602,7 +602,7 @@ def create_umpire_object(name, year):
 	else:
 		data['age'] = -1
 	columns_rename(data, {
-		'BCR_{0}'.format(year): 'icr',
+		# 'BCR_{0}'.format(year): 'icr',
 		'crew.number': 'crewNumber',
 		'ump.number': 'umpNumber',
 		'crew_chief': 'isCrewChief',
@@ -623,7 +623,8 @@ def create_umpire_object(name, year):
 		'worst_worst': 'worstPark',
 		'best_park': 'bestPark',
 		'years.active': 'yearsExperience',
-		'ranking': 'rank'
+		'ranking': 'rank',
+		'bad_call_ratio': 'icr'
 	})
 	return data
 
