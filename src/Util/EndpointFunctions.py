@@ -409,7 +409,7 @@ def get_pitcher_names(name):
 		subnames = [name.replace('total_call_', '').replace('.', ' ') for name in pitchers if \
 			name.startswith('total_call_')]
 		names = names.union(subnames)
-	return list(names)
+	return {'name':name, 'data':list(names)}
 
 
 def create_pitcher_object(umpire_name, pitcher_name):
