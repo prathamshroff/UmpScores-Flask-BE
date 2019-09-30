@@ -66,7 +66,7 @@ def recache_everything(cache, mutex, refPool, data_year_range):
 		print('Cached /career: t = {0}s'.format(time.time() - now))
 
 		now = time.time()
-		print('Starting to cache/umpire')
+		print('Starting to cache /umpire')
 		cache[cache_id]['/umpire'] = refPool.starmap(create_umpire_object, [(name, data_year_range[-1]) for name in cache[cache_id]['umpire_names']])
 		cache[cache_id]['/umpire'] = {obj['name']: obj for obj in cache[cache_id]['/umpire'] if 'name' in obj}
 		print('Cached /umpire: t = {0}s'.format(time.time() - now))

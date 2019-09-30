@@ -49,12 +49,9 @@ def create_chart_object(name, year_range):
 	    'heatMapIN': [],
 	    'allUmpsBcrOverCareer': []
 	}
-	# range_resp = careers_range.get({'name':name})
-
-	bcr_vals = [{'name': {'S': name}, 'season': {'N': str(year)}} for year in year_range]
+	bcr_vals = [{'name': {'S': name}, 'data_year': {'N': str(year)}} for year in year_range]
 	bcr_vals = careers_season.batch_get(bcr_vals)
-
-	resp['bcrOverCareer'] = [{'x': d['season'], 'y': d['bad_call_ratio']} for d in bcr_vals]
+	resp['bcrOverCareer'] = [{'x': d['data_year'], 'y': d['bad_call_ratio']} for d in bcr_vals]
 
 	resp['seasonalBcrByMonth'] = []
 	month_resp = profile_best_worst_month_table.query(KeyConditionExpression = Key('name').eq(name))
