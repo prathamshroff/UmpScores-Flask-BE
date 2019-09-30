@@ -49,9 +49,12 @@ def create_chart_object(name, year_range):
 	    'heatMapIN': [],
 	    'allUmpsBcrOverCareer': []
 	}
-	range_resp = careers_range.get({'name':name})
-	resp['bcrOverCareer'] = [{'x': year, 'y': range_resp['BCR_{0}'.format(year)]} for year in \
-		year_range if 'BCR_{0}'.format(year) in range_resp]
+	# range_resp = careers_range.get({'name':name})
+
+	bcr_vals = [{'name': {'S': name}, 'season': {'N': str(year)}} for year in year_range]
+	bcr_vals = careers_season.batch_get(bcr_vals)
+
+	resp['bcrOverCareer'] = [{'x': d['season'], 'y': d['bad_call_ratio']} for d in bcr_vals]
 
 	resp['seasonalBcrByMonth'] = []
 	month_resp = profile_best_worst_month_table.query(KeyConditionExpression = Key('name').eq(name))
@@ -635,7 +638,7 @@ def create_career_object(name, data_range):
 	average_game_length_table_resp = average_game_length_table.get({'name':name}, 
 		AttributesToGet=['average_game_length_{0}'.format(year) for year in data_range])
 	for year in data_range:
-		range_resp = careers_range.get({'name': name}, AttributesToGet=['BCR_{0}'.format(year)])
+		# range_resp = careers_range.get({'name': name}, AttributesToGet=['BCR_{0}'.format(year)])
 		if year > 2010:
 			change_resp = careers_range_change.get({'name':name}, AttributesToGet=['BCR_change_{0}'.format(year-1) + '_{0}'.format(year)])
 		else:
@@ -645,7 +648,7 @@ def create_career_object(name, data_range):
 		season_resp = careers_season.get({'name': name, 'data_year': year},
 			AttributesToGet=['best_pitch', 'worst_pitch', 'data_year', 'games', 'total_call', 'BCR_SL', 'BCR_FT', 'BCR_CU', 'BCR_FF', 'BCR_SI', 
 				'BCR_CH', 'BCR_FC', 'BCR_EP', 'BCR_KC', 'BCR_FS', 'BCR_PO', 'BCR_KN', 
-				'BCR_SC', 'BCR_FO', 'BCR_UN', 'BCR_FA', 'BCR_IN'])
+				'BCR_SC', 'BCR_FO', 'BCR_UN', 'BCR_FA', 'BCR_IN', 'bad_call_ratio'])
 
 		career_crucial_calls_resp = career_crucial_calls_table.get({'name':name, 'season':year},
 			AttributesToGet=['bad_crucial_call'])
@@ -688,7 +691,7 @@ def create_career_object(name, data_range):
 				'BCR_UN': 'icrUN',
 				'BCR_FA': 'icrFA',
 				'BCR_IN': 'icrIN',
-				'BCR_{0}'.format(year): 'icr',
+				'bad_call_ratio': 'icr',
 				'total_call': 'pitchesCalled',
 				'games': 'gamesUmped'
 				})
