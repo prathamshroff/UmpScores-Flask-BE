@@ -393,7 +393,7 @@ def get_all_games(ALL_UMPIRE_NAMES, q):
 						# compare date to today
 						if (today == dateRealObject):
 							count += 1
-							# print("EVENT: ", event.attrib)
+							print("EVENT: ", event.attrib)
 							# 2018-11-15T12:54:55.604Z
 							# pass event object for further parsing
 							event_info = get_game_values(ALL_UMPIRE_NAMES, ump_table, event)
