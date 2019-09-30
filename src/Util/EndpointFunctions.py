@@ -580,7 +580,6 @@ def create_umpire_object(name, year):
 	bcr_std_resp = bcr_std_table.get({'name':name}, AttributesToGet=['bcr_std_2019'])
 	data = career_seasonal_resp
 	data.update(crew_resp)
-	data.update(range_table)
 	data.update(average_game_length_table_resp)
 	data.update(team_preference_resp)
 	data.update(ejections_resp)
