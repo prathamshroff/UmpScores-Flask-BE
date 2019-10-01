@@ -366,6 +366,18 @@ def get_game_values(ALL_UMPIRE_NAMES, ump_table, event):
 </event>
 		'''
 
+def verifyGameData(event_info):
+	keys = ["awayLine", "homeLine", "awayTeam", "awayPitcherName", "awayPitcherArm", "homeTeam", "homePitcherName", "homePitcherArm", 
+	"location", "date", "umpireName"]
+	for key in keys:
+		if key in event_info:
+			# key is there, check if info is good
+			if (event_info[key] != ""):
+				# data is not empty, check next key
+				return True
+	# return False if conditions are not met above
+	return False
+
 def get_all_games(ALL_UMPIRE_NAMES, q):
 	games = []
 	# storing this to pass to get_game_values so I can get the right data back
@@ -395,7 +407,8 @@ def get_all_games(ALL_UMPIRE_NAMES, q):
 							# 2018-11-15T12:54:55.604Z
 							# pass event object for further parsing
 							event_info = get_game_values(ALL_UMPIRE_NAMES, ump_table, event)
-							games.append(event_info)
+							if (verifyGameData(event_info)):
+								games.append(event_info)
 	except Exception as e:
 		print("EXCEPTION: ", e)
 	q.put(games)
