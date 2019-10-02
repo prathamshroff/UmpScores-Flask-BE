@@ -14,6 +14,8 @@ import simplejson as json
 from flask import Flask, jsonify, request, Response
 import time
 
+from decimal import *
+
 # importing things from cache
 TEAM_NAMES = [name.replace('total_call_', '') for name in \
     team_stats_dataset.get(query_map = {'name':'jordan baker', 'data_year' : 2019}).keys() if \
@@ -30,24 +32,24 @@ def create_chart_object(name, year_range):
 	resp = {
 		'name': name,
 		'heatMap': [],
-	    'heatMapSL': [],
-	    'heatMapFT': [],
-	    'heatMapCU': [],
-	    'heatMapFF': [],
-	    'heatMapSI': [],
-	    'heatMapCH': [],
-	    'heatMapFC': [],
-	    'heatMapEP': [],
-	    'heatMapKC': [],
-	    'heatMapFS': [],
-	    'heatMapPO': [],
-	    'heatMapKN': [],
-	    'heatMapSC': [],
-	    'heatMapFO': [],
-	    'heatMapUN': [],
-	    'heatMapFA': [],
-	    'heatMapIN': [],
-	    'allUmpsBcrOverCareer': []
+		'heatMapSL': [],
+		'heatMapFT': [],
+		'heatMapCU': [],
+		'heatMapFF': [],
+		'heatMapSI': [],
+		'heatMapCH': [],
+		'heatMapFC': [],
+		'heatMapEP': [],
+		'heatMapKC': [],
+		'heatMapFS': [],
+		'heatMapPO': [],
+		'heatMapKN': [],
+		'heatMapSC': [],
+		'heatMapFO': [],
+		'heatMapUN': [],
+		'heatMapFA': [],
+		'heatMapIN': [],
+		'allUmpsBcrOverCareer': []
 	}
 	bcr_vals = [{'name': {'S': name}, 'data_year': {'N': str(year)}} for year in year_range]
 	bcr_vals = careers_season.batch_get(bcr_vals)
@@ -80,103 +82,111 @@ def create_chart_object(name, year_range):
 			'season': year
 		})
 		resp['heatMapSL'].append({
-			'data': [entry[elem] for elem in ['BCR_SL_{0}'.format(i) for i in \
+			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_SL_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapFT'].append({
-			'data': [entry[elem] for elem in ['BCR_FT_{0}'.format(i) for i in \
+			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_FT_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapCU'].append({
-			'data': [entry[elem] for elem in ['BCR_CU_{0}'.format(i) for i in \
+			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_CU_{0}'.format(i) for i in \
 				range(1, 15)if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapFF'].append({
-			'data': [entry[elem] for elem in ['BCR_FF_{0}'.format(i) for i in \
+			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_FF_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapSI'].append({
-			'data': [entry[elem] for elem in ['BCR_SI_{0}'.format(i) for i in \
+			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_SI_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapCH'].append({
-			'data': [entry[elem] for elem in ['BCR_CH_{0}'.format(i) for i in \
+			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_CH_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapFC'].append({
-			'data': [entry[elem] for elem in ['BCR_FC_{0}'.format(i) for i in \
+			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_FC_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
+		# OLD VERSION
+		# resp['heatMapEP'].append({
+		# 	'data': [entry[elem] for elem in ['BCR_EP_{0}'.format(i) for i in \
+		# 		range(1, 15) if i != 10]], 
+		# 	'season': year
+		# })
+		# print("ENTRY: ", [Decimal(entry[elem]).compare(-1) == Decimal('0') for elem in ['BCR_EP_{0}'.format(i) for i in \
+		# 		range(1, 15) if i != 10]])
 		resp['heatMapEP'].append({
-			'data': [entry[elem] for elem in ['BCR_EP_{0}'.format(i) for i in \
+			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_EP_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapKC'].append({
-			'data': [entry[elem] for elem in ['BCR_KC_{0}'.format(i) for i in \
+			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_KC_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapFS'].append({
-			'data': [entry[elem] for elem in ['BCR_FS_{0}'.format(i) for i in \
+			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_FS_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapPO'].append({
-			'data': [entry[elem] for elem in ['BCR_PO_{0}'.format(i) for i in \
+			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_PO_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapKN'].append({
-			'data': [entry[elem] for elem in ['BCR_KN_{0}'.format(i) for i in \
+			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_KN_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapSC'].append({
-			'data': [entry[elem] for elem in ['BCR_SC_{0}'.format(i) for i in \
+			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_SC_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapFO'].append({
-			'data': [entry[elem] for elem in ['BCR_FO_{0}'.format(i) for i in \
+			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_FO_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapUN'].append({
-			'data': [entry[elem] for elem in ['BCR_UN_{0}'.format(i) for i in \
+			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_UN_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapFA'].append({
-			'data': [entry[elem] for elem in ['BCR_FA_{0}'.format(i) for i in \
+			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_FA_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
 
 		resp['heatMapIN'].append({
-			'data': [entry[elem] for elem in ['BCR_IN_{0}'.format(i) for i in \
+			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_IN_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
 			'season': year
 		})
@@ -367,6 +377,18 @@ def get_game_values(ALL_UMPIRE_NAMES, ump_table, event):
 </event>
 		'''
 
+def verifyGameData(event_info):
+	keys = ["awayLine", "homeLine", "awayTeam", "awayPitcherName", "awayPitcherArm", "homeTeam", "homePitcherName", "homePitcherArm", 
+	"location", "date", "umpireName"]
+	for key in keys:
+		if key in event_info:
+			# key is there, check if info is good
+			if (event_info[key] != ""):
+				# data is not empty, check next key
+				return True
+	# return False if conditions are not met above
+	return False
+
 def get_all_games(ALL_UMPIRE_NAMES, q):
 	games = []
 	# storing this to pass to get_game_values so I can get the right data back
@@ -396,7 +418,8 @@ def get_all_games(ALL_UMPIRE_NAMES, q):
 							# 2018-11-15T12:54:55.604Z
 							# pass event object for further parsing
 							event_info = get_game_values(ALL_UMPIRE_NAMES, ump_table, event)
-							games.append(event_info)
+							if (verifyGameData(event_info)):
+								games.append(event_info)
 	except Exception as e:
 		print("EXCEPTION: ", e)
 	q.put(games)
