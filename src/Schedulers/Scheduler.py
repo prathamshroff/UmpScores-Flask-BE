@@ -29,8 +29,8 @@ class CacheScheduler():
 			endpoint = os.path.join(self.url, endpoint)
 
 		while True:
-			print('CacheScheduler daemon calling {0}'.format(endpoint))
 			time.sleep(freq)
+			print('CacheScheduler daemon calling {0}'.format(endpoint))
 			get(endpoint, params=params)
 
 
