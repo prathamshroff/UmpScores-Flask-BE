@@ -5,6 +5,15 @@ from DataSections.Util import simple_merge_folder, pickle
 from threading import Thread
 
 def career_upload_simple_folders(pool):
+	"""
+	Uploads simple folders within output-data/Career. 
+
+	Algorithm
+	----------
+	We define a simple folder as a folder with no sub folders, all contents are files whose filenames
+	have year within that filename such that we may easily extract season column names.
+	We then parallelize the upload process for all of these files
+	"""
 	kwargs = [
 		{
 			'table': crew_update_table, 

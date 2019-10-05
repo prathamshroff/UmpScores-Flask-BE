@@ -25,6 +25,12 @@ from DataSections.Util import simple_merge_folder, single_file_upload
 # If a pitcher switches teams during the same season that would be an issue
 pool = Pool()
 def single_files_scheduler():
+	"""
+	Parallelized the execution of uploading singular simple files to their corresponding
+	dynamodb table
+	"""
+
+	# umpire2019.xlsx may be deprecated. 
 	t1 = Thread(target = single_file_upload, kwargs = {
 			'table': umpires_2019_table, 
 			'filepath': 'output-data/Profile/umpire2019.xlsx', 
@@ -35,23 +41,37 @@ def single_files_scheduler():
 		}
 	)
 	t1.start()
+
+	# Each row in args: [dynamodb Table, filename, keyname]
 	args = [
-		# [average_game_length_table, 'output-data/Career/average_game_length.csv', 'name'],
-		# [bcr_best_year_table, 'output-data/Profile/best_year.csv', 'name'],
-		# [bcr_weather_table, 'output-data/Profile/bcr_weather.csv', 'name'],
-		# [bcr_start_time_table, 'output-data/Profile/bcr_start_time.csv', 'name'],
-		# [bcr_std_table, 'output-data/Career/bcr_std.csv', 'name'],
-		# [ejections_table, 'output-data/Career/ejections.csv', 'name'],
-		# [careers_range_change, 'output-data/Career/Change_in_BCR_2010-2019.csv', 'name'],
-		# [careers, 'output-data/Career/career.csv', 'name'],
-		# [careers_range, 'output-data/Career/BCR By Season/BCR_among_all_umps.csv', 'name']
+		[average_game_length_table, 'output-data/Career/average_game_length.csv', 'name'],
+		[bcr_best_year_table, 'output-data/Profile/best_year.csv', 'name'],
+		[bcr_weather_table, 'output-data/Profile/bcr_weather.csv', 'name'],
+		[bcr_start_time_table, 'output-data/Profile/bcr_start_time.csv', 'name'],
+		[bcr_std_table, 'output-data/Career/bcr_std.csv', 'name'],
+		[ejections_table, 'output-data/Career/ejections.csv', 'name'],
+		[careers_range_change, 'output-data/Career/Change_in_BCR_2010-2019.csv', 'name'],
+		[careers, 'output-data/Career/career.csv', 'name'],
+		[careers_range, 'output-data/Career/BCR By Season/BCR_among_all_umps.csv', 'name']
 		
 	]
 	pool.starmap(single_file_upload, args)
 	t1.join()
 	print('Finished uploading singular files')
 
+
 def upload_umpire_pitchers():
+	"""
+	Creates output-data/Pitcher-Stats/<year>/ump_pitcher_refined.csv. Later uploads
+	this file to the refrating-umpire-pitchers table
+
+	Algorithm
+	----------
+	Iterates through every ump_pitcher.csv file within Pitcher-Stats/<year>. Afterwards
+	it renames the column ump to name, and appends a season column name. Finally this
+	new pandas object is saved to ump_pitcher_refined and is uploaded to the refrating-umpire-pitchers
+	table
+	"""
 	umpire_pitchers.clear('name', sort_key = 'season')
 	parent_folder = 'output-data/Pitcher-Stats'
 	for season_folder in os.listdir(parent_folder):
@@ -69,6 +89,17 @@ def upload_umpire_pitchers():
 
 
 def upload_pitcher_stats():
+	"""
+	Condenses the files within output-data/Pitcher-Stats/<year> into 
+	output-data/Pitcher-Stats/<year>/merged.csv and uploads it to refrating-pitcher-stats.
+
+	Algorithm
+	----------
+	Within each <year> folder, we merge every file excluding pitcher_BCR.csv, 
+	ump_pitcher.csv, ump_pitcher_refined.csv and merged.csv. We merge these files
+	on the unique keys name and team. After merging we append the season column name,
+	and the unique pitcher column name. Afterwards we upload each merged.csv file to refrating-pitcher-stats
+	"""
 	def add_pitcher_name(row):
 		row['pitcher_uuid'] = '{0}_{1}_{2}'.format(row['name'], row['team'], row['season'])
 		return row
@@ -94,6 +125,21 @@ def upload_pitcher_stats():
 
 
 def ump_game_lookup_refresh():
+	"""
+	Creates the refrating_ump_game_lookup.csv file and repopulates it with umpire names
+	and games they ref'd for.
+
+	Requirements
+	----------
+	Before running this make sure you have done the following:
+	dbcode/output-data/Game-Stats exists and if not, download output-data from drive
+
+	Algorithm
+	----------
+	This function will iterate through Game-Stats/<year>/game_bcr and it will extract every unique
+	umpire and game key pair and add that unique pair to a row. We use this table as a lookup
+	to increase querying time for the game stats dynamodb table
+	"""
 	root = 'output-data/Game-Stats'
 	folders = [os.path.join(root, folder) for folder in os.listdir(root)]
 	filenames = [os.path.join(folder, 'game_bcr.csv') for folder in folders]
@@ -249,8 +295,6 @@ def umpire_id_lookup_reset():
 	df['name'] = df['name'].apply(lambda row: row.lower())
 	df.to_csv('name_id.csv')
 	umpire_id_lookup.upload('name_id.csv')
-
-
 
 
 def dataPrep(filepaths):

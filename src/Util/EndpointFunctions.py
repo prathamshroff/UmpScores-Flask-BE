@@ -2,8 +2,6 @@
 # TODO uncomment /get-games
 from boto3.dynamodb.conditions import Key, Attr
 from StorageSolutions.tables import *
-# from Util.RefratingCache import TEAM_NAMES
-# importing libraries for /games endpoint
 import requests
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
@@ -13,18 +11,16 @@ import re
 import simplejson as json
 from flask import Flask, jsonify, request, Response
 import time
-
 from decimal import *
-
 # importing things from cache
 TEAM_NAMES = [name.replace('total_call_', '') for name in \
     team_stats_dataset.get(query_map = {'name':'jordan baker', 'data_year' : 2019}).keys() if \
     name.startswith('total_call_')]
 TEAM_NAMES = [name.split('_')[0] for name in TEAM_NAMES if name.endswith('_')]
-# def create_umpire_list():
-# 	print(ALL_UMPIRE_KEYS
+
 
 def create_chart_object(name, year_range):
+	"""Creates chart object for /charts endpoint"""
 	name = name.lower()
 	filterExpression = Key('name').eq(name)
 	data = umpire_zones.query(KeyConditionExpression = filterExpression)
@@ -123,14 +119,6 @@ def create_chart_object(name, year_range):
 			'season': year
 		})
 
-		# OLD VERSION
-		# resp['heatMapEP'].append({
-		# 	'data': [entry[elem] for elem in ['BCR_EP_{0}'.format(i) for i in \
-		# 		range(1, 15) if i != 10]], 
-		# 	'season': year
-		# })
-		# print("ENTRY: ", [Decimal(entry[elem]).compare(-1) == Decimal('0') for elem in ['BCR_EP_{0}'.format(i) for i in \
-		# 		range(1, 15) if i != 10]])
 		resp['heatMapEP'].append({
 			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_EP_{0}'.format(i) for i in \
 				range(1, 15) if i != 10]], 
@@ -193,6 +181,7 @@ def create_chart_object(name, year_range):
 
 	return resp
 
+
 def get_event_lines(event_id):
 	resp = {}
 	# old token: !m5__dQ_ZN-aH-v4
@@ -215,6 +204,7 @@ def get_event_lines(event_id):
 	except Exception as e:
 		print("EXCEPTION: ", e)
 	return resp
+
 
 def get_team_abbreviation(team):
 	abbreviation_dict = {
@@ -258,6 +248,7 @@ def get_team_abbreviation(team):
 			return e
 	return abbreviated
 
+
 def get_umpires_for_games():
 	page = requests.get("https://www.statfox.com/mlb/umpiremain.asp")
 	soup = BeautifulSoup(page.text, "lxml")
@@ -285,6 +276,7 @@ def get_umpires_for_games():
 	# make a dictionary with the team names as keys, storing the last used key until a new one is found and then replacing it
 	return ump_games
 
+
 def format_umpire_name(ALL_UMPIRE_NAMES, name):
 	umpire_name = ""
 	if (name != "Umpire information is NOT AVAILABLE for this game"):
@@ -295,6 +287,7 @@ def format_umpire_name(ALL_UMPIRE_NAMES, name):
 	else:
 		umpire_name = "NA"
 	return umpire_name
+
 
 def get_game_values(ALL_UMPIRE_NAMES, ump_table, event):
 	resp = {}
@@ -377,6 +370,7 @@ def get_game_values(ALL_UMPIRE_NAMES, ump_table, event):
 </event>
 		'''
 
+
 def verifyGameData(event_info):
 	keys = ["awayLine", "homeLine", "awayTeam", "awayPitcherName", "awayPitcherArm", "homeTeam", "homePitcherName", "homePitcherArm", 
 	"location", "date", "umpireName"]
@@ -389,7 +383,9 @@ def verifyGameData(event_info):
 	# return False if conditions are not met above
 	return False
 
+
 def get_all_games(ALL_UMPIRE_NAMES, q):
+	"""Creates all game objects for /games endpoint"""
 	games = []
 	# storing this to pass to get_game_values so I can get the right data back
 	ump_table = get_umpires_for_games()
@@ -426,6 +422,7 @@ def get_all_games(ALL_UMPIRE_NAMES, q):
 
 
 def get_pitcher_names(name):
+	"""Creates all pitcher name objects for /get-pitchers endpoint"""
 	name = name.lower()
 	names = set()
 	resp = umpire_pitchers.query(KeyConditionExpression = Key('name').eq(name))
@@ -438,6 +435,7 @@ def get_pitcher_names(name):
 
 
 def create_pitcher_object(umpire_name, pitcher_name):
+	"""Creates pitcher object for /pitchers endpoint"""
 	pitcher_name = pitcher_name.lower()
 	umpire_name = umpire_name.lower()
 
@@ -479,14 +477,28 @@ def create_pitcher_object(umpire_name, pitcher_name):
 		resp.append(obj)
 	return resp
 
+
 def columns_rename(d, columns_map):
+	"""
+	Renames keys in a dict if key exists else creates key and sets value to -1
+
+	Parameters
+	----------
+	d : dict
+		dictionary to have column names renamed
+	columns_map : Dict[str, str]
+		keys represent keys in d that we will rename and values represent the new names
+			e.g. columns_map={'ump': 'name'}
+	"""
 	for key in columns_map:
 		if key in d:
 			d[columns_map[key]] = d.pop(key)
 		else:
 			d[columns_map[key]] = -1
 
+
 def create_rankings_object(name, year_range):
+	"""Creates all rankings objects for /rankings endpoint"""
 	subarr = []
 	name = name.lower()
 	parts = name.split()
@@ -538,8 +550,9 @@ def create_rankings_object(name, year_range):
 			subarr.append(resp)
 	return subarr
 
-#TODO CACHE UMPIRES
+
 def create_umpire_object(name, year):
+	"""Creates umpire object for /umpires endpoint"""
 	name = name.lower()
 	career_resp_bcvals = careers_season.get({'name':name, 'data_year':2019},
 		AttributesToGet=['bad_call_per_inning', 'bad_call_per_game'])
@@ -550,7 +563,8 @@ def create_umpire_object(name, year):
 		AttributesToGet = ['id', 'name']
 	)
 
-	# THIS COMMENTED CODE MAY BE A BUG??
+	# THIS COMMENTED CODE MAY BE A BUG?? Alex Tosi will be empty because of this line is 
+	# career.csv out of date?
 	# if 'name' not in career_resp:
 	# 	print(name)
 	if 'name' not in career_resp:
@@ -561,12 +575,6 @@ def create_umpire_object(name, year):
 	resp_2019 = umpires_2019_table.get({'name':name}, AttributesToGet=['age'])
 	crew_update_resp = crew_update_table.get({'name': name, 'season': year}, AttributesToGet = ['years.active', 'ranking'])
 	
-	# range_table = careers_range.get(
-	# 	{
-	# 		'name': name
-	# 	},
-	# 	AttributesToGet = ['BCR_{0}'.format(year)]
-	# )
 	career_seasonal_resp = careers_season.get(
 		{
 			'name': name,
@@ -654,6 +662,7 @@ def create_umpire_object(name, year):
 
 
 def create_career_object(name, data_range):
+	"""Creates career object for /career endpoint"""
 	name = name.lower()
 	career = []
 	average_game_length_table_resp = average_game_length_table.get({'name':name}, 
@@ -720,7 +729,9 @@ def create_career_object(name, data_range):
 			career.append(data)
 	return career
 
+
 def create_umpire_game_object(name):
+	"""Creates umpire_game object for /umpireGames endpoint"""
 	umpire_games = []
 	name = name.lower()
 
@@ -772,6 +783,7 @@ def create_umpire_game_object(name):
 
 
 def create_team_object(name, data_range):
+	"""Creates team object for /teams endpoint"""
 	data = []
 	name = name.lower()
 	# TEAM_NAMES

@@ -360,6 +360,7 @@ class Table():
 
         return data + self.batch_get(remaining_keys, batch_size = batch_size)
 
+
     def clear(self, primary_key, sort_key = None, backoff_init = 50, exp_backoff = False):
         """
         Completely deletes every item within this dynamodb table

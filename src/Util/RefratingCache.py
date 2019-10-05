@@ -11,11 +11,32 @@ import queue
 from copy import deepcopy
 
 def recache_everything(cache, mutex, refPool, data_year_range):
-	print('Beginning caching process')
-	time_stamp = time.time()
-	cache_que = queue.Queue()
+	"""
+	Recaches everything within our cache object and toggles the cache.
+
+	Parameters
+	----------
+	cache : Dict
+		cache dict representing the objects we have cached. Uses green blue deployment
+		such that we can update all objects on a separate cache and atomically switch to the
+		updated cache version.
+			e.g. cache = {
+				'green': {...},
+				'blue': {...},
+				'use': green
+			}
+	mutex : threading.Lock()
+		mutex locks this function to ensure mutual exclusion within the cache
+	refPool : multiprocessing.pool.ThreadPool
+		multiprocessing threaded pooling object to parallelize execution of updating the cache
+	data_year_range : list representing the year range for various information.
+		e.g. range(2010, 2019)	
+	"""
 	mutex.acquire()
 	try:
+		print('Beginning caching process')
+		time_stamp = time.time()
+		cache_que = queue.Queue()
 		cache_id = 'green' if cache['use'] == 'blue' else 'blue'
 		cache[cache_id]['/umpireList'] = umpire_id_lookup.scan()
 
@@ -97,6 +118,23 @@ def recache_everything(cache, mutex, refPool, data_year_range):
 
 
 def recache_games(cache, mutex):
+	"""
+	Re-Caches /games endpoint
+
+	Parameters
+	----------
+	cache : Dict
+		cache dict representing the objects we have cached. Uses green blue deployment
+		such that we can update all objects on a separate cache and atomically switch to the
+		updated cache version.
+			e.g. cache = {
+				'green': {...},
+				'blue': {...},
+				'use': green
+			}
+	mutex : threading.Lock()
+		mutex locks this function to ensure mutual exclusion while recaching
+	"""
 	mutex.acquire()
 	try:
 		time_stamp = time.time()

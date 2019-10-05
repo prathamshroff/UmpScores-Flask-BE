@@ -15,6 +15,7 @@ data_year_range = range(2010, 2020)
 
 cache_lock = threading.Lock()
 cache = {'blue': {}, 'green': {}, 'use': 'blue'}
+
 refPool = Pool()
 recache_everything(cache, cache_lock, refPool, data_year_range)
 

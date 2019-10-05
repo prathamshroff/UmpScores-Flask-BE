@@ -4,6 +4,26 @@ from requests import get
 from typing import Dict, Tuple, Sequence
 import os
 class CacheScheduler():
+	"""
+	CacheScheduler class sets up all daemons responsible for calling various cache update endpoints
+	for the backend. It creates a soft 'daemon' by executing call_endpoint function on a separate process.
+	
+	Parameters
+	----------
+	url : str
+		string representing the root url of the server we're going to be calling for preceeded by http:// 
+			e.g. http://localhost, http://127.0.0.1:3000, http://ec2-3-228-16-91.compute-1.amazonaws.com/
+	secret : str
+		secret is a string representing the privileged secret key. This secret key can be found
+		in .config.json. Is used to authorize get requests 
+
+	Attributes
+	----------
+	url : str
+		stores given url
+	secret : str
+		stores given secret
+	"""
 	def __init__(self, url: str, secret: str):
 		self.url = url
 		self.secret = secret
@@ -13,6 +33,8 @@ class CacheScheduler():
 
 	def call_endpoint(self, endpoint: str, params: Dict[str, str], freq: int):
 		"""
+		Periodically sends a get request to this given endpoint. 
+
 		Parameters
 		----------
 		endpoint : str

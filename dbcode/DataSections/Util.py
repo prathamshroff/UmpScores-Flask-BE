@@ -11,6 +11,29 @@ def pickle(f, kwargs):
 
 def single_file_upload(table, filepath, primary_key, output_filepath=None, 
 	columns_to_rename={'ump':'name'}, sort_key=None, reader=pd.read_csv, clear=True):
+	"""
+	Uploads a singular file to the given dynamodb table. 
+
+	Parameters
+	----------
+	table : Table
+		table is the corresponding dynamodb table to upload to. Table object is found in
+		AWS.Datasets.Table
+	filepath : str
+		filepath for the file which we are uploading
+	primary_key : str
+		primary_key is the primary key name for this table.
+			e.g. 'name' or 'game'
+	output_filepath : str or None
+		output_filepath is the file in which we'll save the cleaned file. If left
+		as None, output_filepath will be set to the input filepath
+	columns_to_rename : Dict[str, str]
+		columns_to_rename is a dictionary mapping deprecated_column_names to new_column_name
+	sort_key : str or None
+		sort_key represents whether this table requires a sort_key. Leave as None if table does
+		not have a sort key. Common sort keys include 'season' and 'data_year'
+	reader : f(filename: str) -> pd.DataFrame
+	"""
 	if output_filepath == None:
 		output_filepath = filepath
 
@@ -31,6 +54,37 @@ def single_file_upload(table, filepath, primary_key, output_filepath=None,
 
 def simple_merge_folder(table, root, primary_key, get_season, columns_to_rename={'ump':'name'},
 	sort_key=None, exclude_files = ['merged.csv']):
+	"""
+	Uploads simple folders to a designated dynamodb table. 
+
+	Parameters
+	----------
+	table : Table
+		table is the corresponding dynamodb table to upload to. Table object is found in
+		AWS.Datasets.Table
+	root : str
+		root is the root folder directory to upload content from
+	primary_key : str
+		primary_key is the primary key name for this table.
+			e.g. 'name' or 'game'
+	get_season : lambda(filename: str) -> str
+		get_season should be a lambda expression. It will take a filename and
+		it should return a string indicating the year/season of that filenames content.
+	columns_to_rename : Dict[str, str]
+		columns_to_rename is a dictionary mapping deprecated_column_names to new_column_name
+	sort_key : str or None
+		sort_key represents whether this table requires a sort_key. Leave as None if table does
+		not have a sort key. Common sort keys include 'season' and 'data_year'
+	exclude_files : List[str]
+		exclude_files represents a list of files we do not want to compress into the merged.csv file.
+		You should ALWAYS have merged.csv within this list otherwise you may upload duplicate content
+
+	Algorithm
+	----------
+	We define a simple folder as a folder with no sub folders, all contents are files whose filenames
+	have year within that filename such that we may easily extract season column names.
+	We then parallelize the upload process for all of these files
+	"""
 	files = [os.path.join(root, file) for file in os.listdir(root) if file not in exclude_files]
 	merge = pd.read_csv(files[0])
 	merge[sort_key] = len(merge) * [get_season(files[0])]
