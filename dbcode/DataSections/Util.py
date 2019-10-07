@@ -36,6 +36,7 @@ def single_file_upload(table, filepath, primary_key, output_filepath=None,
 	"""
 	if output_filepath == None:
 		output_filepath = filepath
+	print('Starting upload for {0}'.format(output_filepath))
 
 	df = reader(filepath)
 	df.rename(columns = columns_to_rename, inplace=True)
@@ -44,7 +45,7 @@ def single_file_upload(table, filepath, primary_key, output_filepath=None,
 		df.drop(columns=['Unnamed: 0'], inplace=True)
 	if 'name' in df.columns:
 		df['name'] = df['name'].apply(lambda row: row.lower())
-
+	
 	df.to_csv(output_filepath)
 	if clear:
 		table.clear(primary_key, sort_key = sort_key)

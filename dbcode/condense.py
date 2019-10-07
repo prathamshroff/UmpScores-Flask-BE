@@ -23,12 +23,15 @@ from DataSections.Util import simple_merge_folder, single_file_upload
 # POTENTIAL VULNERABILITIES
 # Duplicate umpire/pitcher names could be problemsome
 # If a pitcher switches teams during the same season that would be an issue
+# Currently manually removing TOTAL from BCR_among_all_umps.csv
+
 pool = Pool()
 def single_files_scheduler():
 	"""
 	Parallelized the execution of uploading singular simple files to their corresponding
 	dynamodb table
 	"""
+
 
 	# umpire2019.xlsx may be deprecated. 
 	t1 = Thread(target = single_file_upload, kwargs = {
@@ -453,9 +456,9 @@ def refresh_all_aws_resources():
 		'output-data/Game-Stats'
 	]
 	stamp = time.time()
-	Pitcher.upload_strikeout(pool)
-	Career.career_upload_simple_folders(pool)
-	Profile.profile_upload_simple_folders(pool)
+	# Pitcher.upload_strikeout(pool)
+	# Career.career_upload_simple_folders(pool)
+	# Profile.profile_upload_simple_folders(pool)
 	single_files_scheduler()
 	upload_umpire_pitchers()
 	upload_pitcher_stats()

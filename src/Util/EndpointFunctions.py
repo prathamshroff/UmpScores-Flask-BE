@@ -13,6 +13,7 @@ from flask import Flask, jsonify, request, Response
 import time
 from decimal import *
 # importing things from cache
+
 TEAM_NAMES = [name.replace('total_call_', '') for name in \
     team_stats_dataset.get(query_map = {'name':'jordan baker', 'data_year' : 2019}).keys() if \
     name.startswith('total_call_')]
@@ -795,18 +796,26 @@ def create_team_object(name, data_range):
 			year = int(resp['data_year'])
 			keys = list(resp.keys())
 
-			# Spaghetti line of code
+			# MIAMI Changed Team Name in 2012 therefore MIA pre 2012 is FLA
 			prev = team_stats_dataset.get({'name':name, 'data_year': year-1})
 			for team in TEAM_NAMES:
+				if ('total_call_FLA' in resp and team == 'MIA'):
+					team = 'FLA'
+
+				if 'BCR_{0}'.format(team) in prev:
+					season_change_bcr = prev['BCR_{0}'.format(team)] if prev != {} else -1
+				else:
+					season_change_bcr = prev['BCR_FLA'] if prev != {} else -1
+
 				team_stats = {
 					'name': name,
-					'team': team,
+					'team': team if team != 'FLA' else 'MIA',
 					'season': year,
 					'pitchesCalled': resp['total_call_{0}'.format(team)],
 					'ballsCalled': resp['call_ball_{0}'.format(team)],
 					'strikesCalled': resp['call_strike_{0}'.format(team)],
 					'bcr': resp['BCR_{0}'.format(team)],
-					'seasonChangeBcr': prev['BCR_{0}'.format(team)] if prev != {} else -1,
+					'seasonChangeBcr': season_change_bcr,
 					'bcrFO': resp['BCR_{0}'.format(team) + '_FO'],
 					'bcrFF': resp['BCR_{0}'.format(team) + '_FF'],
 					'bcrFT': resp['BCR_{0}'.format(team) + '_FT'],
