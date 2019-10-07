@@ -456,9 +456,9 @@ def refresh_all_aws_resources():
 		'output-data/Game-Stats'
 	]
 	stamp = time.time()
-	# Pitcher.upload_strikeout(pool)
-	# Career.career_upload_simple_folders(pool)
-	# Profile.profile_upload_simple_folders(pool)
+	Pitcher.upload_strikeout(pool)
+	Career.career_upload_simple_folders(pool)
+	Profile.profile_upload_simple_folders(pool)
 	single_files_scheduler()
 	upload_umpire_pitchers()
 	upload_pitcher_stats()
