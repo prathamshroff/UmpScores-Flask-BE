@@ -588,7 +588,7 @@ def create_umpire_object(name, year):
 			'name': name,
 			'season': year
 		},
-		AttributesToGet = ['crew.number', 'status', 'crew_chief', 'ump.number']
+		AttributesToGet = ['crew.number', 'status', 'crew.chief', 'ump.number']
 	)
 	# want to add crew rank here. Might just make a dict of values for now so I don't have to set up another table
 	bcr_best_year_resp = bcr_best_year_table.get({'name':name}, AttributesToGet=['best_year'])
@@ -638,7 +638,7 @@ def create_umpire_object(name, year):
 		# 'BCR_{0}'.format(year): 'icr',
 		'crew.number': 'crewNumber',
 		'ump.number': 'umpNumber',
-		'crew_chief': 'isCrewChief',
+		'crew.chief': 'isCrewChief',
 		'total_call': 'pitchesCalled',
 		'games': 'gamesUmped',
 		'best_weather': 'weatherPreference',
