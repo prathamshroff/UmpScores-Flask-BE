@@ -142,6 +142,9 @@ def recache_games(cache, mutex):
 		get_all_games(cache[cache['use']]['umpire_names'], q)
 		games = q.get()
 		games = [obj for obj in games if obj != {} and type(obj) != KeyError]
+		f = lambda x: {key: x[key] if type(x[key]) != KeyError else -1 for key in x}
+		games = [f(obj) for obj in games if obj != {} and type(obj) != KeyError]
+
 		cache[cache['use']]['/games'] = games
 	finally:
 		print('Cached Only Games in {0}s'.format(time.time() - time_stamp))
