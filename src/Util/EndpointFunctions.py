@@ -94,7 +94,8 @@ def get_event_lines(event_id):
 	resp = {}
 	# old token: !m5__dQ_ZN-aH-v4
 	# new token: !FSUT!-5S_7ogtMs
-	xmlData = requests.get("http://xml.donbest.com/v2/odds/5/" + event_id +"/?token=!FSUT!-5S_7ogtMs")
+	xmlData = requests.get("http://xml.donbest.com/v2/odds/5/" + event_id +"/?token=!FSUT!-5S_7ogtMs",
+		headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'})
 	root = ET.fromstring(xmlData.text)
 	try:
 		for line in root.iter("line"):
@@ -158,7 +159,8 @@ def get_team_abbreviation(team):
 
 
 def get_umpires_for_games():
-	page = requests.get("https://www.statfox.com/mlb/umpiremain.asp")
+	page = requests.get("https://www.statfox.com/mlb/umpiremain.asp",
+		headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'})
 	soup = BeautifulSoup(page.text, "lxml")
 	tables = soup.findAll("table")
 	cells = tables[2].findAll("td")
@@ -269,7 +271,8 @@ def get_all_games(ALL_UMPIRE_NAMES, q):
 	games = []
 	# storing this to pass to get_game_values so I can get the right data back
 	ump_table = get_umpires_for_games()
-	xmlData = requests.get("http://xml.donbest.com/v2/schedule/?token=!FSUT!-5S_7ogtMs")
+	xmlData = requests.get("http://xml.donbest.com/v2/schedule/?token=!FSUT!-5S_7ogtMs",
+		headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'})
 	root = ET.fromstring(xmlData.text)
 	count = 0
 	try:
