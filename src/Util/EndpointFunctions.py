@@ -73,113 +73,20 @@ def create_chart_object(name, year_range):
 		careers_season_resp = careers_season.get({'name': name, 'data_year': year},
 			AttributesToGet = ['BCR_z{0}'.format(i) for i in range(1, 15)])
 
-
+		rang = list(range(11, 15)) + list(range(1, 10))
 		resp['heatMap'].append({
-			'data': [careers_season_resp['BCR_z{0}'.format(i)] for i in range(1,15) if i != 10],
-			'season': year
-		})
-		resp['heatMapSL'].append({
-			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_SL_{0}'.format(i) for i in \
-				range(1, 15) if i != 10]], 
+			'data': [careers_season_resp['BCR_z{0}'.format(i)] for i in rang],
 			'season': year
 		})
 
-		resp['heatMapFT'].append({
-			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_FT_{0}'.format(i) for i in \
-				range(1, 15) if i != 10]], 
-			'season': year
-		})
-
-		resp['heatMapCU'].append({
-			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_CU_{0}'.format(i) for i in \
-				range(1, 15)if i != 10]], 
-			'season': year
-		})
-
-		resp['heatMapFF'].append({
-			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_FF_{0}'.format(i) for i in \
-				range(1, 15) if i != 10]], 
-			'season': year
-		})
-
-		resp['heatMapSI'].append({
-			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_SI_{0}'.format(i) for i in \
-				range(1, 15) if i != 10]], 
-			'season': year
-		})
-
-		resp['heatMapCH'].append({
-			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_CH_{0}'.format(i) for i in \
-				range(1, 15) if i != 10]], 
-			'season': year
-		})
-
-		resp['heatMapFC'].append({
-			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_FC_{0}'.format(i) for i in \
-				range(1, 15) if i != 10]], 
-			'season': year
-		})
-
-		resp['heatMapEP'].append({
-			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_EP_{0}'.format(i) for i in \
-				range(1, 15) if i != 10]], 
-			'season': year
-		})
-
-		resp['heatMapKC'].append({
-			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_KC_{0}'.format(i) for i in \
-				range(1, 15) if i != 10]], 
-			'season': year
-		})
-
-		resp['heatMapFS'].append({
-			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_FS_{0}'.format(i) for i in \
-				range(1, 15) if i != 10]], 
-			'season': year
-		})
-
-		resp['heatMapPO'].append({
-			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_PO_{0}'.format(i) for i in \
-				range(1, 15) if i != 10]], 
-			'season': year
-		})
-
-		resp['heatMapKN'].append({
-			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_KN_{0}'.format(i) for i in \
-				range(1, 15) if i != 10]], 
-			'season': year
-		})
-
-		resp['heatMapSC'].append({
-			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_SC_{0}'.format(i) for i in \
-				range(1, 15) if i != 10]], 
-			'season': year
-		})
-
-		resp['heatMapFO'].append({
-			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_FO_{0}'.format(i) for i in \
-				range(1, 15) if i != 10]], 
-			'season': year
-		})
-
-		resp['heatMapUN'].append({
-			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_UN_{0}'.format(i) for i in \
-				range(1, 15) if i != 10]], 
-			'season': year
-		})
-
-		resp['heatMapFA'].append({
-			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_FA_{0}'.format(i) for i in \
-				range(1, 15) if i != 10]], 
-			'season': year
-		})
-
-		resp['heatMapIN'].append({
-			'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_IN_{0}'.format(i) for i in \
-				range(1, 15) if i != 10]], 
-			'season': year
-		})
-
+		tokens = ['SL', 'FT', 'CU', 'FF', 'SI', 'CH', 'FC', 'EP', 'KC', 'FS', 'PO', 'KN', 'SC',
+			'FO', 'UN', 'FA', 'IN']
+		for token in tokens:
+			resp['heatMap{0}'.format(token)].append({
+				'data': [0 if Decimal(entry[elem]).compare(-1) == Decimal('0') else entry[elem] for elem in ['BCR_{0}_{1}'.format(token, i) for i in \
+					rang]],
+				'season': year
+			})
 	return resp
 
 
@@ -342,34 +249,6 @@ def get_game_values(ALL_UMPIRE_NAMES, ump_table, event):
 	except Exception as e:
 		print("EXCEPTION: ", e)
 	return resp
-'''
-<event id="970457" season="REGULAR" date="2019-09-26T16:35:00+0" name="Milwaukee Brewers vs Cincinnati Reds">
-	<event_type>team_event</event_type>
-	<event_state>PENDING</event_state>
-	<event_state_id>0</event_state_id>
-	<time_changed>false</time_changed>
-	<neutral>false</neutral>
-	<game_number>1</game_number>
-	<location name="Great American Ballpark" id="650" link="/v2/location/650"/>
-	<participant rot="901" side="AWAY">
-		<team id="1298" name="Milwaukee Brewers" link="/v2/team/1298"/>
-		<pitcherChanged>false</pitcherChanged>
-		<pitcher hand="RIGHT" id="342944" full_name="Chase Anderson">C ANDERSON</pitcher>
-	</participant>
-	<participant rot="902" side="HOME">
-		<team id="1295" name="Cincinnati Reds" link="/v2/team/1295"/>
-		<pitcherChanged>false</pitcherChanged>
-		<pitcher hand="RIGHT" id="342058" full_name="Luis Castillo">L CASTILLO</pitcher>
-	</participant>
-	<live>true</live>
-	<lines>
-		<current link="/v2/odds/5/970457"/>
-		<opening link="/v2/open/5/970457"/>
-	</lines>
-	<score link="/v2/score/970457"/>
-	<pitcher_changed>false</pitcher_changed>
-</event>
-		'''
 
 
 def verifyGameData(event_info):
@@ -401,7 +280,7 @@ def get_all_games(ALL_UMPIRE_NAMES, q):
 					if (event_type == "team_event"):
 						test = event.get("date")
 						testDate = parser.parse(test)
-						corrected = testDate - timedelta(hours=4, minutes=0)
+						corrected = testDate - timedelta(hours=7, minutes=0)
 						dateReal = corrected.strftime("%Y-%m-%d")
 						dateRealObject = datetime.strptime(dateReal, "%Y-%m-%d").date()
 							# subtract four from date object to correct for UTC time

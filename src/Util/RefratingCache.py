@@ -108,7 +108,7 @@ def recache_everything(cache, mutex, refPool, data_year_range):
 		gamesThread.join()
 		cache[cache_id]['/games'] = cache_que.get()
 		f = lambda x: {key: x[key] if type(x[key]) != KeyError else -1 for key in x}
-		cache[cache_id]['/games'] = [f(obj) for obj in cache[cache_id]['/games'] if obj != {} and type(obj) != KeyError]
+		cache[cache_id]['/games'] = [f(obj) for obj in cache[cache_id]['/games'] if obj != {} and 'umpireName' in obj and type(obj) != KeyError]
 		print('Cached /games: t = {0}s'.format(time.time() - now))
 		cache['use'] = cache_id
 	finally:
@@ -142,7 +142,7 @@ def recache_games(cache, mutex):
 		games = q.get()
 		games = [obj for obj in games if obj != {} and type(obj) != KeyError]
 		f = lambda x: {key: x[key] if type(x[key]) != KeyError else -1 for key in x}
-		games = [f(obj) for obj in games if obj != {} and type(obj) != KeyError]
+		games = [f(obj) for obj in games if obj != {} and 'umpireName' in obj and type(obj) != KeyError]
 
 		cache[cache['use']]['/games'] = games
 	finally:
