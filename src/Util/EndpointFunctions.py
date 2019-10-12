@@ -289,11 +289,11 @@ def get_all_games(ALL_UMPIRE_NAMES, q):
 							# subtract four from date object to correct for UTC time
 						dateObject = event.get("date").split("T")
 						date = datetime.strptime(dateObject[0],"%Y-%m-%d").date()
-						#today = date.today()
+						today = date.today()
 						# this is going to be the actual current time - 4 to get current, - another 6 for good measure
 						current_time = datetime.now()
 						adjusted_time = current_time - timedelta(hours=10)
-						today = adjusted_time.strftime('%Y-%m-%d')
+						#today = adjusted_time.strftime('%Y-%m-%d')
 						print("CURRENT TIME: ", today)
 						# compare date to today
 						if (today == dateRealObject):
