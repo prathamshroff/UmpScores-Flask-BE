@@ -295,7 +295,6 @@ def get_all_games(ALL_UMPIRE_NAMES, q):
 						adjusted_time = current_time - timedelta(hours=10)
 						new_today_string = adjusted_time.strftime('%Y-%m-%d')
 						new_today_date = datetime.strptime(new_today_string, '%Y-%m-%d').date()
-						print("CHECKING IF DATES ARE EQUAL: ", today == new_today_date)
 						# compare date to today
 						if (new_today_date == dateRealObject):
 							count += 1
