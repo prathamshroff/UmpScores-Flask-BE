@@ -288,3 +288,4 @@ config.json
 *.jpeg
 *.png
 *.xlsx
+env
