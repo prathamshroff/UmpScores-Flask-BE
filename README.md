@@ -5,7 +5,7 @@ I will assume you have pip and python3 set up on your local machine
 
 1. `git clone https://github.com/chris-ackerman/refrating-be`
 2. `cd refrating-be`
-3. Make sure .config.json appears after this command: `ls | grep .config.json` otherwise contact curtis or chris
+3. Make sure .config.json appears after this command: `ls -la | grep .config.json` otherwise contact curtis or chris
 4. Install virtualenv: `pip install virtualenv`
 5. `virtualenv -p python3 env`
 6. `source env/bin/activate`
