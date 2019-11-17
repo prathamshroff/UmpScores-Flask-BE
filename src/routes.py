@@ -1,7 +1,7 @@
 from StorageSolutions.flask_setup import *
 from StorageSolutions.tables import *
 from Util.EndpointFunctions import *
-from Util.RefratingCache import recache_everything, recache_games
+"""from Util.RefratingCache import recache_everything, recache_games"""
 from flask_restplus import Resource, Api, reqparse, fields
 from flask import Flask, request
 import simplejson as json
@@ -17,7 +17,7 @@ cache_lock = threading.Lock()
 cache = {'blue': {}, 'green': {}, 'use': 'blue'}
 
 refPool = Pool()
-recache_everything(cache, cache_lock, refPool, data_year_range)
+#recache_everything(cache, cache_lock, refPool, data_year_range)
 
 @api.route('/charts')
 class Charts(Resource):
@@ -265,3 +265,18 @@ class UmpireGames(Resource):
         Used for debugging purposes and to test if caching was done correctly.
         """
         return cache['use']
+
+@api.route('/awards')
+class Awards(Resource):
+    def get(self):
+        data = [{
+                "Name": "Sample Name",
+                "Information": "Sample Information"
+            },
+            {
+                "Name": "Sample Name 2",
+                "Information": "Sample Information 2"
+            }
+        ]
+        return data
+
