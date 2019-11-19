@@ -19,7 +19,7 @@ if __name__ == '__main__':
 			app.config["DEBUG"] = False
 			app.run('0.0.0.0', port=80)
 	else:
-		"""cache_sched = CacheScheduler('http://127.0.0.1:3000', secret)"""
+		cache_sched = CacheScheduler('http://127.0.0.1:3000', secret)
 		print('Starting in testing mode')
 		app.config["DEBUG"] = True
 		app.run('127.0.0.1', port=3000)
