@@ -265,3 +265,29 @@ class UmpireGames(Resource):
         Used for debugging purposes and to test if caching was done correctly.
         """
         return cache['use']
+
+@api.route('/awards')
+class Awards(Resource):
+    @api.doc(parser = awards_parser)
+    def get(self):
+        """
+        Returns award winners for a given award category and status. 
+        
+        Description
+        -----------
+
+        Categories include Best Crew, Most Improved, Rising Star, and Strongest Performance
+        Statuses include FT and CU. Best Crew does not have a status so it does not require a status parameter.
+        """
+        data = cache[cache['use']]['/awards']
+        award_category = request.args.get("category")
+        if (award_category == "Best Crew"):
+            status = "null"
+        else:
+            status = request.args.get("status")
+        return data[award_category][status]
+
+
+
+        
+

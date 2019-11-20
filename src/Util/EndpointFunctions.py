@@ -19,7 +19,6 @@ TEAM_NAMES = [name.replace('total_call_', '') for name in \
     name.startswith('total_call_')]
 TEAM_NAMES = [name.split('_')[0] for name in TEAM_NAMES if name.endswith('_')]
 
-
 def create_chart_object(name, year_range):
 	"""Creates chart object for /charts endpoint"""
 	name = name.lower()
@@ -725,4 +724,27 @@ def create_team_object(name, data_range):
 					'seasonChangeBcr': 'seasonChangeIcr'
 				})
 				data.append(team_stats)
+	return data
+
+def create_awards_object():
+	all_awards = awards_table.scan()
+	data = {}
+	for award in all_awards : 
+		award_type = award["Award"]
+		if award_type in data:
+			continue
+		else:
+			data[award_type] = {}
+			if award_type != "Best Crew":
+				data[award_type]["FT"] = {}
+				data[award_type]["CU"] = {}
+			else:
+				data[award_type]["null"] = {} #Best crew does not have a status 
+	for award in all_awards:
+		award_type = award["Award"]
+		status = award["Status"]
+		ranking = award["Ranking"]
+		name = award["Name"]
+		data[award_type][status][name] = int(ranking) 
+
 	return data

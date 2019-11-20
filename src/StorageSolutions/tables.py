@@ -40,4 +40,4 @@ profile_best_worst_park_table = Table(iam, 'umpscores-profile-best-worst-park')
 career_crucial_calls_table = Table(iam, 'umpscores-crucial-calls')
 pitcher_walk_strikeout = Table(iam, 'umpscores-pitcher-walk-strikeout')
 profile_best_worst_month_table = Table(iam, 'refrating-profile-month')
-
+awards_table = Table(iam, "umpscores-2019-awards")
