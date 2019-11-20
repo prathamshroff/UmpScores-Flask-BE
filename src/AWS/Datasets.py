@@ -154,7 +154,6 @@ class Table():
                         print('Increasing backoff to {0}ms'.format(backoff))
                 elif errcode == 'ValidationException':
                     print(e)
-                    print(item)
                     exit(1)
                 else:
                     print(e)
