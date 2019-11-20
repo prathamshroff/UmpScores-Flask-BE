@@ -64,7 +64,7 @@ def recache_everything(cache, mutex, refPool, data_year_range):
 		now = time.time()
 		print("Started to cache awards")
 		cache[cache_id]['/awards'] = create_awards_object()
-		print("Finished caching /awards in {1}s".format(time.time() - now))
+		print("Finished caching /awards in {0}s".format(time.time() - now))
 
 		now = time.time()
 		print('Starting to cache /get-pitchers')
