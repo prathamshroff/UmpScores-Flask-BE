@@ -729,6 +729,7 @@ def create_team_object(name, data_range):
 def create_awards_object():
 	all_awards = awards_table.scan()
 	data = {}
+	data["Award Categories"] = [] #Intialize list to store the different types of awards
 	for award in all_awards : 
 		award_type = award["Award"]
 		if award_type in data:
@@ -738,8 +739,11 @@ def create_awards_object():
 			if award_type != "Best Crew":
 				data[award_type]["FT"] = {}
 				data[award_type]["CU"] = {}
+				data["Award Categories"].append([award_type, "FT"])
+				data["Award Categories"].append([award_type, "CU"])
 			else:
 				data[award_type]["null"] = {} #Best crew does not have a status 
+				data["Award Categories"].append([award_type, "null"])
 	for award in all_awards:
 		award_type = award["Award"]
 		status = award["Status"]
