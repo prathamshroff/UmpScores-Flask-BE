@@ -749,6 +749,6 @@ def create_awards_object():
 		status = award["Status"]
 		ranking = award["Ranking"]
 		name = award["Name"]
-		data[award_type][status][name] = int(ranking) 
+		data[award_type][status][int(ranking)] = name
 
 	return data
