@@ -10,8 +10,8 @@ from AWS.CloudSearch import Search
 # Connect boto3 resources
 iam = configs['iam-user']
 
-team_stats_dataset = Table(iam, 'refrating-team-stats-v1', umpires_text_search)
-games_dataset = Table(iam, 'refrating-game-stats-v1', games_text_search)
+team_stats_dataset = Table(iam, 'refrating-team-stats-v1')
+games_dataset = Table(iam, 'refrating-game-stats-v1')
 careers_range_change = Table(iam, 'refrating_career_range_change')
 ump_game_lookup = Table(iam, 'refrating-ump-game-lookup')
 pitcher_stats = Table(iam, 'refrating-pitcher-stats')
