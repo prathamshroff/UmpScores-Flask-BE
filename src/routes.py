@@ -141,29 +141,6 @@ class Career(Resource):
         resp = Response(data, status=200, mimetype='application/json')
         return resp
 
-@api.route('/search')
-class QuerySearch(Resource):
-    @api.doc(parser=search_parser)
-    @api.response(200, 'OK', search_api_object)
-    def get(self):
-        """
-        Search query against our database and get relevant data
-        
-        Description
-        ----------
-        Takes in some arbitrary query string such as 'Jordan Baker'
-        and returns relevant umpire name results with their respective profile picture.
-        """
-        query = request.args.get('q')
-        resp = umpires_text_search.get(query)
-        for obj in resp:
-            obj.update({'ump_profile_pic': 'https://{0}.s3.amazonaws.com/umpires/{1}+{2}'.format(
-                configs['media_bucket'],
-                *obj['name'][0].split()
-            )})
-        data = json.dumps(resp, use_decimal=True)
-        resp = Response(data, status=200, mimetype='application/json')
-        return resp
 
 @api.route('/games')
 class GetTodaysGames(Resource):
@@ -266,6 +243,7 @@ class UmpireGames(Resource):
         """
         return cache['use']
 
+
 @api.route('/awards')
 class Awards(Resource):
     @api.doc(parser = awards_parser)
@@ -287,6 +265,7 @@ class Awards(Resource):
             status = request.args.get("status")
         return data[award_category][status]
 
+
 @api.route("/awardCategories")
 class AwardCategories(Resource):
     def get(self):
@@ -294,9 +273,4 @@ class AwardCategories(Resource):
         Return all the different types of awards.
         """
         data = cache[cache['use']]['/awards']["Award Categories"]
-        return data
-
-
-
-        
-
+        return data  
