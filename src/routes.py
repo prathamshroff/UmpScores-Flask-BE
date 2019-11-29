@@ -287,6 +287,15 @@ class Awards(Resource):
             status = request.args.get("status")
         return data[award_category][status]
 
+@api.route("/awardCategories")
+class AwardCategories(Resource):
+    def get(self):
+        """
+        Return all the different types of awards.
+        """
+        data = cache[cache['use']]['/awards']["Award Categories"]
+        return data
+
 
 
         
