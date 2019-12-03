@@ -5,7 +5,6 @@ with open('.config.json') as f:
     configs = json.load(f)
 sys.path.append('../AWS')
 from AWS.Datasets import Table
-from AWS.CloudSearch import Search
 
 # Connect boto3 resources
 iam = configs['iam-user']

@@ -24,12 +24,12 @@ class CacheScheduler():
 	secret : str
 		stores given secret
 	"""
-	def __init__(self, url: str, secret: str):
+	def __init__(self, url: str, secret: str, freq=15):
 		self.url = url
 		self.secret = secret
 		toMins = lambda ms: ms * 60
 		Process(target=self.call_endpoint, args=('/updateGamesCache', {'secret': self.secret}, 
-			toMins(15))).start()
+			toMins(freq))).start()
 
 	def call_endpoint(self, endpoint: str, params: Dict[str, str], freq: int):
 		"""
