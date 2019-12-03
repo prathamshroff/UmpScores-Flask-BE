@@ -753,5 +753,5 @@ def create_awards_object():
 		bcr = float(careers_range.get({'name':name_lower}, AttributesToGet=['BCR_2019'])['BCR_2019'])
 		career_bcr = float(careers.get({'name':name_lower}, AttributesToGet=['career_bcr'])['career_bcr'])
 		total_games = int(careers.get({'name':name_lower}, AttributesToGet=['total_games'])['total_games'])
-		data[award_type][status][int(ranking)] = {"Name" : name, "BCR": bcr, "Career_BCR": career_bcr, "Total_Games": total_games}
+		data[award_type][status][int(ranking)] = {"Name" : name, "BCR": bcr, "Career BCR": career_bcr, "HP Appearances": total_games}
 	return data
