@@ -736,13 +736,13 @@ def create_awards_object():
 			continue
 		else:
 			data[award_type] = {}
-			if award_type != "Best Crew":
+			if award_type != "Best Crew Chief" and award_type != "Best Crew":
 				data[award_type]["FT"] = {}
 				data[award_type]["CU"] = {}
 				data["Award Categories"].append([award_type, "FT"])
 				data["Award Categories"].append([award_type, "CU"])
 			else:
-				data[award_type]["null"] = {} #Best crew does not have a status 
+				data[award_type]["null"] = {} #Best Crew Chief and Best Crew don't have statuses
 				data["Award Categories"].append([award_type, "null"])
 	for award in all_awards:
 		award_type = award["Award"]
@@ -750,8 +750,9 @@ def create_awards_object():
 		ranking = award["Ranking"]
 		name = award["Name"]
 		name_lower = name.lower()
-		bcr = float(careers_range.get({'name':name_lower}, AttributesToGet=['BCR_2019'])['BCR_2019'])
-		career_bcr = float(careers.get({'name':name_lower}, AttributesToGet=['career_bcr'])['career_bcr'])
-		total_games = int(careers.get({'name':name_lower}, AttributesToGet=['total_games'])['total_games'])
+		if "Crew" not in name:
+			bcr = float(careers_range.get({'name':name_lower}, AttributesToGet=['BCR_2019'])['BCR_2019'])
+			career_bcr = float(careers.get({'name':name_lower}, AttributesToGet=['career_bcr'])['career_bcr'])
+			total_games = int(careers.get({'name':name_lower}, AttributesToGet=['total_games'])['total_games'])
 		data[award_type][status][int(ranking)] = {"Name" : name, "BCR": bcr, "Career BCR": career_bcr, "HP Appearances": total_games}
 	return data

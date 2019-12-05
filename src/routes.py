@@ -259,7 +259,7 @@ class Awards(Resource):
         """
         data = cache[cache['use']]['/awards']
         award_category = request.args.get("category")
-        if (award_category == "Best Crew"):
+        if (award_category == "Best Crew Chief" or award_category == "Best Crew"):
             status = "null"
         else:
             status = request.args.get("status")
