@@ -4,7 +4,6 @@ import math
 import simplejson as json
 from DataSections.Tables import *
 sys.path.append('../src')
-from AWS.CloudSearch import Search
 from AWS.Datasets import Table
 import base64
 import boto3
@@ -468,8 +467,6 @@ def refresh_all_aws_resources():
 	umpire_id_lookup_reset()
 	media_refresh()
 	dataUpload(tasks)
-	umpires_cloudsearch.clear()
-	umpires_cloudsearch.flush()
 	print('Completed all tasks in {0}s'.format(time.time() - stamp))
 
 if __name__ == '__main__':

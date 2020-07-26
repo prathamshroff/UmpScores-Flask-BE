@@ -73,3 +73,13 @@ pitcher_parser.add_argument('u', type=str, help=
 pitcher_parser.add_argument('p', type=str, help=
     '''pitcher fullname
     ?p=andrew miller''')
+
+awards_parser = api.parser()
+awards_parser.add_argument("category", type=str, help=
+    '''Award category
+    ?category=Most Improved''', required=True
+)
+awards_parser.add_argument("status", type=str,help=
+    '''Umpire status (FT/CU)
+    ?status=FT''', required=False
+)

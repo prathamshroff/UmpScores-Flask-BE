@@ -5,17 +5,12 @@ with open('.config.json') as f:
     configs = json.load(f)
 sys.path.append('../AWS')
 from AWS.Datasets import Table
-from AWS.CloudSearch import Search
 
 # Connect boto3 resources
 iam = configs['iam-user']
-umpires_text_search = Search(iam, configs['cloudsearch']['umpires']['url'], 
-    configs['cloudsearch']['umpires']['name'])
-games_text_search = Search(iam, configs['cloudsearch']['games']['url'],
-        configs['cloudsearch']['games']['name'])
 
-team_stats_dataset = Table(iam, 'refrating-team-stats-v1', umpires_text_search)
-games_dataset = Table(iam, 'refrating-game-stats-v1', games_text_search)
+team_stats_dataset = Table(iam, 'refrating-team-stats-v1')
+games_dataset = Table(iam, 'refrating-game-stats-v1')
 careers_range_change = Table(iam, 'refrating_career_range_change')
 ump_game_lookup = Table(iam, 'refrating-ump-game-lookup')
 pitcher_stats = Table(iam, 'refrating-pitcher-stats')
@@ -40,4 +35,4 @@ profile_best_worst_park_table = Table(iam, 'umpscores-profile-best-worst-park')
 career_crucial_calls_table = Table(iam, 'umpscores-crucial-calls')
 pitcher_walk_strikeout = Table(iam, 'umpscores-pitcher-walk-strikeout')
 profile_best_worst_month_table = Table(iam, 'refrating-profile-month')
-
+awards_table = Table(iam, "umpscores-2019-awards")

@@ -3,7 +3,6 @@ import os
 import boto3
 import pandas as pd
 sys.path.append('../src')
-from AWS.CloudSearch import Search
 from AWS.Datasets import Table
 if os.path.exists('../.config.json'):
 	configs = eval(open('../.config.json').read())
@@ -12,9 +11,7 @@ else:
 	print('Oops, could not find refrating-be/.config.json!')
 	exit(1)
 # Creating AWS objects
-umpires_cloudsearch = Search(iam, configs['cloudsearch']['umpires']['url'], 
-	configs['cloudsearch']['umpires']['name'])
-team_stats_table = Table(iam, 'refrating-team-stats-v1', umpires_cloudsearch)
+team_stats_table = Table(iam, 'refrating-team-stats-v1')
 game_stats_table = Table(iam, 'refrating-game-stats-v1')
 games_date_lookup = Table(iam, 'refrating-games-lookup')
 umpire_id_lookup = Table(iam, 'refrating-umps-lookup')

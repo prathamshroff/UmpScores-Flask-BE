@@ -2,7 +2,7 @@ from StorageSolutions.tables import *
 import simplejson as json
 from Util.EndpointFunctions import create_rankings_object, create_umpire_object, get_all_games, \
 	create_career_object, create_umpire_game_object, create_chart_object, create_team_object, \
-	get_pitcher_names, create_pitcher_object
+	get_pitcher_names, create_pitcher_object, create_awards_object
 from flask import Flask, jsonify, request, Response
 from multiprocessing.pool import ThreadPool as Pool
 from threading import Thread
@@ -62,6 +62,11 @@ def recache_everything(cache, mutex, refPool, data_year_range):
 		# NEEDS PITCHER STUFF
 
 		now = time.time()
+		print("Started to cache awards")
+		cache[cache_id]['/awards'] = create_awards_object()
+		print("Finished caching /awards in {0}s".format(time.time() - now))
+
+		now = time.time()
 		print('Starting to cache /get-pitchers')
 		cache[cache_id]['/get-pitchers'] = refPool.map(get_pitcher_names, cache[cache_id]['umpire_names'])
 		cache[cache_id]['/get-pitchers'] = {arr['name']: arr['data'] for arr in cache[cache_id]['/get-pitchers'] if len(arr) != 0}
@@ -103,13 +108,14 @@ def recache_everything(cache, mutex, refPool, data_year_range):
 		cache[cache_id]['/rankings'] = json.dumps(cache[cache_id]['/rankings'], use_decimal=True)
 		cache[cache_id]['/rankings'] = Response(cache[cache_id]['/rankings'], status=200, mimetype='application/json')
 		print('Cached /rankings: t = {0}s'.format(time.time() - now))
-
+		
 		now = time.time()
 		gamesThread.join()
 		cache[cache_id]['/games'] = cache_que.get()
 		f = lambda x: {key: x[key] if type(x[key]) != KeyError else -1 for key in x}
 		cache[cache_id]['/games'] = [f(obj) for obj in cache[cache_id]['/games'] if obj != {} and 'umpireName' in obj and type(obj) != KeyError]
 		print('Cached /games: t = {0}s'.format(time.time() - now))
+
 		cache['use'] = cache_id
 	finally:
 		print('Finished caching in {0}s'.format(time.time() - time_stamp))

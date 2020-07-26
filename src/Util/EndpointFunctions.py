@@ -19,7 +19,6 @@ TEAM_NAMES = [name.replace('total_call_', '') for name in \
     name.startswith('total_call_')]
 TEAM_NAMES = [name.split('_')[0] for name in TEAM_NAMES if name.endswith('_')]
 
-
 def create_chart_object(name, year_range):
 	"""Creates chart object for /charts endpoint"""
 	name = name.lower()
@@ -725,4 +724,35 @@ def create_team_object(name, data_range):
 					'seasonChangeBcr': 'seasonChangeIcr'
 				})
 				data.append(team_stats)
+	return data
+
+def create_awards_object():
+	all_awards = awards_table.scan()
+	data = {}
+	data["Award Categories"] = [] #Intialize list to store the different types of awards
+	for award in all_awards : 
+		award_type = award["Award"]
+		if award_type in data:
+			continue
+		else:
+			data[award_type] = {}
+			if award_type != "Best Crew Chief" and award_type != "Best Crew":
+				data[award_type]["FT"] = {}
+				data[award_type]["CU"] = {}
+				data["Award Categories"].append([award_type, "FT"])
+				data["Award Categories"].append([award_type, "CU"])
+			else:
+				data[award_type]["null"] = {} #Best Crew Chief and Best Crew don't have statuses
+				data["Award Categories"].append([award_type, "null"])
+	for award in all_awards:
+		award_type = award["Award"]
+		status = award["Status"]
+		ranking = award["Ranking"]
+		name = award["Name"]
+		name_lower = name.lower()
+		if "Crew" not in name:
+			bcr = float(careers_range.get({'name':name_lower}, AttributesToGet=['BCR_2019'])['BCR_2019'])
+			career_bcr = float(careers.get({'name':name_lower}, AttributesToGet=['career_bcr'])['career_bcr'])
+			total_games = int(careers.get({'name':name_lower}, AttributesToGet=['total_games'])['total_games'])
+		data[award_type][status][int(ranking)] = {"Name" : name, "BCR": bcr, "Career BCR": career_bcr, "HP Appearances": total_games}
 	return data
