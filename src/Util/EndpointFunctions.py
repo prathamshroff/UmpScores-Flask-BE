@@ -226,31 +226,28 @@ def get_game_values(ALL_UMPIRE_NAMES, ump_table, event):
 		dateCorrectedString = dateCorrected.strftime("%Y-%m-%dT%H:%M:%S")
 		resp["date"] = dateCorrectedString
 		found = 0
-
-		# Hot fixed
-		resp["umpireName"] = 'Alan Porter'.lower()
 		
-		# for key in ump_table.keys():
-		# 	print("GETTING TO  THE KEY IN UMP_TABLE.keys() point")
-		# 	if (resp["awayTeam"] in key and resp["homeTeam"] in key):
-		# 		# grab the umpire value in ump_table
-		# 		resp["umpireName"] = format_umpire_name(ALL_UMPIRE_NAMES, ump_table[key][1])
-		# 		# print("UMP NAME: ", resp["umpireName"])
-		# 		found = 1
-		# swaps = {"CWS":"CHW", "CHW":"CWS", "TB":"TAM", "TAM":"TB", "FLA":"MIA", "MIA":"FLA"}
-		# # means there might be mismatched team abbreviations
-		# if (found == 0):
-		# 	if (resp["awayTeam"] in swaps):
-		# 		for key in ump_table.keys():
-		# 			if (swaps[resp["awayTeam"]] in key and resp["homeTeam"] in key):
-		# 				# grab the umpire value in ump_table
-		# 				resp["umpireName"] = format_umpire_name(ALL_UMPIRE_NAMES, ump_table[key][1])
-		# 	if(resp["homeTeam"] in swaps):
-		# 		# MODIFY HOME TEAM
-		# 		for key in ump_table.keys():
-		# 			if (resp["awayTeam"] in key and swaps[resp["homeTeam"]] in key):
-		# 				# grab the umpire value in ump_table
-		# 				resp["umpireName"] = format_umpire_name(ALL_UMPIRE_NAMES, ump_table[key][1])
+		for key in ump_table.keys():
+			print("GETTING TO  THE KEY IN UMP_TABLE.keys() point")
+			if (resp["awayTeam"] in key and resp["homeTeam"] in key):
+				# grab the umpire value in ump_table
+				resp["umpireName"] = format_umpire_name(ALL_UMPIRE_NAMES, ump_table[key][1])
+				# print("UMP NAME: ", resp["umpireName"])
+				found = 1
+			swaps = {"CWS":"CHW", "CHW":"CWS", "TB":"TAM", "TAM":"TB", "FLA":"MIA", "MIA":"FLA"}
+			# means there might be mismatched team abbreviations
+			if (found == 0):
+				if (resp["awayTeam"] in swaps):
+					for key in ump_table.keys():
+						if (swaps[resp["awayTeam"]] in key and resp["homeTeam"] in key):
+							# grab the umpire value in ump_table
+							resp["umpireName"] = format_umpire_name(ALL_UMPIRE_NAMES, ump_table[key][1])
+				if(resp["homeTeam"] in swaps):
+					# MODIFY HOME TEAM
+					for key in ump_table.keys():
+						if (resp["awayTeam"] in key and swaps[resp["homeTeam"]] in key):
+							# grab the umpire value in ump_table
+							resp["umpireName"] = format_umpire_name(ALL_UMPIRE_NAMES, ump_table[key][1])
 	except Exception as e:
 		print("EXCEPTION: ", e)
 	return resp
