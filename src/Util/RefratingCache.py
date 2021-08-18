@@ -38,6 +38,7 @@ def recache_everything(cache, mutex, refPool, data_year_range):
 		time_stamp = time.time()
 		cache_que = queue.Queue()
 		cache_id = 'green' if cache['use'] == 'blue' else 'blue'
+		
 		cache[cache_id]['/umpireList'] = umpire_id_lookup.scan()
 
 		for umpire in cache[cache_id]['/umpireList']:
@@ -56,11 +57,12 @@ def recache_everything(cache, mutex, refPool, data_year_range):
 			umpire['lastName'] = parts[-1]
 
 		CACHE_ARGS = [(name, data_year_range) for name in cache[cache_id]['umpire_names']]
+		
 		gamesThread = Thread(target = get_all_games, args=(cache[cache_id]['umpire_names'], cache_que))
 		gamesThread.start()
 
 		# NEEDS PITCHER STUFF
-
+		
 		now = time.time()
 		print("Started to cache awards")
 		cache[cache_id]['/awards'] = create_awards_object()
@@ -83,25 +85,25 @@ def recache_everything(cache, mutex, refPool, data_year_range):
 		cache[cache_id]['/teams'] = refPool.starmap(create_team_object, CACHE_ARGS)
 		cache[cache_id]['/teams'] = {arr[0]['name']: arr for arr in cache[cache_id]['/teams'] if len(arr) != 0}
 		print('Cached /teams: t = {0}s'.format(time.time() - now))
-
+		
 		now = time.time()
 		print('Starting to cache /career')
 		cache[cache_id]['/career'] = refPool.starmap(create_career_object, CACHE_ARGS)
 		cache[cache_id]['/career'] = {arr[0]['name']: arr for arr in cache[cache_id]['/career'] if len(arr) != 0}
 		print('Cached /career: t = {0}s'.format(time.time() - now))
-
+		
 		now = time.time()
 		print('Starting to cache /umpire')
 		cache[cache_id]['/umpire'] = refPool.starmap(create_umpire_object, [(name, data_year_range[-1]) for name in cache[cache_id]['umpire_names']])
 		cache[cache_id]['/umpire'] = {obj['name']: obj for obj in cache[cache_id]['/umpire'] if 'name' in obj}
 		print('Cached /umpire: t = {0}s'.format(time.time() - now))
-
+    
 		now = time.time()
 		print('Starting to cache /umpireGames')
 		cache[cache_id]['/umpireGames'] = refPool.map(create_umpire_game_object, cache[cache_id]['umpire_names'])
 		cache[cache_id]['/umpireGames'] = {arr[0]['name']: arr for arr in cache[cache_id]['/umpireGames'] if len(arr) != 0}
 		print('Cached /umpireGames: t = {0}s'.format(time.time() - now))
-
+		
 		now = time.time()
 		print('Starting to cache /rankings')
 		cache[cache_id]['/rankings'] = refPool.starmap(create_rankings_object, CACHE_ARGS)

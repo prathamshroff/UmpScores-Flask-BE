@@ -44,7 +44,10 @@ def single_file_upload(table, filepath, primary_key, output_filepath=None,
 	if 'Unnamed: 0' in df.columns:
 		df.drop(columns=['Unnamed: 0'], inplace=True)
 	if 'name' in df.columns:
-		df['name'] = df['name'].apply(lambda row: row.lower())
+		try:
+			df['name'] = df['name'].apply(lambda row: row.lower())
+		except Exception as e:
+			print(e)
 	
 	df.to_csv(output_filepath)
 	if clear:

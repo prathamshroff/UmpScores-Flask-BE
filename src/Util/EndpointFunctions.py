@@ -73,10 +73,13 @@ def create_chart_object(name, year_range):
 			AttributesToGet = ['BCR_z{0}'.format(i) for i in range(1, 15)])
 
 		rang = list(range(11, 15)) + list(range(1, 10))
-		resp['heatMap'].append({
-			'data': [careers_season_resp['BCR_z{0}'.format(i)] for i in rang],
-			'season': year
-		})
+		try:
+			resp['heatMap'].append({
+				'data': [careers_season_resp['BCR_z{0}'.format(i)] for i in rang],
+				'season': year
+			})
+		except Exception as e:
+			print("EXCEPTION: ", e)
 
 		tokens = ['SL', 'FT', 'CU', 'FF', 'SI', 'CH', 'FC', 'EP', 'KC', 'FS', 'PO', 'KN', 'SC',
 			'FO', 'UN', 'FA', 'IN']
@@ -93,7 +96,7 @@ def get_event_lines(event_id):
 	resp = {}
 	# old token: !m5__dQ_ZN-aH-v4
 	# new token: !FSUT!-5S_7ogtMs
-	xmlData = requests.get("http://xml.donbest.com/v2/odds/5/" + event_id +"/?token=t3Z!!___Nnm4!XP-",
+	xmlData = requests.get("http://xml.donbest.com/v2/odds/5/" + event_id +"/?token=Q6T7J0_!QcUs!_Bx",
 		headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'})
 	root = ET.fromstring(xmlData.text)
 	try:
@@ -228,7 +231,7 @@ def get_game_values(ALL_UMPIRE_NAMES, ump_table, event):
 		found = 0
 		
 		for key in ump_table.keys():
-			print("GETTING TO  THE KEY IN UMP_TABLE.keys() point")
+			#print("GETTING TO  THE KEY IN UMP_TABLE.keys() point")
 			if (resp["awayTeam"] in key and resp["homeTeam"] in key):
 				# grab the umpire value in ump_table
 				resp["umpireName"] = format_umpire_name(ALL_UMPIRE_NAMES, ump_table[key][1])
@@ -271,7 +274,7 @@ def get_all_games(ALL_UMPIRE_NAMES, q):
 	games = []
 	# storing this to pass to get_game_values so I can get the right data back
 	ump_table = get_umpires_for_games()
-	xmlData = requests.get("http://xml.donbest.com/v2/schedule/?token=t3Z!!___Nnm4!XP-",
+	xmlData = requests.get("http://xml.donbest.com/v2/schedule/?token=Q6T7J0_!QcUs!_Bx",
 		headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'})
 	root = ET.fromstring(xmlData.text)
 	count = 0
@@ -298,7 +301,7 @@ def get_all_games(ALL_UMPIRE_NAMES, q):
 						# compare date to today
 						if (new_today_date == dateRealObject):
 							count += 1
-							print("EVENT: ", event.attrib)
+							#print("EVENT: ", event.attrib)
 							# 2018-11-15T12:54:55.604Z
 							# pass event object for further parsing
 							event_info = get_game_values(ALL_UMPIRE_NAMES, ump_table, event)
