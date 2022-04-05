@@ -6,7 +6,7 @@ from Schedulers.Scheduler import CacheScheduler
 import simplejson as json
 import sys
 
-with open('.config.json') as f:
+with open('config.json') as f:
 	configs = json.load(f)
 	secret = configs['privilege_secret']
 
