@@ -112,6 +112,7 @@ def recache_everything(cache, mutex, refPool, data_year_range):
 		print('Cached /rankings: t = {0}s'.format(time.time() - now))
 		
 		now = time.time()
+		print('Starting to cache /games')
 		gamesThread.join()
 		cache[cache_id]['/games'] = cache_que.get()
 		f = lambda x: {key: x[key] if type(x[key]) != KeyError else -1 for key in x}

@@ -12,6 +12,8 @@ import simplejson as json
 from flask import Flask, jsonify, request, Response
 import time
 from decimal import *
+import statsapi
+from datetime import datetime
 # importing things from cache
 
 TEAM_NAMES = [name.replace('total_call_', '') for name in \
@@ -271,6 +273,7 @@ def verifyGameData(event_info):
 
 def get_all_games(ALL_UMPIRE_NAMES, q):
 	"""Creates all game objects for /games endpoint"""
+	"""
 	games = []
 	# storing this to pass to get_game_values so I can get the right data back
 	ump_table = get_umpires_for_games()
@@ -309,6 +312,43 @@ def get_all_games(ALL_UMPIRE_NAMES, q):
 								games.append(event_info)
 	except Exception as e:
 		print("EXCEPTION: ", e)
+	"""
+	today = datetime.today().strftime('%m/%d/%Y') #Gather information for current day
+
+	events = statsapi.schedule(start_date=today)
+	games = []
+
+	for x in events:
+		resp = {}
+		resp["date"] = x['game_datetime'][:-1]
+
+		currgame = x['game_id']
+		box = statsapi.boxscore_data(currgame) #Box score provides all information we will need
+
+		awayteamabv = box['teamInfo']['away']['abbreviation'] #Path to data was found through JSON inspection after API call
+		resp["awayTeam"] = awayteamabv
+
+		hometeamabv = box['teamInfo']['home']['abbreviation']
+		resp["homeTeam"] = hometeamabv
+
+		for key in box['gameBoxInfo']:
+			if key['label'] == 'Venue': #Checks for different formatting to ensure proper variable separation
+				stadium = key['value']
+				resp["location"] = stadium[:-1]
+			if key['label'] == 'Umpires':
+				umpires = key['value']
+				if umpires == '':
+					resp["umpireName"] = "NA" #Error-checking
+				else:
+					homeplateump = umpires.split('. ', 1)
+					homeplatename = homeplateump[0].split(': ')
+					commacheck = ","  #Format string to input into frontend
+					if commacheck in homeplatename[0]:
+						resp["umpireName"] = "NA"
+					else:
+						final = homeplatename[1]
+						resp["umpireName"] = final.lower()
+		games.append(resp)
 	q.put(games)
 
 

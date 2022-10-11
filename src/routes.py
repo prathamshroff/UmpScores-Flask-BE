@@ -11,7 +11,7 @@ from flask import Flask, jsonify, request, Response
 from multiprocessing.pool import ThreadPool as Pool
 import time
 import threading
-data_year_range = range(2010, 2020)
+data_year_range = range(2010, 2022)
 
 cache_lock = threading.Lock()
 cache = {'blue': {}, 'green': {}, 'use': 'blue'}
