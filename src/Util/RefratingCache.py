@@ -32,7 +32,7 @@ def recache_everything(cache, mutex, refPool, data_year_range):
 	refPool : multiprocessing.pool.ThreadPool
 		multiprocessing threaded pooling object to parallelize execution of updating the cache
 	data_year_range : list representing the year range for various information.
-		e.g. range(2010, 2019)    
+		e.g. range(2010,2019)    
 	"""
 	with mutex:
 		try:
