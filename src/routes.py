@@ -30,10 +30,13 @@ class Charts(Resource):
     """
     @api.doc(parser = umpire_parser)
     def get(self):
-        name = request.args.get('name')
-        data = json.dumps(cache[cache['use']]['/charts'][name.lower()], use_decimal=True)
-        resp = Response(data, status=200, mimetype='application/json')
-        return resp
+        try: 
+            name = request.args.get('name')
+            data = json.dumps(cache[cache['use']]['/charts'][name.lower()], use_decimal=True)
+            resp = Response(data, status=200, mimetype='application/json')
+            return resp
+        except Exception as e:
+            return {'error': str(e)}, 500
 
 @api.route('/pitcher')
 class Pitcher(Resource):
@@ -48,12 +51,15 @@ class Pitcher(Resource):
     """
     @api.doc(parser = pitcher_parser)
     def get(self):
-        umpire_name = request.args.get('u')
-        pitcher_name = request.args.get('p')
-        data = create_pitcher_object(umpire_name, pitcher_name)
-        data = json.dumps(data, use_decimal = True)
-        resp = Response(data, status=200, mimetype='application/json')
-        return resp
+        try: 
+            umpire_name = request.args.get('u')
+            pitcher_name = request.args.get('p')
+            data = create_pitcher_object(umpire_name, pitcher_name)
+            data = json.dumps(data, use_decimal = True)
+            resp = Response(data, status=200, mimetype='application/json')
+            return resp
+        except Exception as e:
+            return {'error': str(e)}, 500
 
 @api.route('/get-pitchers')
 class GetPitchers(Resource):
@@ -67,10 +73,13 @@ class GetPitchers(Resource):
     """
     @api.doc(parser = umpire_parser)
     def get(self):
-        name = request.args.get('name')
-        data = json.dumps(cache[cache['use']]['/get-pitchers'][name.lower()], use_decimal=True)
-        resp = Response(data, status=200, mimetype='application/json')
-        return resp
+        try: 
+            name = request.args.get('name')
+            data = json.dumps(cache[cache['use']]['/get-pitchers'][name.lower()], use_decimal=True)
+            resp = Response(data, status=200, mimetype='application/json')
+            return resp
+        except Exception as e:
+            return {'error': str(e)}, 500
         
 
 @api.route('/teams')
@@ -85,10 +94,13 @@ class Teams(Resource):
         ----------
         Takes in some full umpire name and generates an array of team objects
         """
-        name = request.args.get('name')
-        data = json.dumps(cache[cache['use']]['/teams'][name.lower()], use_decimal=True)
-        resp = Response(data, status=200, mimetype='application/json')
-        return resp
+        try: 
+            name = request.args.get('name')
+            data = json.dumps(cache[cache['use']]['/teams'][name.lower()], use_decimal=True)
+            resp = Response(data, status=200, mimetype='application/json')
+            return resp
+        except Exception as e:
+            return {'error': str(e)}, 500
 
 @api.route('/umpire')
 class Umpire(Resource):
@@ -104,11 +116,14 @@ class Umpire(Resource):
         keyed by years where the values will be of the format of the below umpire
         model
         """
-        name = request.args.get('name')
-        data = cache[cache['use']]['/umpire'][name.lower()]
-        data = json.dumps(data, use_decimal=True)
-        resp = Response(data, status=200, mimetype='application/json')
-        return resp
+        try: 
+            name = request.args.get('name')
+            data = cache[cache['use']]['/umpire'][name.lower()]
+            data = json.dumps(data, use_decimal=True)
+            resp = Response(data, status=200, mimetype='application/json')
+            return resp
+        except Exception as e:
+            return {'error': str(e)}, 500
 
 
 @api.route('/rankings')
@@ -118,7 +133,10 @@ class Rankings(Resource):
         """
         Returns a list of all umpire objects from every year in the rankings format
         """ 
-        return cache[cache['use']]['/rankings']
+        try: 
+            return cache[cache['use']]['/rankings']
+        except Exception as e:
+            return {'error': str(e)}, 500
 
 
 
@@ -135,11 +153,14 @@ class Career(Resource):
         Takes in some full umpire name and generates a career object. Response will be
         an array of career objects
         """
-        name = request.args.get('name')
-        data = cache[cache['use']]['/career'][name.lower()]
-        data = json.dumps(data, use_decimal=True)
-        resp = Response(data, status=200, mimetype='application/json')
-        return resp
+        try:
+            name = request.args.get('name')
+            data = cache[cache['use']]['/career'][name.lower()]
+            data = json.dumps(data, use_decimal=True)
+            resp = Response(data, status=200, mimetype='application/json')
+            return resp
+        except Exception as e:
+            return {'error': str(e)}, 500
 
 
 @api.route('/games')
@@ -152,9 +173,12 @@ class GetTodaysGames(Resource):
         ----------
         Will return a cached object representing the games for this day
         """
-        games = json.dumps(cache[cache['use']]['/games'], use_decimal=True)
-        resp = Response(games, status=200, mimetype='application/json')
-        return resp
+        try:
+            games = json.dumps(cache[cache['use']]['/games'], use_decimal=True)
+            resp = Response(games, status=200, mimetype='application/json')
+            return resp
+        except Exception as e:
+            return {'error': str(e)}, 500
 
 @api.route('/recache')
 class Recache(Resource):
@@ -167,13 +191,16 @@ class Recache(Resource):
         ----------
         Takes in a secret. If the secret is valid, caching will commence.
         """
-        password = request.args.get('secret')
-        if password == configs['privilege_secret']:
-            recache_everything(cache, cache_lock, refPool, data_year_range)
-            return Response([], status=200)
-            
-        else:
-            return Response([], status=400)
+        try: 
+            password = request.args.get('secret')
+            if password == configs['privilege_secret']:
+                recache_everything(cache, cache_lock, refPool, data_year_range)
+                return Response([], status=200)
+                
+            else:
+                return Response([], status=400)
+        except Exception as e:
+            return {'error': str(e)}, 500
 
 @api.route('/updateGamesCache')
 class UpdateGamesCache(Resource):
@@ -186,12 +213,15 @@ class UpdateGamesCache(Resource):
         ----------
         Takes in a secret. If the secret is valid, caching will commence.
         """
-        password = request.args.get('secret')
-        if password == configs['privilege_secret']:
-            recache_games(cache, cache_lock)
-            return Response([], status=200)
-        else: 
-            return Response([], status=400)
+        try: 
+            password = request.args.get('secret')
+            if password == configs['privilege_secret']:
+                recache_games(cache, cache_lock)
+                return Response([], status=200)
+            else: 
+                return Response([], status=400)
+        except Exception as e:
+            return {'error': str(e)}, 500
 
 @api.route('/umpireList')
 class GetAllUmps(Resource):
@@ -204,9 +234,12 @@ class GetAllUmps(Resource):
         Will return a list of all umpire names and id's. Can be used as a quick hash map
         to convert id's into names and vice versa, or to simply have a list of all umpire names
         """
-        data = json.dumps(cache[cache['use']]['/umpireList'], use_decimal=True)
-        resp = Response(data, status=200, mimetype='application/json')
-        return resp
+        try:
+            data = json.dumps(cache[cache['use']]['/umpireList'], use_decimal=True)
+            resp = Response(data, status=200, mimetype='application/json')
+            return resp
+        except Exception as e:
+            return {'error': str(e)}, 500
 
 
 @api.route('/umpireGames')
@@ -222,11 +255,14 @@ class UmpireGames(Resource):
         Will return a game object for some umpire given the game id. See below for
         return format
         """
-        name = request.args.get('name')
-        data = cache[cache['use']]['/umpireGames'][name.lower()]
-        data = json.dumps(data, use_decimal=True)
-        resp = Response(data, status=200, mimetype='application/json')
-        return resp
+        try: 
+            name = request.args.get('name')
+            data = cache[cache['use']]['/umpireGames'][name.lower()]
+            data = json.dumps(data, use_decimal=True)
+            resp = Response(data, status=200, mimetype='application/json')
+            return resp
+        except Exception as e:
+            return {'error': str(e)}, 500
 
 
 @api.route('/whichCache')
@@ -241,7 +277,10 @@ class UmpireGames(Resource):
         is currently in use, output of this endpoint will either be blue or green.
         Used for debugging purposes and to test if caching was done correctly.
         """
-        return cache['use']
+        try: 
+            return cache['use']
+        except Exception as e:
+            return {'error': str(e)}, 500
 
 
 @api.route('/awards')
@@ -257,13 +296,16 @@ class Awards(Resource):
         Categories include Best Crew, Most Improved, Rising Star, and Strongest Performance
         Statuses include FT and CU. Best Crew does not have a status so it does not require a status parameter.
         """
-        data = cache[cache['use']]['/awards']
-        award_category = request.args.get("category")
-        if (award_category == "Best Crew Chief" or award_category == "Best Crew"):
-            status = "null"
-        else:
-            status = request.args.get("status")
-        return data[award_category][status]
+        try:
+            data = cache[cache['use']]['/awards']
+            award_category = request.args.get("category")
+            if (award_category == "Best Crew Chief" or award_category == "Best Crew"):
+                status = "null"
+            else:
+                status = request.args.get("status")
+            return data[award_category][status]
+        except Exception as e:
+            return {'error': str(e)}, 500
 
 
 @api.route("/awardCategories")
@@ -272,5 +314,8 @@ class AwardCategories(Resource):
         """
         Return all the different types of awards.
         """
-        data = cache[cache['use']]['/awards']["Award Categories"]
-        return data  
+        try: 
+            data = cache[cache['use']]['/awards']["Award Categories"]
+            return data 
+        except Exception as e:
+            return {'error': str(e)}, 500     
