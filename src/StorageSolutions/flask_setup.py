@@ -1,6 +1,6 @@
 from flask_cors import CORS
 from flask import Flask, request
-from flask_restplus import Resource, Api, reqparse, fields
+from flask_restx import Resource, Api, reqparse, fields
 from StorageSolutions.models import *
 app = Flask(__name__)
 api = Api(app, default ="Umpires and Games")

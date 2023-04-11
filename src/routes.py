@@ -2,7 +2,7 @@ from StorageSolutions.flask_setup import *
 from StorageSolutions.tables import *
 from Util.EndpointFunctions import *
 from Util.RefratingCache import recache_everything, recache_games
-from flask_restplus import Resource, Api, reqparse, fields
+from flask_restx import Resource, Api, reqparse, fields
 from flask import Flask, request
 import simplejson as json
 import boto3
