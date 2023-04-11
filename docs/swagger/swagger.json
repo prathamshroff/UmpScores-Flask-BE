@@ -1,0 +1,319 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "StorageSolutions Back-end API",
+    "version": "1.0"
+  },
+  "paths": {
+    "/charts": {
+      "get": {
+        "description": "Returns chart statistics regarding a specific umpire",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "The name of the umpire for which to retrieve chart statistics"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with the requested chart statistics",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "/awards": {
+      "get": {
+        "description": "Returns award winners for a given award category and status",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "The award category for which to retrieve winners"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "type": "string",
+            "description": "The status of the award winners. This parameter is not required for the \"Best Crew\" or \"Best Crew Chief\" categories."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with the requested award winners",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "/awardCategories": {
+      "get": {
+        "description": "Returns all the different types of awards",
+        "responses": {
+          "200": {
+            "description": "Successful response with all available award categories",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "/pitcher": {
+      "get": {
+        "description": "Get statistics for every season a player has worked with a given umpire",
+        "parameters": [
+          {
+            "name": "u",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "The name of the umpire for which to retrieve pitcher statistics"
+          },
+          {
+            "name": "p",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "The name of the pitcher for which to retrieve statistics"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with the requested pitcher statistics",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "/get-pitchers": {
+      "get": {
+        "description": "Will return a list of pitcher names",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "The name of the umpire for which to retrieve a list of pitchers"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with the requested list of pitchers",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "/teams": {
+      "get": {
+        "description": "Will return an array of dicts where a dict represents team stats for that object",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "The name of the umpire for which to retrieve team statistics"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with the requested team statistics",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "/umpire": {
+      "get": {
+        "description": "Will return a dict where keys represent years, and values are the umpire object",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "The name of the umpire for which to retrieve umpire objects"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with the requested umpire object",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "/rankings": {
+      "get": {
+        "description": "Returns a list of all umpire objects from every year in the rankings format",
+        "responses": {
+          "200": {
+            "description": "Successful response with the requested umpire rankings",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "/career": {
+      "get": {
+        "description": "Will return an array of yearly career objects about this umpire",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "The name of the umpire for which to retrieve career statistics"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with the requested career statistics",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "/games": {
+      "get": {
+        "description": "Generates a list of games for today",
+        "responses": {
+          "200": {
+            "description": "Successful response with the list of games for today",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "/recache": {
+      "get": {
+        "description": "Will recache all internal objects",
+        "parameters": [
+          {
+            "name": "secret",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "The secret key to recache internal objects"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Internal objects recached successfully",
+            "schema": {
+              "type": "object"
+            }
+          },
+          "400": {
+            "description": "Invalid secret key",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "/updateGamesCache": {
+      "get": {
+        "description": "Will recache all game objects",
+        "parameters": [
+          {
+            "name": "secret",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "The secret key to recache game objects"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Game objects recached successfully",
+            "schema": {
+              "type": "object"
+            }
+          },
+          "400": {
+            "description": "Invalid secret key",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "/umpireList": {
+      "get": {
+        "description": "Returns the names with our unique identifiers for every umpire within our dataset",
+        "responses": {
+          "200": {
+            "description": "Successful response with the list of all umpire names and id's",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "/umpireGames": {
+      "get": {
+        "description": "Returns all game objects for some umpire",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "The name of the umpire for which to retrieve game objects"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with the requested game objects",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "/whichCache": {
+      "get": {
+        "description": "Returns which deployment is currently being used",
+        "responses": {
+          "200": {
+            "description": "Successful response with the current deployment being used",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    }
+  }
+}
