@@ -11,7 +11,6 @@ import queue
 from copy import deepcopy
 from threading import Lock
 
-
 def recache_everything(cache, mutex, refPool, data_year_range):
 	"""
 	Recaches everything within our cache object and toggles the cache.
@@ -69,9 +68,9 @@ def recache_everything(cache, mutex, refPool, data_year_range):
 			# NEEDS PITCHER STUFF
 
 			now = time.time()
-			print("Started to cache awards")
+			print("Started to cache /awards")
 			cache[cache_id]['/awards'] = create_awards_object()
-			print("Finished caching /awards in {0}s".format(time.time() - now))
+			print("Finished caching /awards: t = {0}s".format(time.time() - now))
 
 			now = time.time()
 			print('Starting to cache /get-pitchers')
@@ -127,7 +126,6 @@ def recache_everything(cache, mutex, refPool, data_year_range):
 			cache['use'] = cache_id
 		except Exception as e:
 			print(f'Error during recache_everything: {e}')
-
 
 def recache_games(cache, mutex):
 	"""

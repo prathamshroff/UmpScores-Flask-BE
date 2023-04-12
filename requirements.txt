@@ -53,6 +53,7 @@ keyring>=10.6.0
 keyrings.alt>=3.0
 lxml>=4.4.1
 MarkupSafe>=2.1
+MLB-StatsAPI
 mongoengine>=0.24
 mongomock>=3.14.0
 more-itertools>=4.3.0

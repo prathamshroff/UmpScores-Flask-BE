@@ -6,10 +6,6 @@ from Schedulers.Scheduler import CacheScheduler
 import simplejson as json
 import sys
 
-from flask import Flask
-
-app = Flask(__name__)
-
 with open('.config.json') as f:
 	configs = json.load(f)
 	secret = configs['privilege_secret']
