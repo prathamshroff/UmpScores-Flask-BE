@@ -1,4 +1,4 @@
-from flask_restplus import fields
+from flask_restx import fields
 ChartsObject = {
     'heatMap': fields.List(fields.Nested({'data': fields.List(fields.Float), 'season': fields.Integer})),
     'heatMapSL': fields.List(fields.Nested({'data': fields.List(fields.Float), 'season': fields.Integer})),
