@@ -1,0 +1,19 @@
+version: '3'
+services:
+  myapp:
+    build: .
+    command: python3 -m flask run --host=0.0.0.0
+    container_name: myapp
+    restart: always
+    
+    environment:
+      TZ: America/New_York
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+    deploy:
+      replicas: 1
+    runtime: runc
+    user: appuser
+    working_dir: /app
