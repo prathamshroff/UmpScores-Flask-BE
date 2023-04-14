@@ -3,6 +3,7 @@ from StorageSolutions.tables import *
 from Util.EndpointFunctions import *
 from Util.RefratingCache import recache_everything, recache_games
 from flask_restx import Resource, Api, reqparse, fields
+from flask_swagger_ui import get_swaggerui_blueprint
 from flask import Flask, request
 import simplejson as json
 import boto3
@@ -11,6 +12,9 @@ from flask import Flask, jsonify, request, Response
 from multiprocessing.pool import ThreadPool as Pool
 import time
 import threading
+
+from flask_swagger_ui import get_swaggerui_blueprint
+
 data_year_range = range(2010, 2022)
 
 cache_lock = threading.Lock()
@@ -18,6 +22,22 @@ cache = {'blue': {}, 'green': {}, 'use': 'blue'}
 
 refPool = Pool()
 recache_everything(cache, cache_lock, refPool, data_year_range)
+
+# Define the Swagger UI blueprint
+SWAGGER_URL = '/swagger'
+API_URL = '/swagger.json'
+swaggerui_blueprint = get_swaggerui_blueprint(
+    SWAGGER_URL,
+    API_URL,
+    config={
+        'app_name': 'UmpScores API'
+        'title': 'UmpScores API',
+        'description': 'This is the documentation for the UmpScores API, which provides access to umpire scores and statistics.'
+    }
+)
+
+# Register the Swagger UI blueprint with your Flask app
+app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 
 @api.route('/charts')
 class Charts(Resource):
@@ -72,7 +92,6 @@ class GetPitchers(Resource):
         resp = Response(data, status=200, mimetype='application/json')
         return resp
         
-
 @api.route('/teams')
 class Teams(Resource):
     @api.doc(parser = umpire_parser)
@@ -110,7 +129,6 @@ class Umpire(Resource):
         resp = Response(data, status=200, mimetype='application/json')
         return resp
 
-
 @api.route('/rankings')
 class Rankings(Resource):
     @api.response(200, 'OK', rankings_api_object)
@@ -119,8 +137,6 @@ class Rankings(Resource):
         Returns a list of all umpire objects from every year in the rankings format
         """ 
         return cache[cache['use']]['/rankings']
-
-
 
 @api.route('/career')
 class Career(Resource):
@@ -140,7 +156,6 @@ class Career(Resource):
         data = json.dumps(data, use_decimal=True)
         resp = Response(data, status=200, mimetype='application/json')
         return resp
-
 
 @api.route('/games')
 class GetTodaysGames(Resource):
@@ -208,7 +223,6 @@ class GetAllUmps(Resource):
         resp = Response(data, status=200, mimetype='application/json')
         return resp
 
-
 @api.route('/umpireGames')
 class UmpireGames(Resource):
     @api.doc(parser = umpire_parser)
@@ -228,7 +242,6 @@ class UmpireGames(Resource):
         resp = Response(data, status=200, mimetype='application/json')
         return resp
 
-
 @api.route('/whichCache')
 class UmpireGames(Resource):
     def get(self):
@@ -242,7 +255,6 @@ class UmpireGames(Resource):
         Used for debugging purposes and to test if caching was done correctly.
         """
         return cache['use']
-
 
 @api.route('/awards')
 class Awards(Resource):
@@ -264,7 +276,6 @@ class Awards(Resource):
         else:
             status = request.args.get("status")
         return data[award_category][status]
-
 
 @api.route("/awardCategories")
 class AwardCategories(Resource):
