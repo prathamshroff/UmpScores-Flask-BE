@@ -1,0 +1,21 @@
+name: Lint
+on:
+  push:
+    branches: [ '*' ]
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      - name: Install pylint
+        run: |
+          sudo apt-get update
+          sudo apt-get install python3-pip
+          pip3 install pylint
+      - name: Run linter
+        run: |
+          pylint app.py
