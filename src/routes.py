@@ -30,7 +30,7 @@ swaggerui_blueprint = get_swaggerui_blueprint(
     SWAGGER_URL,
     API_URL,
     config={
-        'app_name': 'UmpScores API'
+        'app_name': 'UmpScores API',
         'title': 'UmpScores API',
         'description': 'This is the documentation for the UmpScores API, which provides access to umpire scores and statistics.'
     }

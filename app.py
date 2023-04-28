@@ -1,9 +1,9 @@
+import sys
+sys.path.append('./src')
 import simplejson as json
 from Schedulers.Scheduler import CacheScheduler
 from multiprocessing import Process
 from routes import *
-import sys
-sys.path.append('./src')
 
 with open('.config.json') as f:
     configs = json.load(f)
