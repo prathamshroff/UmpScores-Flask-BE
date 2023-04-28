@@ -31,8 +31,10 @@ Flask-JWT-Extended>=3.14.0
 flask-mongoengine>=0.9.5
 Flask-MySQL>=1.4.0
 Flask-PyMongo>=2.3.0
+flask-restful
 flask-restplus>=0.12.1
 flask-restx
+flask-swagger-ui
 Flask-WTF>=0.14.2
 funcsigs>=1.0.2
 futures==3.1.1

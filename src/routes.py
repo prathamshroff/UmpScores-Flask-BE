@@ -3,6 +3,7 @@ from StorageSolutions.tables import *
 from Util.EndpointFunctions import *
 from Util.RefratingCache import recache_everything, recache_games
 from flask_restx import Resource, Api, reqparse, fields
+from flask_swagger_ui import get_swaggerui_blueprint
 from flask import Flask, request
 import simplejson as json
 import boto3
@@ -11,6 +12,9 @@ from flask import Flask, jsonify, request, Response
 from multiprocessing.pool import ThreadPool as Pool
 import time
 import threading
+
+from flask_swagger_ui import get_swaggerui_blueprint
+
 data_year_range = range(2010, 2022)
 
 cache_lock = threading.Lock()
@@ -18,6 +22,22 @@ cache = {'blue': {}, 'green': {}, 'use': 'blue'}
 
 refPool = Pool()
 recache_everything(cache, cache_lock, refPool, data_year_range)
+
+# Define the Swagger UI blueprint
+SWAGGER_URL = '/swagger'
+API_URL = '/swagger.json'
+swaggerui_blueprint = get_swaggerui_blueprint(
+    SWAGGER_URL,
+    API_URL,
+    config={
+        'app_name': 'UmpScores API'
+        'title': 'UmpScores API',
+        'description': 'This is the documentation for the UmpScores API, which provides access to umpire scores and statistics.'
+    }
+)
+
+# Register the Swagger UI blueprint with your Flask app
+app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 
 @api.route('/charts')
 class Charts(Resource):
@@ -81,7 +101,6 @@ class GetPitchers(Resource):
         except Exception as e:
             return {'error': str(e)}, 500
         
-
 @api.route('/teams')
 class Teams(Resource):
     @api.doc(parser = umpire_parser)
@@ -125,7 +144,6 @@ class Umpire(Resource):
         except Exception as e:
             return {'error': str(e)}, 500
 
-
 @api.route('/rankings')
 class Rankings(Resource):
     @api.response(200, 'OK', rankings_api_object)
@@ -137,8 +155,6 @@ class Rankings(Resource):
             return cache[cache['use']]['/rankings']
         except Exception as e:
             return {'error': str(e)}, 500
-
-
 
 @api.route('/career')
 class Career(Resource):
@@ -161,7 +177,6 @@ class Career(Resource):
             return resp
         except Exception as e:
             return {'error': str(e)}, 500
-
 
 @api.route('/games')
 class GetTodaysGames(Resource):
@@ -241,7 +256,6 @@ class GetAllUmps(Resource):
         except Exception as e:
             return {'error': str(e)}, 500
 
-
 @api.route('/umpireGames')
 class UmpireGames(Resource):
     @api.doc(parser = umpire_parser)
@@ -264,7 +278,6 @@ class UmpireGames(Resource):
         except Exception as e:
             return {'error': str(e)}, 500
 
-
 @api.route('/whichCache')
 class UmpireGames(Resource):
     def get(self):
@@ -281,7 +294,6 @@ class UmpireGames(Resource):
             return cache['use']
         except Exception as e:
             return {'error': str(e)}, 500
-
 
 @api.route('/awards')
 class Awards(Resource):
@@ -306,7 +318,6 @@ class Awards(Resource):
             return data[award_category][status]
         except Exception as e:
             return {'error': str(e)}, 500
-
 
 @api.route("/awardCategories")
 class AwardCategories(Resource):
