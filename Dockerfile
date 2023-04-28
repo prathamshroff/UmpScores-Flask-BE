@@ -9,14 +9,11 @@ WORKDIR /app
 COPY requirements.txt requirements.txt
 
 # Install Dependencies
-RUN pip3 install -r requirements.txt
-
-# Extra-Safe: Frequent Not Found Errors
-RUN pip3 install MLB-statsapi
-RUN pip3 install simplejson
-
-# Remove Unused Dependencies to Reduce Image Size 
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Extra-Safe: To Mitigate Frequent NotFound Errors
+RUN pip3 install --no-cache-dir MLB-statsapi
+RUN pip3 install --no-cache-dir simplejson
 
 COPY . .
 

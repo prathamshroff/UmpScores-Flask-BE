@@ -1,0 +1,34 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches:
+      - main
+      - servertest-prathamshroff
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag umpscores:latest
+    - name: Run the Docker container
+      run: docker run -d -p 3000:3000 --name umpscores_container umpscores
+    - name: Wait for the app to start
+      run: sleep 10
+    - name: Test the API
+      run: |
+        curl -I localhost:3000/umpireList
+        response_code=$(curl -s -o /dev/null -w "%{http_code}" localhost:3000/umpireList)
+        if [ $response_code -ne 200 ]; then
+          echo "API is not responding"
+          exit 1
+        fi
+    - name: Clean up the Docker container
+      run: docker rm -f umpscores_container
