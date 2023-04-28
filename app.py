@@ -1,8 +1,3 @@
-"""
-A Flask app that runs Mx
-"""
-
-
 import simplejson as json
 from Schedulers.Scheduler import CacheScheduler
 from multiprocessing import Process
