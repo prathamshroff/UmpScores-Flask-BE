@@ -4,20 +4,27 @@ import sys
 sys.path.append('./src')
 from Schedulers.Scheduler import CacheScheduler
 import simplejson as json
+from unittest.mock import patch
+import unittest
 
-app = Flask(__name__)
+
 
 with open('.config.json') as f:
 	configs = json.load(f)
 	secret = configs['privilege_secret']
 
-def test_index():
-    cache_sched = CacheScheduler('http://0.0.0.0:80', secret, freq=120)
+class TestApi(unittest.TestCase):
+    
+    @patch('app.CacheScheduler')
+    @patch('app.app.run')
 
-    app.config["DEBUG"] = True
-    client = app.test_client()
-    response = client.get('/')
-    assert response.status_code == 200
+    def test_app(self, mock_run, mock_cache_scheduler):
+        app = Flask(__name__)
+        with patch('sys.argv', ['app.py']):
+            app.main()
+            mock_run.assert_called_once_with('127.0.0.1', port=3000)
 
 
-test_index()
+
+if __name__ == "__main__":
+    unittest.main()
